@@ -1,8 +1,7 @@
 import os
-from os.path import join
 
 import chardet
-from pandas import read_csv, to_datetime
+from pandas import DataFrame, read_csv, to_datetime
 from rich import print
 
 
@@ -52,28 +51,27 @@ class Synchronizer:
 
     def __init__(self, working_dir: str):
         self.working_dir = working_dir
+        self.data_dir = os.path.join(working_dir, "data")
 
-    def run(self):
+    def run(self) -> DataFrame:
         try:
             print("--- Sincronizando dados de Funcionários entre Fiorilli e Ahgora ---")
-            fiorilli_data, ahgora_data = self._get_employees_data(
-                join(self.working_dir, "data")
-            )
-            df_to_add, df_to_inactivate = self._process_data(fiorilli_data, ahgora_data)
+            employees_data = self._get_employees_data()
+            df_to_add, df_to_inactivate = self._process_data(employees_data)
 
-            df_to_add = df_to_add[
-                [
-                    "Nome",
-                    "PIS-PASEP",
-                    "CPF",
-                    "Sexo",
-                    "Data Nascimento",
-                    "Matricula",
-                    "Data Admissao",
-                    "Cargo",
-                    "Localizacao",
-                ]
-            ]
+            # df_to_add = df_to_add[
+            #     [
+            #         "Nome",
+            #         "PIS-PASEP",
+            #         "CPF",
+            #         "Sexo",
+            #         "Data Nascimento",
+            #         "Matricula",
+            #         "Data Admissao",
+            #         "Cargo",
+            #         "Localizacao",
+            #     ]
+            # ]
 
             # df_to_inactivate[
             #     ["Matricula", "Nome", "Data Admissao", "Departamento", "Cargo"]
@@ -84,17 +82,19 @@ class Synchronizer:
             # _manual_add(df_to_inactivate, "remover/verificar")
 
             print("[bold green]Funcionários adicionados com sucesso![/bold green]")
-        except Exception as e:
+        except KeyboardInterrupt as e:
             print(f"[bold red]Erro ao adicionar funcionários: {e}[/bold red]")
 
-    def _get_employees_data(self, data_dir: str):
+    def _get_employees_data(self):
         fiorilli_employees_portable_path = os.path.join(
-            data_dir, "fiorilli", "employees_all_portable.csv"
+            self.data_dir, "fiorilli", "employees_portable.csv"
         )
         fiorilli_employees_path = os.path.join(
-            data_dir, "fiorilli", "employees_all.txt"
+            self.data_dir, "fiorilli", "employees_all.txt"
         )
-        ahgora_employees_path = os.path.join(data_dir, "ahgora", "employees_all.csv")
+        ahgora_employees_path = os.path.join(
+            self.data_dir, "ahgora", "employees_all.csv"
+        )
 
         fiorilli_employees_portable = self._load(
             filepath=fiorilli_employees_path,
@@ -115,9 +115,9 @@ class Synchronizer:
         )
 
         employees_data = {
-            "fiorilli_employees_portable" : fiorilli_employees_portable,
-            "fiorilli_employees" : fiorilli_employees,
-            "ahgora_employees" : ahgora_employees,
+            "fiorilli_employees_portable": fiorilli_employees_portable,
+            "fiorilli_employees": fiorilli_employees,
+            "ahgora_employees": ahgora_employees,
         }
 
         return employees_data
@@ -162,24 +162,28 @@ class Synchronizer:
         with open(filepath, "rb") as f:
             return chardet.detect(f.read())["encoding"]
 
-    def _process_data(self, fiorilli_data, ahgora_data):
-        fiorilli_data["Matricula"] = fiorilli_data["Matricula"].astype(str).str.strip()
-        ahgora_data["Matricula"] = ahgora_data["Matricula"].astype(str).str.strip()
+    def _process_data(self, employees_data):
+        fiorilli_employees = employees_data['fiorilli_employees']
+        fiorilli_employees_portable = employees_data['fiorilli_employees_portable']
+        ahgora_employees = employees_data['ahgora_employees']
 
-        fiorilli_data["Data Admissao"] = fiorilli_data["Data Admissao"].dt.strftime(
+        fiorilli_employees_portable["Matricula"] = fiorilli_employees["Matricula"].astype(str).str.strip()
+        ahgora_employees["Matricula"] = ahgora_employees["Matricula"].astype(str).str.strip()
+
+        fiorilli_employees_portable["Data Admissao"] = fiorilli_employees_portable["Data Admissao"].dt.strftime(
             "%d/%m/%Y"
         )
-        ahgora_data["Data Admissao"] = ahgora_data["Data Admissao"].dt.strftime(
+        ahgora_employees["Data Admissao"] = ahgora_employees["Data Admissao"].dt.strftime(
             "%d/%m/%Y"
         )
 
-        new_to_add = set(fiorilli_data["Matricula"]) - set(ahgora_data["Matricula"])
+        new_to_add = set(fiorilli_employees_portable["Matricula"]) - set(ahgora_employees["Matricula"])
 
-        inactivate_ahgora = set(ahgora_data["Matricula"]) - set(
-            fiorilli_data["Matricula"]
+        inactivate_ahgora = set(ahgora_employees["Matricula"]) - set(
+            fiorilli_employees_portable["Matricula"]
         )
 
-        df_to_add = fiorilli_data[fiorilli_data["Matricula"].isin(new_to_add)]
-        df_to_inactivate = ahgora_data[ahgora_data["Matricula"].isin(inactivate_ahgora)]
+        df_to_add = fiorilli_employees_portable[fiorilli_employees_portable["Matricula"].isin(new_to_add)]
+        df_to_inactivate = ahgora_employees[ahgora_employees["Matricula"].isin(inactivate_ahgora)]
 
         return df_to_add, df_to_inactivate

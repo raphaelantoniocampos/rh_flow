@@ -29,16 +29,16 @@ class AhgoraApp:
         driver = webdriver.Chrome(service=service)
         driver.get("https://app.ahgora.com.br/afastamentos/importa")
 
-        self._login_ahgora()
+        self._login()
 
         while True:
             try:
                 button_location = pyautogui.locateOnScreen(
                     join(self.assets_path, "pw_afimport.png"), grayscale=True
                 )
-                sleep(self.interval)
                 pyautogui.click(button_location)
                 self.center = button_location
+                sleep(self.interval)
                 break
             except pyautogui.ImageNotFoundException:
                 sleep(self.interval)
@@ -49,8 +49,8 @@ class AhgoraApp:
                     button_location = pyautogui.locateOnScreen(
                         join(self.assets_path, "escolher.png"), grayscale=True
                     )
-                    sleep(self.interval)
                     pyautogui.click(button_location)
+                    sleep(self.interval)
                     break
                 except pyautogui.ImageNotFoundException:
                     sleep(self.interval)
@@ -60,8 +60,8 @@ class AhgoraApp:
                     x, y, _, _ = pyautogui.locateOnScreen(
                         join(self.assets_path, "path.png"), grayscale=True
                     )
-                    sleep(self.interval)
                     pyautogui.click(x, y)
+                    sleep(self.interval)
                     break
                 except pyautogui.ImageNotFoundException:
                     sleep(self.interval)
@@ -101,12 +101,12 @@ class AhgoraApp:
                 except pyautogui.ImageNotFoundException:
                     sleep(self.interval)
 
-        sleep(10)
+        sleep(5)
 
         # Close webdriver
         driver.quit()
 
-    def _login_ahgora(self):
+    def _login(self):
         load_dotenv()
 
         user = getenv("AHGORA_USER")
