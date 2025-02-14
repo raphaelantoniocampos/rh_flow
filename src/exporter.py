@@ -61,16 +61,16 @@ class Exporter:
         print("--- Movendo arquivos ---")
         for file_path in file_paths:
             if "funcionarios.csv" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "ahgora", "employees_all.csv"))
+                os.replace(file_path, os.path.join(self.data_dir, "ahgora", "employees.csv"))
 
             if "PontoFuncionario" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "active_employees.txt"))
+                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "employees.txt"))
 
             if "PontoFerias" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "vacations_all.txt"))
+                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "vacations.txt"))
 
             if "PontoAfastamentos" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "leaves_all.txt"))
+                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "leaves.txt"))
 
             if "FUNCIONARIOS_ATIVOS" in file_path:
                 os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "employees_portable.csv"))

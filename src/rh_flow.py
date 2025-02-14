@@ -42,9 +42,12 @@ def main():
 
                 case "Sincronizar Dados":
                     sync = Synchronizer(WORKING_DIR)
-                    df = sync.run()
+                    new_employees, dismissed_employees = sync.run()
                     data_to_process.append(
-                        DataToProcess("Adicionar Funcionários ao Ahgora", df, len(df))
+                        DataToProcess("Adicionar Funcionários ao Ahgora", new_employees, len(new_employees))
+                    )
+                    data_to_process.append(
+                        DataToProcess("Desligar Funcionários no Ahgora", dismissed_employees, len(dismissed_employees))
                     )
 
                 case "Adicionar Funcionários ao Ahgora":
@@ -75,7 +78,7 @@ def show_menu(data_to_process: dict):
             console.print("[yellow]Existem dados para processar:\n")
             for data in data_to_process:
                 console.print(
-                    f"[bold cyan]•[/] {data.to}: {data.length}\n--- RESUMO ---{data.df.head()}\n"
+                    f"[bold cyan]•[/] {data.to}: {data.length}\n--- RESUMO ---{data.df}\n"
                 )
 
     questions = [
