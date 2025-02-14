@@ -51,11 +51,15 @@ class Exporter:
         print("[bold green]--- Exportação Concluida ---[/bold green]")
 
     def _get_file_paths_from_dir(self, dir: str) -> list[str]:
-        file_paths = [
-            os.path.join(self.download_dir, file_name)
-            for file_name in os.listdir(self.download_dir)
-        ]
-        return file_paths
+        try:
+            file_paths = [
+                os.path.join(self.download_dir, file_name)
+                for file_name in os.listdir(self.download_dir)
+            ]
+            return file_paths
+        except FileNotFoundError:
+            return []
+
 
     def _move_and_rename_files_to_data_dir(self, file_paths: list[str]) -> None:
         print("--- Movendo arquivos ---")
