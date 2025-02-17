@@ -1,13 +1,13 @@
-import os
 from dataclasses import dataclass
+import pandas as pd
+import time
+import os
 
 import inquirer
-from pandas import DataFrame
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
 
-from exporter import Exporter
 from synchronizer import Synchronizer
 from updater import Updater
 
@@ -16,41 +16,34 @@ WORKING_DIR = os.getcwd()
 console = Console()
 
 OPTIONS = {
-    1: "Exportar Dados",
-    2: "Sincronizar Dados",
-    3: "Adicionar Funcionários ao Ahgora",
+    1: "Exportar",
+    2: "Sincronizar",
+    3: "Processar",
     4: "Sair",
 }
 
-
 @dataclass
 class DataToProcess:
-    to: str | None
-    df: DataFrame | None
-    length: int | None
-
+    to_add: pd.DataFrame | None
+    to_remove: pd.DataFrame | None
 
 def main():
-    data_to_process = []
     while True:
         try:
+            data_to_process = get_data_to_process()
             option = show_menu(data_to_process)
             match option:
-                case "Exportar Dados":
-                    exporter = Exporter(WORKING_DIR)
-                    exporter.run()
+                case "Exportar":
+                    print("[bold red]DESATIVADO NO MOMENTO[/bold red]")
+                    time.sleep(1)
+                    # exporter = Exporter(WORKING_DIR)
+                    # exporter.run()
 
-                case "Sincronizar Dados":
+                case "Sincronizar":
                     sync = Synchronizer(WORKING_DIR)
-                    new_employees, dismissed_employees = sync.run()
-                    data_to_process.append(
-                        DataToProcess("Adicionar Funcionários ao Ahgora", new_employees, len(new_employees))
-                    )
-                    data_to_process.append(
-                        DataToProcess("Desligar Funcionários no Ahgora", dismissed_employees, len(dismissed_employees))
-                    )
+                    sync.run()
 
-                case "Adicionar Funcionários ao Ahgora":
+                case "Processar":
                     updater = Updater()
                     updater.add_employees(data_to_process["Add"])
 
@@ -63,7 +56,7 @@ def main():
     print("Saindo...")
 
 
-def show_menu(data_to_process: dict):
+def show_menu(data_to_process: DataToProcess):
     console.print(
         Panel.fit(
             f"{'-' * 13}RH FLOW{'-' * 13}\nBem-vindo ao Sistema de. Automação",
@@ -71,15 +64,15 @@ def show_menu(data_to_process: dict):
         )
     )
     console.print("\n")
-    match data_to_process:
-        case []:
-            console.print("[green]Sem novos dados para processar.\n")
-        case _:
-            console.print("[yellow]Existem dados para processar:\n")
-            for data in data_to_process:
-                console.print(
-                    f"[bold cyan]•[/] {data.to}: {data.length}\n--- RESUMO ---{data.df}\n"
-                )
+    if data_to_process.to_add is not None :
+        console.print(f"[bold cyan]•[/] Existem {len(data_to_process.to_add)} funcionários para adicionar no Ahgora:\n")
+        console.print(f"--- RESUMO ---\n{data_to_process.to_add.head()}")
+    if data_to_process.to_remove is not None :
+        console.print(f"[bold cyan]•[/] Existem {len(data_to_process.to_remove)} funcionários para remover do Ahgora:\n")
+        console.print(f"--- RESUMO ---\n{data_to_process.to_remove.head()}")
+
+    if data_to_process.to_add is None and data_to_process.to_remove is None:
+        console.print("[green]Sem novos dados para processar.\n")
 
     questions = [
         inquirer.List(
@@ -91,6 +84,23 @@ def show_menu(data_to_process: dict):
     answers = inquirer.prompt(questions)
     return answers["option"]
 
+def get_data_to_process() -> DataToProcess:
+    to_process_dir = os.path.join(WORKING_DIR, 'data', 'to_process')
+
+    new_employees_path = os.path.join(to_process_dir, 'new_employees.csv')
+    dismissed_employees_path = os.path.join(to_process_dir, 'dismissed_employees.csv')
+
+    data_to_process = DataToProcess(None, None)
+
+    if os.path.isfile(new_employees_path):
+        df_new = pd.read_csv(new_employees_path)
+        data_to_process.to_add = df_new
+
+    if os.path.isfile(dismissed_employees_path):
+        df_dismissed = pd.read_csv(dismissed_employees_path)
+        data_to_process.to_remove = df_dismissed
+
+    return data_to_process
 
 # def select_date():
 #     last_week_day = _get_last_week_day()

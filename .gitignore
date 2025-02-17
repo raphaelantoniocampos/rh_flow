@@ -9,6 +9,5 @@ wheels/
 # Virtual environments
 src/.venv
 src/.env
-src/data/fiorilli/*
-src/data/ahgora/*
+src/data/*
 src/downloads/*

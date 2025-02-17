@@ -43,7 +43,6 @@ class Exporter:
 
         web_driver.close()
 
-
         downloaded_files = self._get_file_paths_from_dir(self.download_dir)
 
         self._move_and_rename_files_to_data_dir(downloaded_files)
@@ -60,25 +59,34 @@ class Exporter:
         except FileNotFoundError:
             return []
 
-
     def _move_and_rename_files_to_data_dir(self, file_paths: list[str]) -> None:
         print("--- Movendo arquivos ---")
         for file_path in file_paths:
             if "funcionarios.csv" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "ahgora", "employees.csv"))
+                os.replace(
+                    file_path, os.path.join(self.data_dir, "ahgora", "employees.csv")
+                )
 
             if "PontoFuncionario" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "employees.txt"))
+                os.replace(
+                    file_path, os.path.join(self.data_dir, "fiorilli", "employees.txt")
+                )
 
             if "PontoFerias" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "vacations.txt"))
+                os.replace(
+                    file_path, os.path.join(self.data_dir, "fiorilli", "vacations.txt")
+                )
 
             if "PontoAfastamentos" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "leaves.txt"))
+                os.replace(
+                    file_path, os.path.join(self.data_dir, "fiorilli", "leaves.txt")
+                )
 
             if "FUNCIONARIOS_ATIVOS" in file_path:
-                os.replace(file_path, os.path.join(self.data_dir, "fiorilli", "employees_portable.csv"))
-
+                os.replace(
+                    file_path,
+                    os.path.join(self.data_dir, "fiorilli", "employees_portable.csv"),
+                )
 
     def _create_web_driver(self) -> webdriver.Chrome:
         print("--- Iniciando Web Driver ---")

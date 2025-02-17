@@ -13,7 +13,7 @@ class Key:
     colored: str
 
 
-class Updater:
+class Processor:
     KEY_SEMI_AUTO = Key("F1", "[bold cyan1]F2[/bold cyan1]")
     KEY_CONTINUE = Key("F2", "[bold green1]F2[/bold green1]")
     KEY_NEXT = Key("F3", "[bold yellow]F3[/bold yellow]")
@@ -41,7 +41,14 @@ class Updater:
         if not ok_input["start"]:
             return
 
-    def _manual_add(df, verb: str):
+    def remove_employees(self, df):
+        print(f"Novos funcionários para Remover do Ahgora: {len(df)}")
+        ok_input = inquirer.prompt([inquirer.Confirm("start", message="Começar?")])
+        sleep(0.5)
+        if not ok_input["start"]:
+            return
+
+    def _manual_add(self, df, verb: str):
         print(f"Novos funcionários para {verb} no Ahgora: {len(df)}")
         ok_input = inquirer.prompt([inquirer.Confirm("start", message="Começar?")])
         sleep(0.5)
@@ -53,15 +60,15 @@ class Updater:
             )
             print(series)
             print(
-                f"\nPressione {KEY_SEMI_AUTO.colored} para o processo [bold white]semi automático[/bold white]."
+                f"\nPressione {self.KEY_SEMI_AUTO.colored} para o processo [bold white]semi automático[/bold white]."
             )
             print(
-                f"Pressione {KEY_CONTINUE.colored} para o próximo [bold white]campo[/bold white]."
+                f"Pressione {self.KEY_CONTINUE.colored} para o próximo [bold white]campo[/bold white]."
             )
             print(
-                f"Pressione {KEY_NEXT.colored} para próximo [bold white]funcionário[/bold white]."
+                f"Pressione {self.KEY_NEXT.colored} para próximo [bold white]funcionário[/bold white]."
             )
-            print(f"Pressione {KEY_STOP.colored} para [bold white]sair...[/bold white]")
+            print(f"Pressione {self.KEY_STOP.colored} para [bold white]sair...[/bold white]")
             name = series.iloc(0)[0]
             copy(name)
             print(f"(Nome '{name}' copiado para a área de transferência!)")
@@ -71,32 +78,32 @@ class Updater:
                 copy(field)
                 print(f"({index} '{field}' copiado para a área de transferência!)")
                 while True:
-                    if keyboard.is_pressed(KEY_SEMI_AUTO.key):
+                    if keyboard.is_pressed(self.KEY_SEMI_AUTO.key):
                         sleep(0.5)
-                        _semi_auto_add(series)
+                        self._semi_auto_add(series)
                         break
-                    if keyboard.is_pressed(KEY_CONTINUE.key):
+                    if keyboard.is_pressed(self.KEY_CONTINUE.key):
                         sleep(0.5)
                         break
-                    if keyboard.is_pressed(KEY_NEXT.key):
+                    if keyboard.is_pressed(self.KEY_NEXT.key):
                         break
-                    if keyboard.is_pressed(KEY_STOP.key):
+                    if keyboard.is_pressed(self.KEY_STOP.key):
                         sleep(0.5)
                         print("Interrompido pelo usuário.")
                         return
-                if keyboard.is_pressed(KEY_NEXT.key):
+                if keyboard.is_pressed(self.KEY_NEXT.key):
                     sleep(0.5)
                     break
 
-    def _semi_auto_add(row):
+    def _semi_auto_add(self, row):
         print(
             f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/] e Aperte {KEY_SEMI_AUTO.colored} para começar ou {KEY_STOP} para sair."
         )
         while True:
-            if keyboard.is_pressed(KEY_SEMI_AUTO.key):
+            if keyboard.is_pressed(self.KEY_SEMI_AUTO.key):
                 sleep(0.5)
                 break
-            if keyboard.is_pressed(KEY_STOP.key):
+            if keyboard.is_pressed(self.KEY_STOP.key):
                 sleep(0.1)
                 print("Interrompido pelo usuário.")
                 return
@@ -107,7 +114,7 @@ class Updater:
         pyautogui.press("tab", presses=7, interval=0.005)
         sleep(0.2)
 
-        print(f"Confira o PIS-PASEP e Pressione {KEY_SEMI_AUTO.colored} para continuar")
+        print(f"Confira o PIS-PASEP e Pressione {self.KEY_SEMI_AUTO.colored} para continuar")
         print(str(row["PIS-PASEP"]))
 
         pyautogui.write(str(row["PIS-PASEP"]), interval=0.2)
@@ -116,7 +123,7 @@ class Updater:
         pyautogui.press("tab")
         sleep(0.2)
         while True:
-            if keyboard.is_pressed(KEY_SEMI_AUTO.colored):
+            if keyboard.is_pressed(self.KEY_SEMI_AUTO.colored):
                 sleep(0.1)
                 break
 
@@ -187,9 +194,9 @@ class Updater:
         sleep(0.2)
 
         print(
-            f"Insira a Localização\n[yellow]{row['Localizacao']}\n[/]Pressione {KEY_NEXT.colored} para sair..."
+            f"Insira a Localização\n[yellow]{row['Localizacao']}\n[/]Pressione {self.KEY_NEXT.colored} para sair..."
         )
 
         while True:
-            if keyboard.is_pressed(KEY_NEXT.key):
+            if keyboard.is_pressed(self.KEY_NEXT.key):
                 return
