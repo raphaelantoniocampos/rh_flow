@@ -10,7 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 
-class Exporter:
+class FileDownloader:
     WAIT_SECONDS = 0.2
     WRITE_INTERVAL = 0.01
     TAB_INTERVAL = 0.005

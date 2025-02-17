@@ -13,22 +13,52 @@ class Key:
     colored: str
 
 
-class Processor:
+class ActionHandler:
     KEY_SEMI_AUTO = Key("F1", "[bold cyan1]F2[/bold cyan1]")
     KEY_CONTINUE = Key("F2", "[bold green1]F2[/bold green1]")
     KEY_NEXT = Key("F3", "[bold yellow]F3[/bold yellow]")
     KEY_STOP = Key("F4", "[bold red3]F4[/bold red3]")
 
+    def __init__(self, actions_to_do):
+        self.actions_to_do = actions_to_do
+
     def run(self):
+        option = self._show_actions_menu()[2:]
+        print(option)
+        match option:
+            case "Adicionar funcionários":
+                print("ESSE 1")
+                sleep(1)
+                self.add_employees(self.actions_to_do.to_add)
+
+            case "Remover funcionários":
+                print("ESSE 2")
+                sleep(1)
+                self.remove_employees(self.actions_to_do.to_remove)
+
+            case "Sair":
+                print("SALIR 1")
+                return
+
+    def _show_actions_menu(self):
+        actions = []
+
+        if self.actions_to_do.to_add is not None:
+            actions.append("Adicionar funcionários")
+
+        if self.actions_to_do.to_remove is not None:
+            actions.append("Remover funcionários")
+
+        if not actions:
+            actions.append("[green]• Nenhuma ação pendente.[/green]")
+
+        choices = [f"{index}. {action}" for index, action in enumerate(actions, start=1)]
+        choices.append(f"{len(choices) + 1}. Sair")
         questions = [
             inquirer.List(
                 "option",
                 message="Selecione uma opção",
-                choices=[
-                    "1. Adicionar Funcionários",
-                    "2. Adição de Funcionários ao Ahgora",
-                    "3. Sair",
-                ],
+                choices=choices
             ),
         ]
         answers = inquirer.prompt(questions)

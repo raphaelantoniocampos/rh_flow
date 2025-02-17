@@ -5,7 +5,7 @@ import pandas as pd
 from rich import print
 
 
-class Synchronizer:
+class DataAnalyzer:
     FIORILLI_EMPLOYEES_COLUMNS = [
         "Matricula",
         "Nome",
