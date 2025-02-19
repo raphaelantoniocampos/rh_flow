@@ -73,16 +73,27 @@ class DataManager:
         filepath: str,
         sep: str = ",",
         cols_names: list[str] = [],
+        none_header: bool = False
     ):
         encoding = self._detect_encoding(filepath)
-        data = pd.read_csv(
-            filepath,
-            sep=sep,
-            encoding=encoding,
-            index_col=False,
-            header=None,
-            dtype={"Matricula": str},
-        )
+        if none_header:
+            data = pd.read_csv(
+                filepath,
+                sep=sep,
+                encoding=encoding,
+                index_col=False,
+                header=None,
+                dtype={"Matricula": str},
+            )
+        else:
+            data = pd.read_csv(
+                filepath,
+                sep=sep,
+                encoding=encoding,
+                index_col=False,
+                dtype={"Matricula": str},
+            )
+
         if cols_names:
             data.columns = cols_names
 
@@ -136,6 +147,7 @@ class DataManager:
             filepath=ahgora_employees_path,
             sep=",",
             cols_names=self.AHGORA_EMPLOYEES_COLUMNS,
+            none_header=True
         )
 
         return fiorilli_employees, ahgora_employees
