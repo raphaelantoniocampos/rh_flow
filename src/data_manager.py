@@ -68,48 +68,22 @@ class DataManager:
             print(f"[bold red]Erro ao adicionar funcionários: {e}[/bold red]\n")
             sleep(1)
 
-    def load(
-        self,
-        filepath: str,
-        sep: str = ",",
-        cols_names: list[str] = [],
-        none_header: bool = False
-    ):
-        encoding = self._detect_encoding(filepath)
-        if none_header:
-            data = pd.read_csv(
-                filepath,
-                sep=sep,
-                encoding=encoding,
-                index_col=False,
-                header=None,
-                dtype={"Matricula": str},
-            )
-        else:
-            data = pd.read_csv(
-                filepath,
-                sep=sep,
-                encoding=encoding,
-                index_col=False,
-                dtype={"Matricula": str},
-            )
-
+    def prepare_dataframe(self, df, cols_names: list[str] = []):
         if cols_names:
-            data.columns = cols_names
-
-        data["Data Admissao"] = pd.to_datetime(
-            data["Data Admissao"], dayfirst=True, errors="coerce"
+            df.columns = cols_names
+        df["Data Admissao"] = pd.to_datetime(
+            df["Data Admissao"], dayfirst=True, errors="coerce"
         )
 
         try:
-            data["CPF"] = data["CPF"].fillna("").astype(str).str.zfill(11)
+            df["CPF"] = df["CPF"].fillna("").astype(str).str.zfill(11)
         except KeyError:
             pass
-        data["Nome"] = data["Nome"].str.strip().str.upper()
+        df["Nome"] = df["Nome"].str.strip().str.upper()
 
-        data["Matricula"] = data["Matricula"].astype(str).str.zfill(6)
+        df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
 
-        return data
+        return df
 
     def get_actions_to_do(self) -> ActionsToDo:
         to_process_dir = os.path.join(self.working_dir, "data", "to_do")
@@ -122,11 +96,24 @@ class DataManager:
         data_to_process = ActionsToDo(None, None)
 
         if os.path.isfile(new_employees_path):
-            df_new = self.load(new_employees_path)
+            df_new = pd.read_csv(
+                new_employees_path,
+                encoding=self._detect_encoding(new_employees_path),
+                index_col=False,
+                dtype={"Matricula": str},
+            )
+
+            df_new = self.prepare_dataframe(df_new)
             data_to_process.to_add = df_new
 
         if os.path.isfile(dismissed_employees_path):
-            df_dismissed = self.load(dismissed_employees_path)
+            df_dismissed = pd.read_csv(
+                dismissed_employees_path,
+                encoding=self._detect_encoding(new_employees_path),
+                index_col=False,
+                dtype={"Matricula": str},
+            )
+            df_dismissed = self.prepare_dataframe(df_dismissed)
             data_to_process.to_remove = df_dismissed
 
         return data_to_process
@@ -137,17 +124,30 @@ class DataManager:
         )
         ahgora_employees_path = os.path.join(self.data_dir, "ahgora", "employees.csv")
 
-        fiorilli_employees = self.load(
-            filepath=fiorilli_employees_path,
+        fiorilli_employees = pd.read_csv(
+            fiorilli_employees_path,
+            encoding=self._detect_encoding(fiorilli_employees_path),
             sep="|",
-            cols_names=self.FIORILLI_EMPLOYEES_COLUMNS,
+            index_col=False,
+            header=None,
+            dtype={"Matricula": str},
         )
 
-        ahgora_employees = self.load(
-            filepath=ahgora_employees_path,
+        fiorilli_employees = self.prepare_dataframe(
+            fiorilli_employees, self.FIORILLI_EMPLOYEES_COLUMNS
+        )
+
+        ahgora_employees = pd.read_csv(
+            ahgora_employees_path,
+            encoding=self._detect_encoding(ahgora_employees_path),
             sep=",",
-            cols_names=self.AHGORA_EMPLOYEES_COLUMNS,
-            none_header=True
+            index_col=False,
+            header=None,
+            dtype={"Matricula": str},
+        )
+
+        ahgora_employees = self.prepare_dataframe(
+            ahgora_employees, self.AHGORA_EMPLOYEES_COLUMNS
         )
 
         return fiorilli_employees, ahgora_employees
@@ -164,7 +164,6 @@ class DataManager:
 
         self._standardize_employee_id(ahgora_employees)
         self._process_date(ahgora_employees)
-
 
         print("\nFIORILLI")
         print(fiorilli_employees.loc[fiorilli_employees["Matricula"] == "031787"])
