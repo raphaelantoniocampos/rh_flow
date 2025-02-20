@@ -46,7 +46,7 @@ class DataManager:
         try:
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
             fiorilli_employees, ahgora_employees = self._get_employees_data()
-            new_employees, dismissed_employees = self._process_data(
+            new_employees, dismissed_employees = self._generate_actions_dfs(
                 fiorilli_employees, ahgora_employees
             )
 
@@ -150,7 +150,7 @@ class DataManager:
 
         return fiorilli_employees, ahgora_employees
 
-    def _process_data(
+    def _generate_actions_dfs(
         self, fiorilli_employees: pd.DataFrame, ahgora_employees: pd.DataFrame
     ):
         fiorilli_dismissed_df = fiorilli_employees[
@@ -186,6 +186,9 @@ class DataManager:
             on="Matricula",
             how="left",
         )
+
+        new_employees["Ignore"] = None
+        dismissed_employees["Ignore"] = None
 
         return new_employees, dismissed_employees
 
