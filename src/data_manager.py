@@ -1,7 +1,6 @@
 from time import sleep
 import os
 
-import chardet
 import pandas as pd
 from rich import print
 from dataclasses import dataclass
@@ -100,7 +99,6 @@ class DataManager:
         if os.path.isfile(new_employees_path):
             df_new = pd.read_csv(
                 new_employees_path,
-                encoding=self._detect_encoding(new_employees_path),
                 index_col=False,
                 dtype={"Matricula": str},
             )
@@ -111,7 +109,6 @@ class DataManager:
         if os.path.isfile(dismissed_employees_path):
             df_dismissed = pd.read_csv(
                 dismissed_employees_path,
-                encoding=self._detect_encoding(new_employees_path),
                 index_col=False,
                 dtype={"Matricula": str},
             )
@@ -128,7 +125,7 @@ class DataManager:
 
         fiorilli_employees = pd.read_csv(
             fiorilli_employees_path,
-            encoding=self._detect_encoding(fiorilli_employees_path),
+            encoding="latin1",
             sep="|",
             index_col=False,
             header=None,
@@ -141,7 +138,6 @@ class DataManager:
 
         ahgora_employees = pd.read_csv(
             ahgora_employees_path,
-            encoding=self._detect_encoding(ahgora_employees_path),
             sep=",",
             index_col=False,
             header=None,
@@ -153,10 +149,6 @@ class DataManager:
         )
 
         return fiorilli_employees, ahgora_employees
-
-    def _detect_encoding(self, filepath: str):
-        with open(filepath, "rb") as f:
-            return chardet.detect(f.read())["encoding"]
 
     def _process_data(
         self, fiorilli_employees: pd.DataFrame, ahgora_employees: pd.DataFrame
