@@ -54,12 +54,12 @@ class DataManager:
             save_dir = os.path.join(self.data_dir, "to_do")
             if not new_employees.empty:
                 new_employees.to_csv(
-                    os.path.join(save_dir, "new_employees.csv"), index=False
+                    os.path.join(save_dir, "new_employees.csv"), index=False, encoding="utf-8"
                 )
 
             if not dismissed_employees.empty:
                 dismissed_employees.to_csv(
-                    os.path.join(save_dir, "dismissed_employees.csv"), index=False
+                    os.path.join(save_dir, "dismissed_employees.csv"), index=False, encoding="utf-8"
                 )
 
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
@@ -83,6 +83,8 @@ class DataManager:
 
         df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
 
+        df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
+
         return df
 
     def get_actions_to_do(self) -> ActionsToDo:
@@ -93,7 +95,7 @@ class DataManager:
             to_process_dir, "dismissed_employees.csv"
         )
 
-        data_to_process = ActionsToDo(None, None)
+        actions_to_do = ActionsToDo(None, None)
 
         if os.path.isfile(new_employees_path):
             df_new = pd.read_csv(
@@ -104,7 +106,7 @@ class DataManager:
             )
 
             df_new = self.prepare_dataframe(df_new)
-            data_to_process.to_add = df_new
+            actions_to_do.to_add = df_new
 
         if os.path.isfile(dismissed_employees_path):
             df_dismissed = pd.read_csv(
@@ -114,9 +116,9 @@ class DataManager:
                 dtype={"Matricula": str},
             )
             df_dismissed = self.prepare_dataframe(df_dismissed)
-            data_to_process.to_remove = df_dismissed
+            actions_to_do.to_remove = df_dismissed
 
-        return data_to_process
+        return actions_to_do
 
     def _get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
         fiorilli_employees_path = os.path.join(
@@ -159,17 +161,6 @@ class DataManager:
     def _process_data(
         self, fiorilli_employees: pd.DataFrame, ahgora_employees: pd.DataFrame
     ):
-        self._standardize_employee_id(fiorilli_employees)
-        self._process_date(fiorilli_employees)
-
-        self._standardize_employee_id(ahgora_employees)
-        self._process_date(ahgora_employees)
-
-        print("\nFIORILLI")
-        print(fiorilli_employees.loc[fiorilli_employees["Matricula"] == "031787"])
-        print("\nAHGORA")
-        print(ahgora_employees.loc[ahgora_employees["Matricula"] == "031787"])
-
         fiorilli_dismissed_df = fiorilli_employees[
             fiorilli_employees["Data Desligamento"].notna()
         ]
@@ -191,8 +182,6 @@ class DataManager:
         new_employees = fiorilli_active_df[
             ~fiorilli_active_df["Matricula"].isin(ahgora_ids)
         ]
-        print("\nNEW_EMPLOYEES")
-        print(new_employees.loc[new_employees["Matricula"] == "031787"])
 
         dismissed_employees = ahgora_employees[
             ahgora_employees["Matricula"].isin(fiorilli_dismissed_ids)
@@ -207,12 +196,6 @@ class DataManager:
         )
 
         return new_employees, dismissed_employees
-
-    def _standardize_employee_id(self, df: pd.DataFrame) -> None:
-        df["Matricula"] = df["Matricula"].astype(str).str.strip()
-
-    def _process_date(self, df: pd.DataFrame) -> None:
-        df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
 
     def _calculate_id_differences(
         self, portable_df, ahgora_df, dismissed_df

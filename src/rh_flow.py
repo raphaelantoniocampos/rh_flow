@@ -27,6 +27,7 @@ def main():
     while True:
         try:
             actions_to_do = data_manager.get_actions_to_do()
+            # actions_to_do = ActionsToDo(None, None)
             option = show_menu(actions_to_do)
             match option:
                 case "Baixar arquivos":

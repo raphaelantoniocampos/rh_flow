@@ -27,8 +27,22 @@ class ActionHandler:
         option = self._show_actions_menu()
         match option[3:]:
             case "Adicionar funcionários":
+                df = self.actions_to_do.to_add
                 sleep(1)
-                self.add_employees(self.actions_to_do.to_add)
+                print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
+                see_list = inquirer.prompt([inquirer.Confirm(
+                        "see_list",
+                        message="Ver lista de funcionários",
+                    )])
+                if see_list["see_list"]:
+                    sleep(0.5)
+                    print(df.to_string(columns=["Nome", "Data Admissao"], index=False))
+
+                ok_input = inquirer.prompt([inquirer.Confirm("start", message="Começar?")])
+                sleep(0.5)
+                if not ok_input["start"]:
+                    return
+                self.add_employees(df)
 
             case "Remover funcionários":
                 sleep(1)
@@ -60,13 +74,6 @@ class ActionHandler:
         return answers["option"]
 
     def add_employees(self, df):
-        print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
-        ok_input = inquirer.prompt([inquirer.Confirm("start", message="Começar?")])
-        sleep(0.5)
-        if not ok_input["start"]:
-            return
-        print(df.to_string(columns=["Nome", "Data Admissao"], index=False))
-        return
         for i, series in df.iterrows():
             print(
                 f"\n[bold yellow]{'-' * 15} NOVO FUNCIONÁRIO! {'-' * 15}[/bold yellow]"
@@ -85,7 +92,7 @@ class ActionHandler:
                 f"Pressione {self.KEY_STOP.colored} para [bold white]sair...[/bold white]"
             )
             for index, field in series.items():
-                if index == 0:
+                if index == "Matricula":
                     continue
                 copy(field)
                 print(f"({index} '{field}' copiado para a área de transferência!)")
@@ -215,7 +222,7 @@ class ActionHandler:
         sleep(0.2)
 
         print(
-            f"Insira a Localização\n[yellow]{row['Localizacao']}\n[/]Pressione {self.KEY_NEXT.colored} para sair..."
+            f"Insira a Localização\n[yellow]{row['Localizacao']}\n[/]Pressione {self.KEY_NEXT.colored} para o próximo funcionário..."
         )
 
         while True:
