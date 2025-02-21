@@ -23,6 +23,12 @@ class ActionHandler:
     def __init__(self, actions_to_do):
         self.actions_to_do = actions_to_do
 
+        # save_dir = os.path.join(self.data_dir, "to_do")
+        # if not new_employees.empty:
+        #     new_employees.to_csv(
+        #         os.path.join(save_dir, "new_employees.csv"), index=False, encoding="utf-8"
+        #     )
+
     def run(self):
         option = self._show_actions_menu()
         match option[3:]:
@@ -30,17 +36,39 @@ class ActionHandler:
                 df = self.actions_to_do.to_add
                 sleep(1)
                 print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
-                see_list = inquirer.prompt([inquirer.Confirm(
-                        "see_list",
-                        message="Ver lista de funcionários",
-                    )])
-                if see_list["see_list"]:
+                see_list = inquirer.prompt(
+                    [
+                        inquirer.Confirm(
+                            "yes",
+                            message="Ver lista de funcionários",
+                        )
+                    ]
+                )
+                if see_list["yes"]:
                     sleep(0.5)
-                    print(df.to_string(columns=["Nome", "Data Admissao"], index=False))
+                    employees = [
+                        f"{series['Matricula']} - {series['Data Admissao']} - {series['Nome']} - {series['Vinculo']}"
+                        for _, series in df.iterrows()
+                    ]
+                    print("Selecione os funcionários para ignorar")
+                    employees_to_ignore = inquirer.prompt(
+                        [
+                            inquirer.Checkbox(
+                                "ignore",
+                                message="Matricula - Data Admissao - Nome - Vinculo",
+                                choices=employees,
+                            )
+                        ]
+                    )
+                    to_ignore = [ignore[:6] for ignore in employees_to_ignore.get("ignore")]
 
-                ok_input = inquirer.prompt([inquirer.Confirm("start", message="Começar?")])
+                    df = df[~df['Matricula'].isin(to_ignore)]
+
+                ok_input = inquirer.prompt(
+                    [inquirer.Confirm("yes", message="Começar?")]
+                )
                 sleep(0.5)
-                if not ok_input["start"]:
+                if not ok_input["yes"]:
                     return
                 self.add_employees(df)
 
@@ -61,7 +89,7 @@ class ActionHandler:
             actions.append("Remover funcionários")
 
         if not actions:
-            actions.append("[green]• Nenhuma ação pendente.[/green]")
+            actions.append("[green]• N[enhuma ação pendente.[/green]")
 
         choices = [
             f"{index}. {action}" for index, action in enumerate(actions, start=1)
@@ -116,9 +144,9 @@ class ActionHandler:
 
     def remove_employees(self, df):
         print(f"Novos funcionários para Remover do Ahgora: {len(df)}")
-        ok_input = inquirer.prompt([inquirer.Confirm("start", message="Começar?")])
+        ok_input = inquirer.prompt([inquirer.Confirm("yes", message="Começar?")])
         sleep(0.5)
-        if not ok_input["start"]:
+        if not ok_input["yes"]:
             return
 
     def _semi_auto_add(self, row):
@@ -145,7 +173,7 @@ class ActionHandler:
         )
         print(str(row["PIS-PASEP"]))
 
-        pyautogui.write(str(row["PIS-PASEP"]), interval=0.2)
+        pyautogui.write(str(row["PIS-PASEP"]), interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab")

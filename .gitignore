@@ -11,6 +11,5 @@ wheels/
 src/.env
 
 downloads/*
-assets/*
 
 .ruff_cache

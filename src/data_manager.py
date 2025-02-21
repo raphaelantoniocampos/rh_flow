@@ -1,3 +1,4 @@
+import inquirer
 from time import sleep
 import os
 
@@ -23,6 +24,7 @@ class DataManager:
         "Cargo",
         "Localizacao",
         "Departamento",
+        "Vinculo",
         "Data Admissao",
         "Data Desligamento",
     ]
@@ -70,6 +72,15 @@ class DataManager:
     def prepare_dataframe(self, df, cols_names: list[str] = []):
         if cols_names:
             df.columns = cols_names
+
+        if 'Ignore' in df.columns:
+            df = df[df['Ignore'].isna()]
+
+        # if 'Vinculo' in df.columns:
+        #     df = df[
+        #         ~df["Vinculo"].isin(viculos)
+        #     ]
+
         df["Data Admissao"] = pd.to_datetime(
             df["Data Admissao"], dayfirst=True, errors="coerce"
         )
@@ -85,6 +96,28 @@ class DataManager:
         df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
 
         return df
+
+    def update_employees_to_ignore(df: pd.DataFrame):
+        employees = [
+            f"{series['Matricula']} - {series['Data Admissao']} - {series['Nome']} - {series['Vinculo']}"
+            for _, series in df.iterrows()
+        ]
+        print("Selecione os funcionários para ignorar")
+        employees_to_ignore = inquirer.prompt(
+            [
+                inquirer.Checkbox(
+                    "ignore",
+                    message="Matricula - Data Admissao - Nome - Vinculo",
+                    choices=employees,
+                )
+            ]
+        )
+        to_ignore = [ignore[:6] for ignore in employees_to_ignore.get("ignore")]
+        df = df[~df['Matricula'].isin(to_ignore)]
+    #
+    # ok_input = inquirer.prompt(
+    #     [inquirer.Confirm("start", message="Começar?")]
+        pass
 
     def get_actions_to_do(self) -> ActionsToDo:
         to_process_dir = os.path.join(self.working_dir, "data", "to_do")
@@ -187,8 +220,8 @@ class DataManager:
             how="left",
         )
 
-        new_employees["Ignore"] = None
-        dismissed_employees["Ignore"] = None
+        new_employees = new_employees.assign(Ignore = None)
+        dismissed_employees = dismissed_employees.assign(Ignore = None)
 
         return new_employees, dismissed_employees
 
