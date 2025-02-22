@@ -20,8 +20,9 @@ class ActionHandler:
     KEY_NEXT = Key("F3", "[bold yellow]F3[/bold yellow]")
     KEY_STOP = Key("F5", "[bold red3]F5[/bold red3]")
 
-    def __init__(self, actions_to_do):
-        self.actions_to_do = actions_to_do
+    def __init__(self, actions, data_manager):
+        self.actions = actions
+        self.data_manager = data_manager
 
         # save_dir = os.path.join(self.data_dir, "to_do")
         # if not new_employees.empty:
@@ -33,7 +34,7 @@ class ActionHandler:
         option = self._show_actions_menu()
         match option[3:]:
             case "Adicionar funcionários":
-                df = self.actions_to_do.to_add
+                df = self.actions.to_add
                 sleep(1)
                 print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
                 see_list = inquirer.prompt(
@@ -46,23 +47,7 @@ class ActionHandler:
                 )
                 if see_list["yes"]:
                     sleep(0.5)
-                    employees = [
-                        f"{series['Matricula']} - {series['Data Admissao']} - {series['Nome']} - {series['Vinculo']}"
-                        for _, series in df.iterrows()
-                    ]
-                    print("Selecione os funcionários para ignorar")
-                    employees_to_ignore = inquirer.prompt(
-                        [
-                            inquirer.Checkbox(
-                                "ignore",
-                                message="Matricula - Data Admissao - Nome - Vinculo",
-                                choices=employees,
-                            )
-                        ]
-                    )
-                    to_ignore = [ignore[:6] for ignore in employees_to_ignore.get("ignore")]
-
-                    df = df[~df['Matricula'].isin(to_ignore)]
+                    df = self.data_manager.update_employees_to_ignore(df)
 
                 ok_input = inquirer.prompt(
                     [inquirer.Confirm("yes", message="Começar?")]
@@ -74,7 +59,7 @@ class ActionHandler:
 
             case "Remover funcionários":
                 sleep(1)
-                self.remove_employees(self.actions_to_do.to_remove)
+                self.remove_employees(self.actions.to_remove)
 
             case "Sair":
                 return
@@ -82,10 +67,10 @@ class ActionHandler:
     def _show_actions_menu(self):
         actions = []
 
-        if self.actions_to_do.to_add is not None:
+        if self.actions.to_add is not None:
             actions.append("Adicionar funcionários")
 
-        if self.actions_to_do.to_remove is not None:
+        if self.actions.to_remove is not None:
             actions.append("Remover funcionários")
 
         if not actions:
