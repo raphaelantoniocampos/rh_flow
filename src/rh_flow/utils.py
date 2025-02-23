@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-INIT_UTILS = {"ignore": []}
+INIT_UTILS = {"ignore": {}}
 
 
 class Utils:
@@ -19,11 +19,12 @@ class Utils:
     def read(self) -> dict:
         return self.data
 
-    def update(self, field: str, new_data: list) -> None:
+    def update(self, field: str, new_data: dict) -> None:
         if field not in self.data:
-            self.data[field] = []
-        self.data[field].extend(new_data)
-        self.data[field] = sorted(list(set(self.data[field])))
+            self.data[field] = {}
+
+        self.data[field].update(new_data)
+
         with open(self.path, "w") as f:
             json.dump(self.data, f, indent=4)
 
@@ -31,6 +32,15 @@ class Utils:
         with open(self.path, "w") as f:
             json.dump(INIT_UTILS, f, indent=4)
         return INIT_UTILS
+
+    def remove(self, field: str, key: str) -> str:
+        if field in self.data and key in self.data[field]:
+            del self.data[field][key]
+            with open(self.path, "w") as f:
+                json.dump(self.data, f, indent=4)
+            return f"Item '{key}' removido do campo '{field}'."
+        else:
+            return f"Item '{key}' não encontrado no campo '{field}'."
 
     def __str__(self):
         str_return = ""

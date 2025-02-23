@@ -1,7 +1,16 @@
 {
-    "ignore": [
-        "032775 - 01/01/2021 - LETICIA ALVES DA SILVA - AUXILIO RECLUSAO",
-        "032776 - 01/01/2021 - LARISSA VITORIA DA SILVA ALBINO - AUXILIO RECLUSAO",
-        "033998 - 14/02/2025 - MIRIAN SOUSA CAMARGO - FUNCAO TEMPORARIA - C.P.D."
-    ]
+    "ignore": {
+        "032775": {
+            "Matricula": "032775",
+            "Data Admissao": "01/01/2021",
+            "Nome": "LETICIA ALVES DA SILVA",
+            "Vinculo": "AUXILIO RECLUSAO"
+        },
+        "032776": {
+            "Matricula": "032776",
+            "Data Admissao": "01/01/2021",
+            "Nome": "LARISSA VITORIA DA SILVA ALBINO",
+            "Vinculo": "AUXILIO RECLUSAO"
+        }
+    }
 }

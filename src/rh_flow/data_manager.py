@@ -53,11 +53,6 @@ class DataManager:
         if cols_names:
             df.columns = cols_names
 
-        # if 'Vinculo' in df.columns:
-        #     df = df[
-        #         ~df["Vinculo"].isin(viculos)
-        #     ]
-
         df["Data Admissao"] = pd.to_datetime(
             df["Data Admissao"], dayfirst=True, errors="coerce"
         )
@@ -72,13 +67,21 @@ class DataManager:
 
         df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
 
-        print(df)
         return df
 
     def update_employees_to_ignore(self, df: pd.DataFrame) -> pd.DataFrame:
-        employees = [
-            f"{series['Matricula']} - {series['Data Admissao']} - {series['Nome']} - {series['Vinculo']}"
+        employees_dict = {
+            str(series["Matricula"]): {
+                "Matricula": series["Matricula"],
+                "Data Admissao": series["Data Admissao"],
+                "Nome": series["Nome"],
+                "Vinculo": series["Vinculo"],
+            }
             for _, series in df.iterrows()
+        }
+        employees_list = [
+            f"{matricula} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+            for matricula, data in employees_dict.items()
         ]
 
         print("Selecione os funcionários para ignorar")
@@ -87,21 +90,28 @@ class DataManager:
                 inquirer.Checkbox(
                     "ignore",
                     message="Matricula - Data Admissao - Nome - Vinculo",
-                    choices=employees
-                    ,
+                    choices=employees_list,
                 )
             ]
         ).get("ignore")
 
-        self.utils.update("ignore", employees_to_ignore)
-        to_ignore = [ignore[:6] for ignore in employees_to_ignore]
-        return df[~df["Matricula"].isin(to_ignore)]
+        to_ignore_dict = {
+            ignore.split(" - ")[0]: employees_dict[ignore.split(" - ")[0]]
+            for ignore in employees_to_ignore
+        }
+
+        self.utils.update("ignore", to_ignore_dict)
+
+        return df[~df["Matricula"].isin(to_ignore_dict.keys())]
 
     def get_actions(self) -> Actions:
         actions_dir = self.data_dir / "actions"
 
         new_employees_path = actions_dir / "new_employees.csv"
         dismissed_employees_path = actions_dir / "dismissed_employees.csv"
+
+        ignore_list = self.utils.data.get("ignore", {})
+        ignore_ids = set(ignore_list.keys())  
 
         actions = Actions(None, None)
 
@@ -113,6 +123,7 @@ class DataManager:
             )
 
             df_new = self.prepare_dataframe(df_new)
+            df_new = df_new[~df_new["Matricula"].isin(ignore_ids)]
             actions.to_add = df_new
 
         if os.path.isfile(dismissed_employees_path):
@@ -122,6 +133,7 @@ class DataManager:
                 dtype={"Matricula": str},
             )
             df_dismissed = self.prepare_dataframe(df_dismissed)
+            # df_dismissed = df_dismissed[~df_dismissed["Matricula"].isin(ignore_ids)]
             actions.to_remove = df_dismissed
 
         return actions

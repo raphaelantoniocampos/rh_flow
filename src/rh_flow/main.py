@@ -9,6 +9,8 @@ from rich.panel import Panel
 from file_downloader import FileDownloader
 from data_manager import DataManager, Actions
 from action_handler import ActionHandler
+from config import Config
+from utils import Utils
 
 WORKING_DIR = Path.cwd()
 
@@ -18,7 +20,8 @@ OPTIONS = {
     1: "Baixar arquivos",
     2: "Analisar dados",
     3: "Ações",
-    4: "Sair",
+    4: "Configurações",
+    5: "Sair",
 }
 
 
@@ -42,6 +45,11 @@ def main():
                 case "Ações":
                     action_handler = ActionHandler(actions, data_manager)
                     action_handler.run()
+
+                case "Configurações":
+                    utils = Utils(Path(WORKING_DIR / "data"))
+                    config = Config(console, utils)
+                    config.manage_ignored()
 
                 case "Sair":
                     break
