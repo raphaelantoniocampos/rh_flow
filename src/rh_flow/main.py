@@ -10,7 +10,6 @@ from file_downloader import FileDownloader
 from data_manager import DataManager, Actions
 from action_handler import ActionHandler
 from config import Config
-from utils import Utils
 
 WORKING_DIR = Path.cwd()
 
@@ -47,9 +46,8 @@ def main():
                     action_handler.run()
 
                 case "Configurações":
-                    utils = Utils(Path(WORKING_DIR / "data"))
-                    config = Config(console, utils)
-                    config.manage_ignored()
+                    config = Config(Path(WORKING_DIR / "data"))
+                    config.config_panel(console)
 
                 case "Sair":
                     break
@@ -87,16 +85,18 @@ def get_actions_panel(actions: Actions) -> Panel:
     actions_list = []
 
     if actions.to_add is not None:
-        actions_list.append(
-            f"[bold cyan]•[/] Adicionar [cyan]{len(actions.to_add)}[/] funcionários ao Ahgora"
-        )
+        if not actions.to_add.empty:
+            actions_list.append(
+                f"[bold cyan]•[/] Adicionar [cyan]{len(actions.to_add)}[/] funcionários ao Ahgora"
+            )
 
     if actions.to_remove is not None:
-        actions_list.append(
-            f"[bold cyan]•[/] Remover [cyan]{len(actions.to_remove)}[/] funcionários do Ahgora"
-        )
+        if not actions.to_remove.empty:
+            actions_list.append(
+                f"[bold cyan]•[/] Remover [cyan]{len(actions.to_remove)}[/] funcionários do Ahgora"
+            )
 
-    if not actions:
+    if not actions_list:
         actions_list.append("[green]• Nenhuma ação pendente.[/green]")
 
         return Panel.fit(

@@ -3,10 +3,11 @@ from time import sleep
 from pathlib import Path
 import os
 
+from datetime import datetime
 import pandas as pd
 from rich import print
 from dataclasses import dataclass
-from utils import Utils
+from config import Config
 
 
 @dataclass
@@ -18,7 +19,7 @@ class Actions:
 class DataManager:
     def __init__(self, working_dir: str):
         self.data_dir = Path(working_dir) / "data"
-        self.utils = Utils(data_dir=self.data_dir)
+        self.config = Config(data_dir=self.data_dir)
 
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):
         try:
@@ -42,7 +43,8 @@ class DataManager:
                     index=False,
                     encoding="utf-8",
                 )
-
+            now = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
+            self.config.update("last_analisys", {"datetime": now, "time_since": now})
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
             sleep(1)
         except KeyboardInterrupt as e:
@@ -80,27 +82,27 @@ class DataManager:
             for _, series in df.iterrows()
         }
         employees_list = [
-            f"{matricula} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
-            for matricula, data in employees_dict.items()
+            f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+            for id, data in employees_dict.items()
+        ]
+
+        questions = [
+            inquirer.Checkbox(
+                "ignore",
+                message="Matricula - Data Admissao - Nome - Vinculo",
+                choices=employees_list,
+            )
         ]
 
         print("Selecione os funcionários para ignorar")
-        employees_to_ignore = inquirer.prompt(
-            [
-                inquirer.Checkbox(
-                    "ignore",
-                    message="Matricula - Data Admissao - Nome - Vinculo",
-                    choices=employees_list,
-                )
-            ]
-        ).get("ignore")
+        employees_to_ignore = inquirer.prompt(questions).get("ignore")
 
         to_ignore_dict = {
             ignore.split(" - ")[0]: employees_dict[ignore.split(" - ")[0]]
             for ignore in employees_to_ignore
         }
 
-        self.utils.update("ignore", to_ignore_dict)
+        self.config.update("ignore", to_ignore_dict)
 
         return df[~df["Matricula"].isin(to_ignore_dict.keys())]
 
@@ -110,8 +112,8 @@ class DataManager:
         new_employees_path = actions_dir / "new_employees.csv"
         dismissed_employees_path = actions_dir / "dismissed_employees.csv"
 
-        ignore_list = self.utils.data.get("ignore", {})
-        ignore_ids = set(ignore_list.keys())  
+        ignore_list = self.config.data.get("ignore", {})
+        ignore_ids = set(ignore_list.keys())
 
         actions = Actions(None, None)
 
