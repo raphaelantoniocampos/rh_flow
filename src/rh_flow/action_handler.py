@@ -6,6 +6,7 @@ import keyboard
 import pyautogui
 from rich import print
 from pyperclip import copy
+import pandas as pd
 
 from data_manager import Actions
 from config import Config
@@ -23,58 +24,95 @@ class ActionHandler:
     KEY_NEXT = Key("F3", "[bold yellow]F3[/bold yellow]")
     KEY_STOP = Key("F5", "[bold red3]F5[/bold red3]")
 
+    NO_EMPLOYEE_TO_ADD_STR = "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]\n"
+    NO_EMPLOYEE_TO_REMOVE_STR = "[bold yellow]Nenhum funcionário para remover do Ahgora no momento.[/bold yellow]\n"
+
     def __init__(self, actions: Actions, config: Config):
         self.actions: Actions = actions
         self.config: Config = config
 
-        # save_dir = os.path.join(self.data_dir, "to_do")
-        # if not new_employees.empty:
-        #     new_employees.to_csv(
-        #         os.path.join(save_dir, "new_employees.csv"), index=False, encoding="utf-8"
-        #     )
-
     def run(self):
         while True:
-            option = self._show_actions_menu()
-            match option[3:]:
+            option: str = self._show_actions_menu()[3:]
+            match option:
                 case "Adicionar funcionários":
-                    df = self.actions.to_add
-                    if df.empty:
-                        print(
-                            "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]\n"
-                        )
-                        continue
                     sleep(1)
-                    print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
-                    see_list = inquirer.prompt(
-                        [
-                            inquirer.Confirm(
-                                "yes",
-                                message="Ver lista de funcionários",
-                            )
-                        ]
-                    )
-                    if see_list["yes"]:
-                        sleep(0.5)
-                        df = self.config.update_employees_to_ignore(df)
-
-                    ok_input = inquirer.prompt(
-                        [inquirer.Confirm("yes", message="Começar?")]
-                    )
-                    sleep(0.5)
-                    if not ok_input["yes"]:
+                    if self.actions.to_add is None:
+                        print(self.NO_EMPLOYEE_TO_ADD_STR)
                         return
-
-                    self.add_employees(df)
+                    df: pd.DataFrame = self.actions.to_add
+                    self._prepare_list_and_run(
+                        df,
+                        self.NO_EMPLOYEE_TO_ADD_STR,
+                        "add",
+                        self._add_employees,
+                    )
+                    break
 
                 case "Remover funcionários":
                     sleep(1)
-                    self.remove_employees(self.actions.to_remove)
+                    if self.actions.to_remove is None:
+                        print(self.NO_EMPLOYEE_TO_REMOVE_STR)
+                        return
+                    df: pd.DataFrame = self.actions.to_remove
+                    self._prepare_list_and_run(
+                        df,
+                        self.NO_EMPLOYEE_TO_REMOVE_STR,
+                        "remove",
+                        self._remove_employees,
+                    )
+                    break
 
                 case "Sair":
                     return
 
-    def _show_actions_menu(self):
+    def _prepare_list_and_run(
+        self,
+        df: pd.DataFrame,
+        no_employee_str: str,
+        to: str,
+        action_function,
+    ):
+        if to == "add":
+            action_to_str = "Adicionar no Ahgora"
+        if to == "remove":
+            action_to_str = "Remover do Ahgora"
+
+        if df.empty:
+            print(no_employee_str)
+            return
+
+        sleep(1)
+        print(f"Novos funcionários para {action_to_str}: {len(df)}")
+        see_list = inquirer.prompt(
+            [
+                inquirer.Confirm(
+                    "yes",
+                    message="Ver lista de funcionários",
+                )
+            ]
+        )
+
+        if see_list["yes"] is None:
+            return
+
+        see_list: dict[str, bool] = see_list["yes"]
+        if see_list:
+            sleep(0.5)
+            df = self.config.update_employees_to_ignore(df, to)
+
+        ok_input = inquirer.prompt([inquirer.Confirm("yes", message="Começar?")])
+        sleep(0.5)
+        if not ok_input["yes"]:
+            return
+
+        if df.empty:
+            print(no_employee_str)
+            return
+
+        action_function(df)
+
+    def _show_actions_menu(self) -> dict[str, str]:
         actions = []
 
         if self.actions.to_add is not None:
@@ -96,7 +134,7 @@ class ActionHandler:
         answers = inquirer.prompt(questions)
         return answers["option"]
 
-    def add_employees(self, df):
+    def _add_employees(self, df: pd.DataFrame) -> None:
         for i, series in df.iterrows():
             if df.empty:
                 print(
@@ -142,12 +180,40 @@ class ActionHandler:
                     sleep(0.5)
                     break
 
-    def remove_employees(self, df):
-        print(f"Novos funcionários para Remover do Ahgora: {len(df)}")
-        ok_input = inquirer.prompt([inquirer.Confirm("yes", message="Começar?")])
-        sleep(0.5)
-        if not ok_input["yes"]:
-            return
+    def _remove_employees(self, df):
+        for i, series in df.iterrows():
+            if df.empty:
+                print(
+                    "[bold yellow]Nenhum funcionário para remover do Ahgora no momento.[/bold yellow]\n"
+                )
+                return
+            print(
+                f"\n[bold yellow]{'-' * 15} FUNCIONÁRIO DESLIGADO! {'-' * 15}[/bold yellow]"
+            )
+            print(series)
+            print(
+                f"\nPressione {self.KEY_SEMI_AUTO.colored} para o processo [bold white]semi automático[/bold white]."
+            )
+            print(
+                f"Pressione {self.KEY_CONTINUE.colored} para o próximo [bold white]campo[/bold white]."
+            )
+            print(
+                f"Pressione {self.KEY_NEXT.colored} para próximo [bold white]funcionário[/bold white]."
+            )
+            print(
+                f"Pressione {self.KEY_STOP.colored} para [bold white]sair...[/bold white]"
+            )
+            print(f"(Nome '{df[i]['Nome']}' copiado para a área de transferência!)")
+            while True:
+                if keyboard.is_pressed(self.KEY_NEXT.key):
+                    break
+                if keyboard.is_pressed(self.KEY_STOP.key):
+                    sleep(0.5)
+                    print("Interrompido pelo usuário.")
+                    return
+            if keyboard.is_pressed(self.KEY_NEXT.key):
+                sleep(0.5)
+                break
 
     def _semi_auto_add(self, row):
         print(

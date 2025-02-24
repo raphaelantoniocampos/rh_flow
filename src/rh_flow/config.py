@@ -17,7 +17,9 @@ INIT_CONFIG = {
     },
 }
 
-NO_IGNORED_STR = "\n\t[yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"
+NO_IGNORED_STR = (
+    "\n    [yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"
+)
 
 
 class Config:
@@ -28,9 +30,6 @@ class Config:
         self._update_time_since()
 
     def config_panel(self, console: Console) -> None:
-        def format_ignored(ignored_employee: dict) -> str:
-            pass
-
         while True:
             config_data = self._read()
             ignore_data = config_data.get("ignore", {})
@@ -53,10 +52,10 @@ class Config:
                 }[/] atrás)
 
 [cyan]•[/] [bold]Últimos downloads[/]: 
-\t• Fiorilli - {last_download["fiorilli"]["datetime"]} ([bold]{
+    • Fiorilli - {last_download["fiorilli"]["datetime"]} ([bold]{
                     last_download["fiorilli"]["time_since"]
                 }[/] atrás)
-\t• Ahgora - {last_download["ahgora"]["datetime"]} ([bold]{
+    • Ahgora - {last_download["ahgora"]["datetime"]} ([bold]{
                     last_download["ahgora"]["time_since"]
                 }[/] atrás)
 
@@ -64,7 +63,7 @@ class Config:
 {
                     NO_IGNORED_STR
                     if not ignored_list
-                    else "\n".join([f"\t• {ignored}" for ignored in ignored_list])
+                    else "\n".join([f"    • {ignored}" for ignored in ignored_list])
                 }
 """
             )
@@ -103,30 +102,44 @@ class Config:
                         f"[bold green]Funcionário com matrícula {employee[:6]} removido da lista de ignorados.[/bold green]"
                     )
 
-    def update_employees_to_ignore(self, df: pd.DataFrame) -> pd.DataFrame:
-        employees_dict = {
-            str(series["Matricula"]): {
-                "Matricula": series["Matricula"],
-                "Data Admissao": series["Data Admissao"],
-                "Nome": series["Nome"],
-                "Vinculo": series["Vinculo"],
+    def update_employees_to_ignore(self, df: pd.DataFrame, to: str) -> pd.DataFrame:
+        if to == "add":
+            employees_dict = {
+                str(series["Matricula"]): {
+                    "Matricula": series["Matricula"],
+                    "Data Admissao": series["Data Admissao"],
+                    "Nome": series["Nome"],
+                    "Vinculo": series["Vinculo"],
+                }
+                for _, series in df.iterrows()
             }
-            for _, series in df.iterrows()
-        }
-        employees_list = [
-            f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
-            for id, data in employees_dict.items()
-        ]
+            employees_list = [
+                f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+                for id, data in employees_dict.items()
+            ]
+        if to == "remove":
+            employees_dict = {
+                str(series["Matricula"]): {
+                    "Matricula": series["Matricula"],
+                    "Data Admissao": series["Data Admissao"],
+                    "Nome": series["Nome"],
+                    "Vinculo": series["Data Desligamento"],
+                }
+                for _, series in df.iterrows()
+            }
+            employees_list = [
+                f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+                for id, data in employees_dict.items()
+            ]
 
         questions = [
             inquirer.Checkbox(
                 "ignore",
-                message="Matricula - Data Admissao - Nome - Vinculo",
+                message="Selecione os funcionários para ignorar",
                 choices=employees_list,
             )
         ]
 
-        print("Selecione os funcionários para ignorar")
         employees_to_ignore = inquirer.prompt(questions).get("ignore")
 
         to_ignore_dict = {

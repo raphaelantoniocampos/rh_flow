@@ -1,17 +1,30 @@
 {
-    "ignore": {},
+    "ignore": {
+        "032776": {
+            "Matricula": "032776",
+            "Data Admissao": "01/01/2021",
+            "Nome": "LARISSA VITORIA DA SILVA ALBINO",
+            "Vinculo": "AUXILIO RECLUSAO"
+        },
+        "032775": {
+            "Matricula": "032775",
+            "Data Admissao": "01/01/2021",
+            "Nome": "LETICIA ALVES DA SILVA",
+            "Vinculo": "AUXILIO RECLUSAO"
+        }
+    },
     "last_analisys": {
-        "datetime": "24/02/2025, 16:57",
-        "time_since": "0d 0h 8m"
+        "datetime": "24/02/2025, 20:00",
+        "time_since": "0d 0h 7m"
     },
     "last_download": {
         "ahgora": {
-            "datetime": "24/02/2025, 07:42",
-            "time_since": "0d 9h 23m"
+            "datetime": "24/02/2025, 18:24",
+            "time_since": "0d 1h 43m"
         },
         "fiorilli": {
-            "datetime": "24/02/2025, 07:47",
-            "time_since": "0d 9h 18m"
+            "datetime": "22/02/2025, 21:10",
+            "time_since": "1d 22h 57m"
         }
     }
 }
