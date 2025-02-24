@@ -2,7 +2,6 @@ from time import sleep
 from pathlib import Path
 import os
 
-from datetime import datetime
 import pandas as pd
 from rich import print
 from dataclasses import dataclass
@@ -42,8 +41,8 @@ class DataManager:
                     index=False,
                     encoding="utf-8",
                 )
-            now = datetime.now().strftime("%d/%m/%Y, %H:%M")
-            self.config._update("last_analisys", {"datetime": now, "time_since": now})
+
+            self.config.update_last_analisys()
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
             sleep(1)
         except KeyboardInterrupt as e:

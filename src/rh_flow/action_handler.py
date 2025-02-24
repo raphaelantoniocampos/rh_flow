@@ -98,6 +98,11 @@ class ActionHandler:
 
     def add_employees(self, df):
         for i, series in df.iterrows():
+            if df.empty:
+                print(
+                    "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]\n"
+                )
+                return
             print(
                 f"\n[bold yellow]{'-' * 15} NOVO FUNCIONÁRIO! {'-' * 15}[/bold yellow]"
             )
@@ -153,7 +158,6 @@ class ActionHandler:
                 sleep(0.5)
                 break
             if keyboard.is_pressed(self.KEY_STOP.key):
-                sleep(0.1)
                 print("Interrompido pelo usuário.")
                 return
 

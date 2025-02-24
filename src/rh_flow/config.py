@@ -17,6 +17,8 @@ INIT_CONFIG = {
     },
 }
 
+NO_IGNORED_STR = "\n\t[yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"
+
 
 class Config:
     def __init__(self, data_dir_path: Path):
@@ -26,32 +28,52 @@ class Config:
         self._update_time_since()
 
     def config_panel(self, console: Console) -> None:
+        def format_ignored(ignored_employee: dict) -> str:
+            pass
+
         while True:
             config_data = self._read()
             ignore_data = config_data.get("ignore", {})
-            last_analisys = self.data.get(
-                "last_analisys", {"datetime": "", "time_since": ""}
-            )
-            last_download = self.data.get(
-                "last_download", {"datetime": "", "time_since": ""}
-            )
+            last_analisys = self.data.get("last_analisys")
+            last_download = self.data.get("last_download")
 
             console.print(
                 Panel.fit("[bold]Configurações[/bold]", border_style="yellow")
             )
 
+            ignored_list = [
+                f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+                for id, data in ignore_data.items()
+            ]
+
             console.print(
                 f"""
-[cyan]•[/] [bold]Último download[/]: {last_download["datetime"]} ([bold]{last_download["time_since"]}[/] atrás)
-[cyan]•[/] [bold]Última análise[/]: {last_analisys["datetime"]} ([bold]{last_analisys["time_since"]}[/] atrás)
-                """
+[cyan]•[/] [bold]Última análise[/]: {last_analisys["datetime"]} ([bold]{
+                    last_analisys["time_since"]
+                }[/] atrás)
+
+[cyan]•[/] [bold]Últimos downloads[/]: 
+\t• Fiorilli - {last_download["fiorilli"]["datetime"]} ([bold]{
+                    last_download["fiorilli"]["time_since"]
+                }[/] atrás)
+\t• Ahgora - {last_download["ahgora"]["datetime"]} ([bold]{
+                    last_download["ahgora"]["time_since"]
+                }[/] atrás)
+
+[cyan]•[/] [bold]Lista de funcionários ignorados[/]: 
+{
+                    NO_IGNORED_STR
+                    if not ignored_list
+                    else "\n".join([f"\t• {ignored}" for ignored in ignored_list])
+                }
+"""
             )
 
             questions = [
                 inquirer.List(
                     "action",
                     message="O que deseja fazer?",
-                    choices=["Ver lista de ignorados", "Voltar"],
+                    choices=["Remover funcionários da lista de ignorados", "Voltar"],
                 ),
             ]
 
@@ -61,56 +83,25 @@ class Config:
             if action == "Voltar":
                 return
 
-            if action == "Ver lista de ignorados":
-                ignored_list = [
-                    f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
-                    for id, data in ignore_data.items()
-                ]
-
-                console.print(
-                    Panel.fit(
-                        "[bold]Funcionários Ignorados[/bold]", border_style="yellow"
-                    )
-                )
-
+            if action == "Remover funcionários da lista de ignorados":
                 if not ignored_list:
-                    print(
-                        "[bold yellow]Nenhum funcionário está sendo ignorado no momento.[/bold yellow]\n"
-                    )
-
-                else:
-                    for ignored in ignored_list:
-                        console.print(ignored)
-
-                questions = [
-                    inquirer.List(
-                        "action",
-                        message="O que deseja fazer?",
-                        choices=["Remover um funcionário", "Voltar"],
-                    ),
-                ]
-
-                answers = inquirer.prompt(questions)
-                action = answers["action"]
-
-                if action == "Voltar":
+                    print(NO_IGNORED_STR)
                     continue
 
-                if action == "Remover um funcionário":
-                    questions = [
-                        inquirer.Checkbox(
-                            "remove_ignore",
-                            message="Escolha os funcionários para remover da lista de ignorados.",
-                            choices=ignored_list,
-                        ),
-                    ]
-                    remove_ignore = inquirer.prompt(questions).get("remove_ignore")
+                questions = [
+                    inquirer.Checkbox(
+                        "remove_ignore",
+                        message="Escolha os funcionários para remover da lista de ignorados.",
+                        choices=ignored_list,
+                    ),
+                ]
+                remove_ignore = inquirer.prompt(questions).get("remove_ignore")
 
-                    for employee in remove_ignore:
-                        self._delete("ignore", employee[:6])
-                        console.print(
-                            f"[bold green]Funcionário com matrícula {employee[:6]} removido da lista de ignorados.[/bold green]"
-                        )
+                for employee in remove_ignore:
+                    self._delete("ignore", employee[:6])
+                    console.print(
+                        f"[bold green]Funcionário com matrícula {employee[:6]} removido da lista de ignorados.[/bold green]"
+                    )
 
     def update_employees_to_ignore(self, df: pd.DataFrame) -> pd.DataFrame:
         employees_dict = {
@@ -143,9 +134,14 @@ class Config:
             for ignore in employees_to_ignore
         }
 
-        self._update("ignore", to_ignore_dict)
+        self._update("ignore", value=to_ignore_dict)
 
         return df[~df["Matricula"].isin(to_ignore_dict.keys())]
+
+    def update_last_analisys(self):
+        now = datetime.now()
+        last_analisys = {"datetime": now.strftime("%d/%m/%Y, %H:%M"), "time_since": now}
+        self._update_analysis_time_since(last_analisys, now)
 
     def _load(self) -> dict:
         if self.path.exists():
@@ -202,10 +198,8 @@ class Config:
         self._update_analysis_time_since(last_analisys, now)
 
         last_download = self.data.get("last_download")
-        print(last_download)
-        print(type(last_download))
         self._update_downloads_time_since(last_download, "ahgora", now)
-        # self._update_downloads_time_since(last_download, "fiorilli", now)
+        self._update_downloads_time_since(last_download, "fiorilli", now)
 
     def _update_analysis_time_since(self, last_analisys: dict, now: timedelta) -> None:
         if last_analisys["datetime"]:
@@ -218,24 +212,22 @@ class Config:
             )
             self._update("last_analisys", value=last_analisys)
 
-    def _update_downloads_time_since(self, last_download: dict, app_name: str, now: timedelta) -> None:
+    def _update_downloads_time_since(
+        self, last_download: dict, app_name: str, now: timedelta
+    ) -> None:
         app_last_download = last_download.get(app_name)
 
-        print(f"{app_name}")
+        app_last_download["datetime"] = self._get_last_download(app_name)
 
-        if app_last_download["datetime"]:
-            last_download_dt = datetime.strptime(
-                app_last_download["datetime"], "%d/%m/%Y, %H:%M"
-            )
-            time_since_last_download = now - last_download_dt
-            app_last_download["time_since"] = self._format_timedelta(
-                time_since_last_download
-            )
-            print(app_last_download)
-            self._update("last_download", app_name, "datetime",value=app_last_download)
-        else:
-            app_last_download = self._get_last_download(app_name)
-            # self._update("last_download", app_name, "datetime", value=app_last_download)
+        last_download_dt = datetime.strptime(
+            app_last_download["datetime"], "%d/%m/%Y, %H:%M"
+        )
+        time_since_last_download = now - last_download_dt
+        app_last_download["time_since"] = self._format_timedelta(
+            time_since_last_download
+        )
+
+        self._update("last_download", app_name, value=app_last_download)
 
     def _get_last_download(self, app_name: str) -> str:
         return datetime.strftime(
@@ -246,7 +238,7 @@ class Config:
                     / f"employees.{'csv' if app_name == 'ahgora' else 'txt'}"
                 )
                 .stat()
-                .st_ctime
+                .st_mtime
             ),
             "%d/%m/%Y, %H:%M",
         )

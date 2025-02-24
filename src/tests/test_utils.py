@@ -7,6 +7,7 @@ from rh_flow.config import Config, INIT_CONFIG
 @pytest.fixture
 def temp_dir():
     from tempfile import TemporaryDirectory
+
     with TemporaryDirectory() as temp_dir:
         yield Path(temp_dir)
 
