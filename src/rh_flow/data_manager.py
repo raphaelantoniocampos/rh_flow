@@ -1,4 +1,3 @@
-import inquirer
 from time import sleep
 from pathlib import Path
 import os
@@ -17,9 +16,9 @@ class Actions:
 
 
 class DataManager:
-    def __init__(self, working_dir: str):
-        self.data_dir = Path(working_dir) / "data"
-        self.config = Config(data_dir=self.data_dir)
+    def __init__(self, working_dir_path: str, config: Config):
+        self.data_dir_path = Path(working_dir_path) / "data"
+        self.config = config
 
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):
         try:
@@ -28,7 +27,7 @@ class DataManager:
             new_employees, dismissed_employees = self._generate_actions_dfs(
                 fiorilli_employees, ahgora_employees
             )
-            save_dir = self.data_dir / "actions"
+            save_dir = self.data_dir_path / "actions"
 
             if not new_employees.empty:
                 new_employees.to_csv(
@@ -43,15 +42,34 @@ class DataManager:
                     index=False,
                     encoding="utf-8",
                 )
-            now = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-            self.config.update("last_analisys", {"datetime": now, "time_since": now})
+            now = datetime.now().strftime("%d/%m/%Y, %H:%M")
+            self.config._update("last_analisys", {"datetime": now, "time_since": now})
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
             sleep(1)
         except KeyboardInterrupt as e:
             print(f"[bold red]Erro ao adicionar funcionários: {e}[/bold red]\n")
             sleep(1)
 
-    def prepare_dataframe(self, df, cols_names: list[str] = []):
+    def _read_csv(
+        self,
+        path: str,
+        sep: str = ",",
+        encoding: str = "utf-8",
+        header: str | None = "infer",
+        cols_names: list[str] = [],
+    ):
+        df = pd.read_csv(
+            path,
+            sep=sep,
+            encoding=encoding,
+            index_col=False,
+            header=header,
+            dtype={"Matricula": str},
+        )
+
+        return self._prepare_dataframe(df=df, cols_names=cols_names)
+
+    def _prepare_dataframe(self, df, cols_names: list[str] = []):
         if cols_names:
             df.columns = cols_names
 
@@ -71,43 +89,8 @@ class DataManager:
 
         return df
 
-    def update_employees_to_ignore(self, df: pd.DataFrame) -> pd.DataFrame:
-        employees_dict = {
-            str(series["Matricula"]): {
-                "Matricula": series["Matricula"],
-                "Data Admissao": series["Data Admissao"],
-                "Nome": series["Nome"],
-                "Vinculo": series["Vinculo"],
-            }
-            for _, series in df.iterrows()
-        }
-        employees_list = [
-            f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
-            for id, data in employees_dict.items()
-        ]
-
-        questions = [
-            inquirer.Checkbox(
-                "ignore",
-                message="Matricula - Data Admissao - Nome - Vinculo",
-                choices=employees_list,
-            )
-        ]
-
-        print("Selecione os funcionários para ignorar")
-        employees_to_ignore = inquirer.prompt(questions).get("ignore")
-
-        to_ignore_dict = {
-            ignore.split(" - ")[0]: employees_dict[ignore.split(" - ")[0]]
-            for ignore in employees_to_ignore
-        }
-
-        self.config.update("ignore", to_ignore_dict)
-
-        return df[~df["Matricula"].isin(to_ignore_dict.keys())]
-
     def get_actions(self) -> Actions:
-        actions_dir = self.data_dir / "actions"
+        actions_dir = self.data_dir_path / "actions"
 
         new_employees_path = actions_dir / "new_employees.csv"
         dismissed_employees_path = actions_dir / "dismissed_employees.csv"
@@ -118,44 +101,27 @@ class DataManager:
         actions = Actions(None, None)
 
         if os.path.isfile(new_employees_path):
-            df_new = pd.read_csv(
-                new_employees_path,
-                index_col=False,
-                dtype={"Matricula": str},
-            )
-
-            df_new = self.prepare_dataframe(df_new)
+            df_new = self._read_csv(new_employees_path)
             df_new = df_new[~df_new["Matricula"].isin(ignore_ids)]
             actions.to_add = df_new
 
         if os.path.isfile(dismissed_employees_path):
-            df_dismissed = pd.read_csv(
-                dismissed_employees_path,
-                index_col=False,
-                dtype={"Matricula": str},
-            )
-            df_dismissed = self.prepare_dataframe(df_dismissed)
+            df_dismissed = self._read_csv(dismissed_employees_path)
             # df_dismissed = df_dismissed[~df_dismissed["Matricula"].isin(ignore_ids)]
             actions.to_remove = df_dismissed
 
         return actions
 
     def _get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
-        fiorilli_employees_path = self.data_dir / "fiorilli" / "employees.txt"
-        ahgora_employees_path = self.data_dir / "ahgora" / "employees.csv"
+        fiorilli_employees_path = self.data_dir_path / "fiorilli" / "employees.txt"
+        ahgora_employees_path = self.data_dir_path / "ahgora" / "employees.csv"
 
-        fiorilli_employees = pd.read_csv(
+        fiorilli_employees = self._read_csv(
             fiorilli_employees_path,
-            encoding="latin1",
             sep="|",
-            index_col=False,
+            encoding="latin1",
             header=None,
-            dtype={"Matricula": str},
-        )
-
-        fiorilli_employees = self.prepare_dataframe(
-            fiorilli_employees,
-            [
+            cols_names=[
                 "Matricula",
                 "Nome",
                 "CPF",
@@ -171,17 +137,10 @@ class DataManager:
             ],
         )
 
-        ahgora_employees = pd.read_csv(
+        ahgora_employees = self._read_csv(
             ahgora_employees_path,
-            sep=",",
-            index_col=False,
             header=None,
-            dtype={"Matricula": str},
-        )
-
-        ahgora_employees = self.prepare_dataframe(
-            ahgora_employees,
-            [
+            cols_names=[
                 "Matricula",
                 "Nome",
                 "Cargo",

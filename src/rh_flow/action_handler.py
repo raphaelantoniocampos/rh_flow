@@ -7,6 +7,9 @@ import pyautogui
 from rich import print
 from pyperclip import copy
 
+from data_manager import Actions
+from config import Config
+
 
 @dataclass
 class Key:
@@ -20,9 +23,9 @@ class ActionHandler:
     KEY_NEXT = Key("F3", "[bold yellow]F3[/bold yellow]")
     KEY_STOP = Key("F5", "[bold red3]F5[/bold red3]")
 
-    def __init__(self, actions, data_manager):
-        self.actions = actions
-        self.data_manager = data_manager
+    def __init__(self, actions: Actions, config: Config):
+        self.actions: Actions = actions
+        self.config: Config = config
 
         # save_dir = os.path.join(self.data_dir, "to_do")
         # if not new_employees.empty:
@@ -31,38 +34,45 @@ class ActionHandler:
         #     )
 
     def run(self):
-        option = self._show_actions_menu()
-        match option[3:]:
-            case "Adicionar funcionários":
-                df = self.actions.to_add
-                sleep(1)
-                print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
-                see_list = inquirer.prompt(
-                    [
-                        inquirer.Confirm(
-                            "yes",
-                            message="Ver lista de funcionários",
+        while True:
+            option = self._show_actions_menu()
+            match option[3:]:
+                case "Adicionar funcionários":
+                    df = self.actions.to_add
+                    if df.empty:
+                        print(
+                            "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]\n"
                         )
-                    ]
-                )
-                if see_list["yes"]:
+                        continue
+                    sleep(1)
+                    print(f"Novos funcionários para Adicionar no Ahgora: {len(df)}")
+                    see_list = inquirer.prompt(
+                        [
+                            inquirer.Confirm(
+                                "yes",
+                                message="Ver lista de funcionários",
+                            )
+                        ]
+                    )
+                    if see_list["yes"]:
+                        sleep(0.5)
+                        df = self.config.update_employees_to_ignore(df)
+
+                    ok_input = inquirer.prompt(
+                        [inquirer.Confirm("yes", message="Começar?")]
+                    )
                     sleep(0.5)
-                    df = self.data_manager.update_employees_to_ignore(df)
+                    if not ok_input["yes"]:
+                        return
 
-                ok_input = inquirer.prompt(
-                    [inquirer.Confirm("yes", message="Começar?")]
-                )
-                sleep(0.5)
-                if not ok_input["yes"]:
+                    self.add_employees(df)
+
+                case "Remover funcionários":
+                    sleep(1)
+                    self.remove_employees(self.actions.to_remove)
+
+                case "Sair":
                     return
-                self.add_employees(df)
-
-            case "Remover funcionários":
-                sleep(1)
-                self.remove_employees(self.actions.to_remove)
-
-            case "Sair":
-                return
 
     def _show_actions_menu(self):
         actions = []

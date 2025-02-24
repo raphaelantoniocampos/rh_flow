@@ -10,6 +10,8 @@ wheels/
 .venv
 src/.env
 
-downloads/*
+downloads/
+data/
+assets/
 
 .ruff_cache

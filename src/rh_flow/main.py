@@ -25,7 +25,10 @@ OPTIONS = {
 
 
 def main():
-    data_manager = DataManager(WORKING_DIR)
+    config = Config(Path(WORKING_DIR / "data"))
+    data_manager = DataManager(WORKING_DIR, config)
+    file_downloader = FileDownloader(WORKING_DIR)
+
     while True:
         try:
             actions = data_manager.get_actions()
@@ -35,18 +38,16 @@ def main():
                     print("[bold red]DESATIVADO NO MOMENTO[/bold red]")
                     time.sleep(1)
                     continue
-                    file_downloader = FileDownloader(WORKING_DIR)
                     file_downloader.run()
 
                 case "Analisar dados":
                     data_manager.analyze()
 
                 case "Ações":
-                    action_handler = ActionHandler(actions, data_manager)
+                    action_handler = ActionHandler(actions, config)
                     action_handler.run()
 
                 case "Configurações":
-                    config = Config(Path(WORKING_DIR / "data"))
                     config.config_panel(console)
 
                 case "Sair":
