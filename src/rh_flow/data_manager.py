@@ -49,64 +49,50 @@ class DataManager:
             print(f"[bold red]Erro ao adicionar funcionários: {e}[/bold red]\n")
             sleep(1)
 
+    def get_actions(self) -> Actions:
+        actions_dir = self.data_dir_path / "actions"
+
+        new_employees_path = actions_dir / "new_employees.csv"
+        dismissed_employees_path = actions_dir / "dismissed_employees.csv"
+
+        ignore_list = self.config.data.get("ignore", {})
+        ignore_ids = set(ignore_list.keys())
+
+        actions = Actions(None, None)
+
+        if os.path.isfile(new_employees_path):
+            df_new = self._read_csv(new_employees_path)
+            df_new = df_new[~df_new["Matricula"].isin(ignore_ids)]
+            actions.to_add = df_new
+
+        if os.path.isfile(dismissed_employees_path):
+            df_dismissed = self._read_csv(dismissed_employees_path)
+            # df_dismissed = df_dismissed[~df_dismissed["Matricula"].isin(ignore_ids)]
+            actions.to_remove = df_dismissed
+
+        return actions
+
     def analyze_leaves(self):
         try:
             print("--- Analisando afastamentos entre Fiorilli e Ahgora ---\n")
 
             fiorilli_leaves, ahgora_leaves = self._get_leaves_data()
 
-            # Convertendo colunas de datas para o mesmo formato
-            fiorilli_leaves["Início"] = pd.to_datetime(
-                fiorilli_leaves["Início"], format="%d/%m/%Y %H:%M"
-            )
-            fiorilli_leaves["Fim"] = pd.to_datetime(
-                fiorilli_leaves["Fim"], format="%d/%m/%Y %H:%M"
-            )
 
-            ahgora_leaves["Data Início"] = pd.to_datetime(
-                ahgora_leaves["Data Início Afastamento"]
-                + " "
-                + ahgora_leaves["Hora Início Afastamento"],
-                format="%d/%m/%Y %H:%M",
-            )
-            ahgora_leaves["Data Fim"] = pd.to_datetime(
-                ahgora_leaves["Data Final Afastamento"]
-                + " "
-                + ahgora_leaves["Hora Final Afastamento"],
-                format="%d/%m/%Y %H:%M",
-            )
+            fiorilli_ids = set(fiorilli_leaves["Matricula"])
+            ahgora_ids = set(ahgora_leaves["Matricula"])
 
-            # Criar uma chave de comparação
-            fiorilli_leaves["chave"] = (
-                fiorilli_leaves["Matrícula"].astype(str)
-                + "-"
-                + fiorilli_leaves["Início"].astype(str)
-                + "-"
-                + fiorilli_leaves["Fim"].astype(str)
-            )
 
-            ahgora_leaves["chave"] = (
-                ahgora_leaves["Matrícula"].astype(str)
-                + "-"
-                + ahgora_leaves["Data Início"].astype(str)
-                + "-"
-                + ahgora_leaves["Data Fim"].astype(str)
-            )
 
-            # Encontrar afastamentos que existem nos dois sistemas
-            common_leaves = fiorilli_leaves[
-                fiorilli_leaves["chave"].isin(ahgora_leaves["chave"])
+            no_fio = fiorilli_leaves[
+                ~fiorilli_leaves["Matricula"].isin(ahgora_ids)
             ]
 
-            save_dir = self.data_dir_path / "leaves"
-            os.makedirs(save_dir, exist_ok=True)
+            no_agora = ahgora_leaves[
+                ~ahgora_leaves["Matricula"].isin(fiorilli_ids)
+            ]
 
-            if not common_leaves.empty:
-                common_leaves.to_csv(
-                    os.path.join(save_dir, "common_leaves.csv"),
-                    index=False,
-                    encoding="utf-8",
-                )
+            no_fio.to_csv('teste.csv', index=False,  header=False)
 
             print("[bold green]Afastamentos comparados com sucesso![/bold green]\n")
             sleep(1)
@@ -133,55 +119,62 @@ class DataManager:
 
         return self._prepare_dataframe(df=df, cols_names=cols_names)
 
+
     def _prepare_dataframe(self, df, cols_names: list[str] = []):
-        if cols_names:
-            df.columns = cols_names
+        if not cols_names:
+            cols_names = df.columns
+        df.columns = cols_names
 
-        try:
-            df["Data Admissao"] = pd.to_datetime(
-                df["Data Admissao"], dayfirst=True, errors="coerce"
-            )
-            df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
-        except KeyError:
-            pass
+        # if "Hora Inicio" in cols_names and "Hora Fim" in cols_names:
+        #     df = df.drop(columns=["Hora Inicio", "Hora Fim"])
 
-        try:
+        for col in cols_names:
+            if "Data" in col:
+                df[col] = df[col].apply(self._convert_date)
+                df[col] = pd.to_datetime(df[col], dayfirst=True, errors="coerce")
+                df[col] = df[col].dt.strftime("%d/%m/%Y")
+
+        if "CPF" in cols_names:
             df["CPF"] = df["CPF"].fillna("").astype(str).str.zfill(11)
-        except KeyError:
-            pass
-        try:
+
+        if "Nome" in cols_names:
             df["Nome"] = df["Nome"].str.strip().str.upper()
-        except KeyError:
-            pass
-        try:
+
+        if "Matricula" in cols_names:
             df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
-        except KeyError:
-            pass
 
         return df
 
-    def get_actions(self) -> Actions:
-        actions_dir = self.data_dir_path / "actions"
+    def _convert_date(self, data_str):
+        meses = {
+            "Jan": "Jan",
+            "Fev": "Feb",
+            "Mar": "Mar",
+            "Abr": "Apr",
+            "Mai": "May",
+            "Jun": "Jun",
+            "Jul": "Jul",
+            "Ago": "Aug",
+            "Set": "Sep",
+            "Out": "Oct",
+            "Nov": "Nov",
+            "Dez": "Dec",
+        }
+        if pd.isna(data_str) or not isinstance(data_str, str):
+            return None
+        partes = data_str.split(", ")
+        if len(partes) > 1:
+            data_str = partes[1]
+        for pt, en in meses.items():
+            data_str = data_str.replace(f"{pt}/", f"{en}/")
+        try:
+            return pd.to_datetime(data_str, format="%d/%b/%Y", errors="raise")
+        except ValueError:
+            try:
+                return pd.to_datetime(data_str, format="%d/%m/%Y", errors="raise")
+            except ValueError:
+                return pd.to_datetime(data_str, format="%d/%b/%Y %H:%M", errors="coerce")
 
-        new_employees_path = actions_dir / "new_employees.csv"
-        dismissed_employees_path = actions_dir / "dismissed_employees.csv"
-
-        ignore_list = self.config.data.get("ignore", {})
-        ignore_ids = set(ignore_list.keys())
-
-        actions = Actions(None, None)
-
-        if os.path.isfile(new_employees_path):
-            df_new = self._read_csv(new_employees_path)
-            df_new = df_new[~df_new["Matricula"].isin(ignore_ids)]
-            actions.to_add = df_new
-
-        if os.path.isfile(dismissed_employees_path):
-            df_dismissed = self._read_csv(dismissed_employees_path)
-            # df_dismissed = df_dismissed[~df_dismissed["Matricula"].isin(ignore_ids)]
-            actions.to_remove = df_dismissed
-
-        return actions
 
     def _get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
         fiorilli_employees_path = self.data_dir_path / "fiorilli" / "employees.txt"
@@ -230,31 +223,27 @@ class DataManager:
         fiorilli_vacation_path = self.data_dir_path / "fiorilli" / "vacation.txt"
         ahgora_leaves_path = self.data_dir_path / "ahgora" / "leaves.csv"
 
-        fiorilli_leaves = self._read_csv(
+        fiorilli_columns = [
+            "Matricula",
+            "Cod",
+            "Data Inicio",
+            "Hora Inicio",
+            "Data Fim",
+            "Hora Fim",
+        ]
+        fiorilli_only_leaves = self._read_csv(
             fiorilli_leaves_path,
             header=None,
-            cols_names=[
-                "Matricula",
-                "Cod",
-                "Início",
-                "Inicio Hora",
-                "Fim Data",
-                "Fim Hora",
-            ],
+            cols_names=fiorilli_columns,
         )
 
         fiorilli_vacation = self._read_csv(
             fiorilli_vacation_path,
             header=None,
-            cols_names=[
-                "Matricula",
-                "Cod",
-                "Início",
-                "Inicio Hora",
-                "Fim Data",
-                "Fim Hora",
-            ],
+            cols_names=fiorilli_columns,
         )
+
+        fiorilli_leaves = pd.concat([fiorilli_only_leaves, fiorilli_vacation])
 
         ahgora_leaves = self._read_csv(
             ahgora_leaves_path,
@@ -262,8 +251,8 @@ class DataManager:
             cols_names=[
                 "Identificador",
                 "Motivo",
-                "Inicio",
-                "Fim",
+                "Data Inicio",
+                "Data Fim",
                 "Funcionario",
                 "Matricula",
                 "Duracao",
@@ -271,10 +260,6 @@ class DataManager:
                 "Acoes",
             ],
         )
-        print(fiorilli_leaves.columns)
-        # print(fiorilli_leaves)
-        # print(fiorilli_vacation)
-        # print(ahgora_leaves)
 
         return fiorilli_leaves, ahgora_leaves
 

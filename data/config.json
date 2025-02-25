@@ -14,17 +14,17 @@
         }
     },
     "last_analisys": {
-        "datetime": "24/02/2025, 20:00",
-        "time_since": "0d 1h 59m"
+        "datetime": "25/02/2025, 07:55",
+        "time_since": "0d 4h 50m"
     },
     "last_download": {
         "ahgora": {
-            "datetime": "24/02/2025, 18:24",
-            "time_since": "0d 3h 35m"
+            "datetime": "25/02/2025, 07:42",
+            "time_since": "0d 5h 3m"
         },
         "fiorilli": {
-            "datetime": "22/02/2025, 21:10",
-            "time_since": "2d 0h 49m"
+            "datetime": "25/02/2025, 07:45",
+            "time_since": "0d 5h 0m"
         }
     }
 }

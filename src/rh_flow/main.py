@@ -29,6 +29,7 @@ def main():
     data_manager = DataManager(WORKING_DIR, config)
 
     data_manager.analyze_leaves()
+    return
 
     file_downloader = FileDownloader(WORKING_DIR)
 
