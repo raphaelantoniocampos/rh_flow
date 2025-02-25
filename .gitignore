@@ -12,6 +12,5 @@ src/.env
 
 downloads/
 data/
-assets/
 
 .ruff_cache

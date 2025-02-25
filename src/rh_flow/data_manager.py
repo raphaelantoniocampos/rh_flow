@@ -78,21 +78,34 @@ class DataManager:
 
             fiorilli_leaves, ahgora_leaves = self._get_leaves_data()
 
-
             fiorilli_ids = set(fiorilli_leaves["Matricula"])
             ahgora_ids = set(ahgora_leaves["Matricula"])
 
+            # no_fio = fiorilli_leaves[~fiorilli_leaves["Matricula"].isin(ahgora_ids)]
+            # no_agora = ahgora_leaves[~ahgora_leaves["Matricula"].isin(fiorilli_ids)]
 
+            fiorilli_leaves["key"] = (
+                fiorilli_leaves["Matricula"].astype(str)
+                + "-"
+                + fiorilli_leaves["Data Inicio"].astype(str)
+                + "-"
+                + fiorilli_leaves["Data Fim"].astype(str)
+            )
 
-            no_fio = fiorilli_leaves[
-                ~fiorilli_leaves["Matricula"].isin(ahgora_ids)
-            ]
+            ahgora_leaves["key"] = (
+                ahgora_leaves["Matricula"].astype(str)
+                + "-"
+                + ahgora_leaves["Data Inicio"].astype(str)
+                + "-"
+                + ahgora_leaves["Data Fim"].astype(str)
+            )
 
-            no_agora = ahgora_leaves[
-                ~ahgora_leaves["Matricula"].isin(fiorilli_ids)
-            ]
+            not_common_leaves = fiorilli_leaves[
+                ~fiorilli_leaves["key"].isin(ahgora_leaves["key"])
+            ].drop(columns=["key"])
 
-            no_fio.to_csv('teste.csv', index=False,  header=False)
+            not_common_leaves.to_csv("no.csv", index=False, header=False)
+            print(not_common_leaves)
 
             print("[bold green]Afastamentos comparados com sucesso![/bold green]\n")
             sleep(1)
@@ -119,14 +132,10 @@ class DataManager:
 
         return self._prepare_dataframe(df=df, cols_names=cols_names)
 
-
     def _prepare_dataframe(self, df, cols_names: list[str] = []):
         if not cols_names:
             cols_names = df.columns
         df.columns = cols_names
-
-        # if "Hora Inicio" in cols_names and "Hora Fim" in cols_names:
-        #     df = df.drop(columns=["Hora Inicio", "Hora Fim"])
 
         for col in cols_names:
             if "Data" in col:
@@ -136,6 +145,9 @@ class DataManager:
 
         if "CPF" in cols_names:
             df["CPF"] = df["CPF"].fillna("").astype(str).str.zfill(11)
+
+        if "Cod" in cols_names:
+            df["Cod"] = df["Cod"].fillna("").astype(str).str.zfill(3)
 
         if "Nome" in cols_names:
             df["Nome"] = df["Nome"].str.strip().str.upper()
@@ -173,8 +185,9 @@ class DataManager:
             try:
                 return pd.to_datetime(data_str, format="%d/%m/%Y", errors="raise")
             except ValueError:
-                return pd.to_datetime(data_str, format="%d/%b/%Y %H:%M", errors="coerce")
-
+                return pd.to_datetime(
+                    data_str, format="%d/%b/%Y %H:%M", errors="coerce"
+                )
 
     def _get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
         fiorilli_employees_path = self.data_dir_path / "fiorilli" / "employees.txt"
@@ -231,33 +244,37 @@ class DataManager:
             "Data Fim",
             "Hora Fim",
         ]
-        fiorilli_only_leaves = self._read_csv(
+        # fiorilli_leaves = pd.concat(
+        #     [
+        #         self._read_csv(
+        #             fiorilli_vacation_path,
+        #             header=None,
+        #             cols_names=fiorilli_columns,
+        #         ),
+        #         self._read_csv(
+        #             fiorilli_leaves_path,
+        #             header=None,
+        #             cols_names=fiorilli_columns,
+        #         ),
+        #     ]
+        # )
+
+        fiorilli_leaves = self._read_csv(
             fiorilli_leaves_path,
             header=None,
             cols_names=fiorilli_columns,
         )
 
-        fiorilli_vacation = self._read_csv(
-            fiorilli_vacation_path,
-            header=None,
-            cols_names=fiorilli_columns,
-        )
-
-        fiorilli_leaves = pd.concat([fiorilli_only_leaves, fiorilli_vacation])
-
         ahgora_leaves = self._read_csv(
             ahgora_leaves_path,
             sep=";",
             cols_names=[
-                "Identificador",
+                "Nome",
+                "Matricula",
+                "Cod",
                 "Motivo",
                 "Data Inicio",
                 "Data Fim",
-                "Funcionario",
-                "Matricula",
-                "Duracao",
-                "Tratamento",
-                "Acoes",
             ],
         )
 

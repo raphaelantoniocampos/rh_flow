@@ -191,11 +191,9 @@ class ActionHandler:
                 f"\n[bold yellow]{'-' * 15} FUNCIONÁRIO DESLIGADO! {'-' * 15}[/bold yellow]"
             )
             print(series)
+
             print(
-                f"\nPressione {self.KEY_SEMI_AUTO.colored} para o processo [bold white]semi automático[/bold white]."
-            )
-            print(
-                f"Pressione {self.KEY_CONTINUE.colored} para o próximo [bold white]campo[/bold white]."
+                f"Pressione {self.KEY_CONTINUE.colored} para copiar a [bold white]Data de Desligamento[/bold white]."
             )
             print(
                 f"Pressione {self.KEY_NEXT.colored} para próximo [bold white]funcionário[/bold white]."
@@ -203,9 +201,18 @@ class ActionHandler:
             print(
                 f"Pressione {self.KEY_STOP.colored} para [bold white]sair...[/bold white]"
             )
-            print(f"(Nome '{df[i]['Nome']}' copiado para a área de transferência!)")
+            name = series["Nome"]
+            print(f"(Nome '{name}' copiado para a área de transferência!)")
+            copy(name)
             while True:
+                if keyboard.is_pressed(self.KEY_CONTINUE.key):
+                    date = series["Data Desligamento"]
+                    print(f"(Matricula '{date}' copiado para a área de transferência!)")
+                    copy(date)
+                    sleep(0.5)
+                    continue
                 if keyboard.is_pressed(self.KEY_NEXT.key):
+                    sleep(0.5)
                     break
                 if keyboard.is_pressed(self.KEY_STOP.key):
                     sleep(0.5)
@@ -213,7 +220,7 @@ class ActionHandler:
                     return
             if keyboard.is_pressed(self.KEY_NEXT.key):
                 sleep(0.5)
-                break
+                continue
 
     def _semi_auto_add(self, row):
         print(

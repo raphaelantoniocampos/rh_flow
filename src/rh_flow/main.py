@@ -28,8 +28,9 @@ def main():
     config = Config(Path(WORKING_DIR / "data"))
     data_manager = DataManager(WORKING_DIR, config)
 
-    data_manager.analyze_leaves()
-    return
+    #debug
+    # data_manager.analyze_leaves()
+    # return
 
     file_downloader = FileDownloader(WORKING_DIR)
 
