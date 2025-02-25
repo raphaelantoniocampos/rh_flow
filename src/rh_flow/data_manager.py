@@ -49,6 +49,71 @@ class DataManager:
             print(f"[bold red]Erro ao adicionar funcionários: {e}[/bold red]\n")
             sleep(1)
 
+    def analyze_leaves(self):
+        try:
+            print("--- Analisando afastamentos entre Fiorilli e Ahgora ---\n")
+
+            fiorilli_leaves, ahgora_leaves = self._get_leaves_data()
+
+            # Convertendo colunas de datas para o mesmo formato
+            fiorilli_leaves["Início"] = pd.to_datetime(
+                fiorilli_leaves["Início"], format="%d/%m/%Y %H:%M"
+            )
+            fiorilli_leaves["Fim"] = pd.to_datetime(
+                fiorilli_leaves["Fim"], format="%d/%m/%Y %H:%M"
+            )
+
+            ahgora_leaves["Data Início"] = pd.to_datetime(
+                ahgora_leaves["Data Início Afastamento"]
+                + " "
+                + ahgora_leaves["Hora Início Afastamento"],
+                format="%d/%m/%Y %H:%M",
+            )
+            ahgora_leaves["Data Fim"] = pd.to_datetime(
+                ahgora_leaves["Data Final Afastamento"]
+                + " "
+                + ahgora_leaves["Hora Final Afastamento"],
+                format="%d/%m/%Y %H:%M",
+            )
+
+            # Criar uma chave de comparação
+            fiorilli_leaves["chave"] = (
+                fiorilli_leaves["Matrícula"].astype(str)
+                + "-"
+                + fiorilli_leaves["Início"].astype(str)
+                + "-"
+                + fiorilli_leaves["Fim"].astype(str)
+            )
+
+            ahgora_leaves["chave"] = (
+                ahgora_leaves["Matrícula"].astype(str)
+                + "-"
+                + ahgora_leaves["Data Início"].astype(str)
+                + "-"
+                + ahgora_leaves["Data Fim"].astype(str)
+            )
+
+            # Encontrar afastamentos que existem nos dois sistemas
+            common_leaves = fiorilli_leaves[
+                fiorilli_leaves["chave"].isin(ahgora_leaves["chave"])
+            ]
+
+            save_dir = self.data_dir_path / "leaves"
+            os.makedirs(save_dir, exist_ok=True)
+
+            if not common_leaves.empty:
+                common_leaves.to_csv(
+                    os.path.join(save_dir, "common_leaves.csv"),
+                    index=False,
+                    encoding="utf-8",
+                )
+
+            print("[bold green]Afastamentos comparados com sucesso![/bold green]\n")
+            sleep(1)
+        except KeyboardInterrupt as e:
+            print(f"[bold red]Erro ao analisar afastamentos: {e}[/bold red]\n")
+            sleep(1)
+
     def _read_csv(
         self,
         path: str,
@@ -72,19 +137,26 @@ class DataManager:
         if cols_names:
             df.columns = cols_names
 
-        df["Data Admissao"] = pd.to_datetime(
-            df["Data Admissao"], dayfirst=True, errors="coerce"
-        )
+        try:
+            df["Data Admissao"] = pd.to_datetime(
+                df["Data Admissao"], dayfirst=True, errors="coerce"
+            )
+            df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
+        except KeyError:
+            pass
 
         try:
             df["CPF"] = df["CPF"].fillna("").astype(str).str.zfill(11)
         except KeyError:
             pass
-        df["Nome"] = df["Nome"].str.strip().str.upper()
-
-        df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
-
-        df["Data Admissao"] = df["Data Admissao"].dt.strftime("%d/%m/%Y")
+        try:
+            df["Nome"] = df["Nome"].str.strip().str.upper()
+        except KeyError:
+            pass
+        try:
+            df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
+        except KeyError:
+            pass
 
         return df
 
@@ -152,6 +224,59 @@ class DataManager:
         )
 
         return fiorilli_employees, ahgora_employees
+
+    def _get_leaves_data(self) -> (pd.DataFrame, pd.DataFrame):
+        fiorilli_leaves_path = self.data_dir_path / "fiorilli" / "leaves.txt"
+        fiorilli_vacation_path = self.data_dir_path / "fiorilli" / "vacation.txt"
+        ahgora_leaves_path = self.data_dir_path / "ahgora" / "leaves.csv"
+
+        fiorilli_leaves = self._read_csv(
+            fiorilli_leaves_path,
+            header=None,
+            cols_names=[
+                "Matricula",
+                "Cod",
+                "Início",
+                "Inicio Hora",
+                "Fim Data",
+                "Fim Hora",
+            ],
+        )
+
+        fiorilli_vacation = self._read_csv(
+            fiorilli_vacation_path,
+            header=None,
+            cols_names=[
+                "Matricula",
+                "Cod",
+                "Início",
+                "Inicio Hora",
+                "Fim Data",
+                "Fim Hora",
+            ],
+        )
+
+        ahgora_leaves = self._read_csv(
+            ahgora_leaves_path,
+            sep=";",
+            cols_names=[
+                "Identificador",
+                "Motivo",
+                "Inicio",
+                "Fim",
+                "Funcionario",
+                "Matricula",
+                "Duracao",
+                "Tratamento",
+                "Acoes",
+            ],
+        )
+        print(fiorilli_leaves.columns)
+        # print(fiorilli_leaves)
+        # print(fiorilli_vacation)
+        # print(ahgora_leaves)
+
+        return fiorilli_leaves, ahgora_leaves
 
     def _generate_actions_dfs(
         self, fiorilli_employees: pd.DataFrame, ahgora_employees: pd.DataFrame

@@ -27,6 +27,9 @@ OPTIONS = {
 def main():
     config = Config(Path(WORKING_DIR / "data"))
     data_manager = DataManager(WORKING_DIR, config)
+
+    data_manager.analyze_leaves()
+
     file_downloader = FileDownloader(WORKING_DIR)
 
     while True:

@@ -15,16 +15,16 @@
     },
     "last_analisys": {
         "datetime": "24/02/2025, 20:00",
-        "time_since": "0d 0h 7m"
+        "time_since": "0d 1h 59m"
     },
     "last_download": {
         "ahgora": {
             "datetime": "24/02/2025, 18:24",
-            "time_since": "0d 1h 43m"
+            "time_since": "0d 3h 35m"
         },
         "fiorilli": {
             "datetime": "22/02/2025, 21:10",
-            "time_since": "1d 22h 57m"
+            "time_since": "2d 0h 49m"
         }
     }
 }
