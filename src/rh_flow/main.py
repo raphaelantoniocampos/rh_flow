@@ -11,7 +11,7 @@ from data_manager import DataManager, Actions
 from action_handler import ActionHandler
 from config import Config
 
-WORKING_DIR = Path.cwd()
+WORKING_DIR_PATH = Path.cwd()
 
 console = Console()
 
@@ -25,14 +25,10 @@ OPTIONS = {
 
 
 def main():
-    config = Config(Path(WORKING_DIR / "data"))
-    data_manager = DataManager(WORKING_DIR, config)
+    config = Config(Path(WORKING_DIR_PATH))
+    data_manager = DataManager(WORKING_DIR_PATH, config)
 
-    #debug
-    # data_manager.analyze_leaves()
-    # return
-
-    file_downloader = FileDownloader(WORKING_DIR)
+    file_downloader = FileDownloader(WORKING_DIR_PATH)
 
     while True:
         try:

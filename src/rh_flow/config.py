@@ -23,9 +23,9 @@ NO_IGNORED_STR = (
 
 
 class Config:
-    def __init__(self, data_dir_path: Path):
-        self.data_dir_path = data_dir_path
-        self.path: Path = data_dir_path / "config.json"
+    def __init__(self, working_dir_path: Path):
+        self.data_dir_path = self._get_data_dir_path(working_dir_path)
+        self.path: Path = self.data_dir_path / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
 
@@ -156,6 +156,12 @@ class Config:
         last_analisys = {"datetime": now.strftime("%d/%m/%Y, %H:%M"), "time_since": now}
         self._update_analysis_time_since(last_analisys, now)
 
+    def _get_data_dir_path(self, working_dir_path: Path) -> Path:
+        path = Path(working_dir_path / 'data')
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        return path
+
     def _load(self) -> dict:
         if self.path.exists():
             with open(self.path, "r") as f:
@@ -243,13 +249,14 @@ class Config:
         self._update("last_download", app_name, value=app_last_download)
 
     def _get_last_download(self, app_name: str) -> str:
-        return datetime.strftime(
-            datetime.fromtimestamp(
-                Path(
+        file_path = Path(
                     self.data_dir_path
                     / app_name
                     / f"employees.{'csv' if app_name == 'ahgora' else 'txt'}"
-                )
+        )
+        return datetime.strftime(
+            datetime.fromtimestamp(
+                file_path
                 .stat()
                 .st_mtime
             ),
