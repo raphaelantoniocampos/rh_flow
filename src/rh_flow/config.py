@@ -25,43 +25,15 @@ NO_IGNORED_STR = (
 
 class Config:
     def __init__(self, working_dir_path: Path):
-        self._verify_paths()
         self.data_dir_path = Path(working_dir_path / "data")
         self.path: Path = self.data_dir_path / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
 
-    def _verify_paths(self):
-        working_dir_path = Path.cwd()
-        needed_directories = [
-            Path(working_dir_path / "downloads"),
-            Path(working_dir_path / "data"),
-            Path(working_dir_path / "data" / "ahgora"),
-            Path(working_dir_path / "data" / "fiorilli"),
-            Path(working_dir_path / "data" / "actions"),
-        ]
-
-        needed_files = [
-            Path(working_dir_path / "data" / "ahgora" / "employees.csv"),
-            Path(working_dir_path / "data" / "fiorilli" / "employees.txt"),
-        ]
-
-        for path in needed_directories:
-            if not path.exists():
-                path.mkdir(parents=True)
-        for path in needed_files:
-            for file in path.parent.iterdir():
-                print(f'for {file} in parent')
-                if 'funcionarios' in file.name or 'Trabalhador' in file.name:
-                    file.replace(path)
-                    break
-            print("path.touch")
-            path.touch()
-
     def config_panel(self, console: Console) -> None:
         while True:
             config_data = self._read()
-            ignore_data = config_data.get("ignore", {})
+            ignore_data = config_data.get("ignore")
             last_analisys = self.data.get("last_analisys")
             last_download = self.data.get("last_download")
 
@@ -176,7 +148,7 @@ class Config:
             for ignore in employees_to_ignore
         }
 
-        self._update("ignore", value=to_ignore_dict)
+        self.update("ignore", value=to_ignore_dict)
 
         return df[~df["Matricula"].isin(to_ignore_dict.keys())]
 
@@ -195,7 +167,7 @@ class Config:
     def _read(self) -> dict:
         return self.data
 
-    def _update(self, *keys, value=None) -> dict:
+    def update(self, *keys, value=None) -> dict:
         data = self.data
         *path, last_key = keys
 
@@ -257,7 +229,7 @@ class Config:
             last_analisys["time_since"] = self._format_timedelta(
                 time_since_last_analisys
             )
-            self._update("last_analisys", value=last_analisys)
+            self.update("last_analisys", value=last_analisys)
 
     def _update_downloads_time_since(
         self, last_download: dict, app_name: str, now: timedelta
@@ -274,7 +246,7 @@ class Config:
             time_since_last_download
         )
 
-        self._update("last_download", app_name, value=app_last_download)
+        self.update("last_download", app_name, value=app_last_download)
 
     def _get_last_download(self, app_name: str) -> str:
         file_path = Path(
@@ -293,3 +265,4 @@ class Config:
             str_return += f"{key}: {value}\n"
 
         return str_return
+

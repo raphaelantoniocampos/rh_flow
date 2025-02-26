@@ -1,3 +1,5 @@
+from __init__ import verify_paths
+
 from pathlib import Path
 import time
 
@@ -10,6 +12,8 @@ from file_downloader import FileDownloader
 from data_manager import DataManager, Actions
 from action_handler import ActionHandler
 from config import Config
+
+verify_paths()
 
 WORKING_DIR_PATH = Path.cwd()
 
