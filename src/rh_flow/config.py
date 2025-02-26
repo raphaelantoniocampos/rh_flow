@@ -9,7 +9,7 @@ from pathlib import Path
 import json
 
 INIT_CONFIG = {
-    "init_date":"",
+    "init_date": "",
     "ignore": {},
     "last_analisys": {"datetime": "", "time_since": ""},
     "last_download": {
@@ -25,10 +25,38 @@ NO_IGNORED_STR = (
 
 class Config:
     def __init__(self, working_dir_path: Path):
-        self.data_dir_path = self._get_data_dir_path(working_dir_path)
+        self._verify_paths()
+        self.data_dir_path = Path(working_dir_path / "data")
         self.path: Path = self.data_dir_path / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
+
+    def _verify_paths(self):
+        working_dir_path = Path.cwd()
+        needed_directories = [
+            Path(working_dir_path / "downloads"),
+            Path(working_dir_path / "data"),
+            Path(working_dir_path / "data" / "ahgora"),
+            Path(working_dir_path / "data" / "fiorilli"),
+            Path(working_dir_path / "data" / "actions"),
+        ]
+
+        needed_files = [
+            Path(working_dir_path / "data" / "ahgora" / "employees.csv"),
+            Path(working_dir_path / "data" / "fiorilli" / "employees.txt"),
+        ]
+
+        for path in needed_directories:
+            if not path.exists():
+                path.mkdir(parents=True)
+        for path in needed_files:
+            for file in path.parent.iterdir():
+                print(f'for {file} in parent')
+                if 'funcionarios' in file.name or 'Trabalhador' in file.name:
+                    file.replace(path)
+                    break
+            print("path.touch")
+            path.touch()
 
     def config_panel(self, console: Console) -> None:
         while True:
@@ -157,22 +185,6 @@ class Config:
         last_analisys = {"datetime": now.strftime("%d/%m/%Y, %H:%M"), "time_since": now}
         self._update_analysis_time_since(last_analisys, now)
 
-    def _get_data_dir_path(self, working_dir_path: Path) -> Path:
-        path = Path(working_dir_path / 'data')
-        if not path.exists():
-            self._init_directory_config(working_dir_path)
-        return path
-
-    def _init_directory_config(self, working_dir_path: Path):
-        Path(working_dir_path / 'downloads').mkdir(parents=True, exist_ok=True)
-        data_path = Path(working_dir_path / 'data')
-        data_path.mkdir(parents=True, exist_ok=True)
-        Path(data_path / 'ahgora').mkdir(parents=True, exist_ok=True)
-        Path(data_path / 'fiorilli').mkdir(parents=True, exist_ok=True)
-
-        raise Exception("Baixe os arquivos e coloque nas pastas\n[cyan]•[/] data/ahgora\n[cyan]•[/] data/fiorilli")
-
-
     def _load(self) -> dict:
         if self.path.exists():
             with open(self.path, "r") as f:
@@ -232,7 +244,9 @@ class Config:
             self._update_downloads_time_since(last_download, "ahgora", now)
             self._update_downloads_time_since(last_download, "fiorilli", now)
         except FileNotFoundError as error:
-            raise Exception(f"{error}\nPossível Solução:\nBaixe o arquivo e o coloque na pasta solicitada.")
+            raise Exception(
+                f"{error}\nBaixe o arquivo e o coloque na pasta solicitada."
+            )
 
     def _update_analysis_time_since(self, last_analisys: dict, now: timedelta) -> None:
         if last_analisys["datetime"]:
@@ -264,16 +278,12 @@ class Config:
 
     def _get_last_download(self, app_name: str) -> str:
         file_path = Path(
-                    self.data_dir_path
-                    / app_name
-                    / f"employees.{'csv' if app_name == 'ahgora' else 'txt'}"
+            self.data_dir_path
+            / app_name
+            / f"employees.{'csv' if app_name == 'ahgora' else 'txt'}"
         )
         return datetime.strftime(
-            datetime.fromtimestamp(
-                file_path
-                .stat()
-                .st_mtime
-            ),
+            datetime.fromtimestamp(file_path.stat().st_mtime),
             "%d/%m/%Y, %H:%M",
         )
 

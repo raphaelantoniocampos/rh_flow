@@ -26,7 +26,7 @@ OPTIONS = {
 
 def main():
     try:
-        config = Config(Path(WORKING_DIR_PATH))
+        config = Config(WORKING_DIR_PATH)
         data_manager = DataManager(WORKING_DIR_PATH, config)
 
         file_downloader = FileDownloader(WORKING_DIR_PATH)
@@ -56,8 +56,8 @@ def main():
 
     except KeyboardInterrupt:
         print("Saindo...")
-    except Exception as e:
-        print(e)
+    # except Exception as e:
+    #     print(e)
 
 
 def show_menu(actions: Actions):
