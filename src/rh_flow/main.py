@@ -25,13 +25,13 @@ OPTIONS = {
 
 
 def main():
-    config = Config(Path(WORKING_DIR_PATH))
-    data_manager = DataManager(WORKING_DIR_PATH, config)
+    try:
+        config = Config(Path(WORKING_DIR_PATH))
+        data_manager = DataManager(WORKING_DIR_PATH, config)
 
-    file_downloader = FileDownloader(WORKING_DIR_PATH)
+        file_downloader = FileDownloader(WORKING_DIR_PATH)
 
-    while True:
-        try:
+        while True:
             actions = data_manager.get_actions()
             option = show_menu(actions)
             match option:
@@ -54,10 +54,10 @@ def main():
                 case "Sair":
                     break
 
-        except KeyboardInterrupt:
-            break
-
-    print("Saindo...")
+    except KeyboardInterrupt:
+        print("Saindo...")
+    except Exception as e:
+        print(e)
 
 
 def show_menu(actions: Actions):

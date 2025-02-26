@@ -9,6 +9,7 @@ from pathlib import Path
 import json
 
 INIT_CONFIG = {
+    "init_date":"",
     "ignore": {},
     "last_analisys": {"datetime": "", "time_since": ""},
     "last_download": {
@@ -159,8 +160,18 @@ class Config:
     def _get_data_dir_path(self, working_dir_path: Path) -> Path:
         path = Path(working_dir_path / 'data')
         if not path.exists():
-            path.mkdir(parents=True, exist_ok=True)
+            self._init_directory_config(working_dir_path)
         return path
+
+    def _init_directory_config(self, working_dir_path: Path):
+        Path(working_dir_path / 'downloads').mkdir(parents=True, exist_ok=True)
+        data_path = Path(working_dir_path / 'data')
+        data_path.mkdir(parents=True, exist_ok=True)
+        Path(data_path / 'ahgora').mkdir(parents=True, exist_ok=True)
+        Path(data_path / 'fiorilli').mkdir(parents=True, exist_ok=True)
+
+        raise Exception("Baixe os arquivos e coloque nas pastas\n[cyan]•[/] data/ahgora\n[cyan]•[/] data/fiorilli")
+
 
     def _load(self) -> dict:
         if self.path.exists():
@@ -212,13 +223,16 @@ class Config:
         return f"{days}d {hours}h {minutes}m"
 
     def _update_time_since(self) -> None:
-        now = datetime.now()
-        last_analisys = self.data.get("last_analisys")
-        self._update_analysis_time_since(last_analisys, now)
+        try:
+            now = datetime.now()
+            last_analisys = self.data.get("last_analisys")
+            self._update_analysis_time_since(last_analisys, now)
 
-        last_download = self.data.get("last_download")
-        self._update_downloads_time_since(last_download, "ahgora", now)
-        self._update_downloads_time_since(last_download, "fiorilli", now)
+            last_download = self.data.get("last_download")
+            self._update_downloads_time_since(last_download, "ahgora", now)
+            self._update_downloads_time_since(last_download, "fiorilli", now)
+        except FileNotFoundError as error:
+            raise Exception(f"{error}\nPossível Solução:\nBaixe o arquivo e o coloque na pasta solicitada.")
 
     def _update_analysis_time_since(self, last_analisys: dict, now: timedelta) -> None:
         if last_analisys["datetime"]:
