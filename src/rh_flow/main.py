@@ -102,6 +102,12 @@ def get_actions_panel(actions: Actions) -> Panel:
                 f"[bold cyan]•[/] Remover [cyan]{len(actions.to_remove)}[/] funcionários do Ahgora"
             )
 
+    if actions.absences is not None:
+        if not actions.absences.empty:
+            actions_list.append(
+                f"[bold cyan]•[/] Adicionar [cyan]{len(actions.absences)}[/] afastamentos/férias no Ahgora"
+            )
+
     if not actions_list:
         actions_list.append("[green]• Nenhuma ação pendente.[/green]")
 

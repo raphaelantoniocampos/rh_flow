@@ -13,7 +13,7 @@ from config import Config
 class Actions:
     to_add: pd.DataFrame | None
     to_remove: pd.DataFrame | None
-    leaves: pd.DataFrame | None
+    absences: pd.DataFrame | None
 
 
 class DataManager:
@@ -28,7 +28,7 @@ class DataManager:
             new_employees, dismissed_employees = self._generate_actions_dfs(
                 fiorilli_employees, ahgora_employees
             )
-            self.analyze_leaves()
+            # self.analyze_absences()
             save_dir = self.data_dir_path / "actions"
 
             if not new_employees.empty:
@@ -57,7 +57,7 @@ class DataManager:
 
         new_employees_path = actions_dir / "new_employees.csv"
         dismissed_employees_path = actions_dir / "dismissed_employees.csv"
-        leaves_path = actions_dir / "leaves.csv"
+        absences_path = actions_dir / "absences.csv"
 
         ignore_list = self.config.data.get("ignore", {})
         ignore_ids = set(ignore_list.keys())
@@ -66,54 +66,54 @@ class DataManager:
 
         if new_employees_path.exists():
             df_new = self._read_csv(new_employees_path)
-            df_new = df_new[~df_new["Matricula"].isin(ignore_ids)]
+            df_new = df_new[~df_new["id"].isin(ignore_ids)]
             actions.to_add = df_new
 
         if dismissed_employees_path.exists():
             df_dismissed = self._read_csv(dismissed_employees_path)
-            # df_dismissed = df_dismissed[~df_dismissed["Matricula"].isin(ignore_ids)]
+            # df_dismissed = df_dismissed[~df_dismissed["id"].isin(ignore_ids)]
             actions.to_remove = df_dismissed
 
-        if leaves_path.exists():
-            df_leaves = self._read_csv(leaves_path)
-            actions.leaves = df_leaves
+        if absences_path.exists():
+            df_absences = self._read_csv(absences_path)
+            actions.absences = df_absences
 
         return actions
 
-    def analyze_leaves(self):
+    def analyze_absences(self):
         try:
             print("--- Analisando afastamentos entre Fiorilli e Ahgora ---\n")
 
-            fiorilli_leaves, ahgora_leaves = self._get_leaves_data()
+            fiorilli_absences, ahgora_absences = self._get_absences_data()
 
-            fiorilli_ids = set(fiorilli_leaves["Matricula"])
-            ahgora_ids = set(ahgora_leaves["Matricula"])
+            fiorilli_ids = set(fiorilli_absences["id"])
+            ahgora_ids = set(ahgora_absences["id"])
 
-            # no_fio = fiorilli_leaves[~fiorilli_leaves["Matricula"].isin(ahgora_ids)]
-            # no_agora = ahgora_leaves[~ahgora_leaves["Matricula"].isin(fiorilli_ids)]
+            # no_fio = fiorilli_absences[~fiorilli_absences["id"].isin(ahgora_ids)]
+            # no_agora = ahgora_absences[~ahgora_absences["id"].isin(fiorilli_ids)]
 
-            fiorilli_leaves["key"] = (
-                fiorilli_leaves["Matricula"].astype(str)
+            fiorilli_absences["key"] = (
+                fiorilli_absences["id"].astype(str)
                 + "-"
-                + fiorilli_leaves["Data Inicio"].astype(str)
+                + fiorilli_absences["start_date"].astype(str)
                 + "-"
-                + fiorilli_leaves["Data Fim"].astype(str)
+                + fiorilli_absences["end_date"].astype(str)
             )
 
-            ahgora_leaves["key"] = (
-                ahgora_leaves["Matricula"].astype(str)
+            ahgora_absences["key"] = (
+                ahgora_absences["id"].astype(str)
                 + "-"
-                + ahgora_leaves["Data Inicio"].astype(str)
+                + ahgora_absences["start_date"].astype(str)
                 + "-"
-                + ahgora_leaves["Data Fim"].astype(str)
+                + ahgora_absences["end_date"].astype(str)
             )
 
-            not_common_leaves = fiorilli_leaves[
-                ~fiorilli_leaves["key"].isin(ahgora_leaves["key"])
+            not_common_absences = fiorilli_absences[
+                ~fiorilli_absences["key"].isin(ahgora_absences["key"])
             ].drop(columns=["key"])
 
-            not_common_leaves.to_csv("data\\actions\\leaves.csv", index=False, header=False)
-            # print(not_common_leaves)
+            not_common_absences.to_csv("data\\actions\\absences.csv", index=False, header=False)
+            # print(not_common_absences)
 
             print("[bold green]Afastamentos comparados com sucesso![/bold green]\n")
             sleep(1)
@@ -127,7 +127,7 @@ class DataManager:
         sep: str = ",",
         encoding: str = "utf-8",
         header: str | None = "infer",
-        cols_names: list[str] = [],
+        columns: list[str] = [],
     ):
         df = pd.read_csv(
             path,
@@ -135,33 +135,33 @@ class DataManager:
             encoding=encoding,
             index_col=False,
             header=header,
-            dtype={"Matricula": str},
+            dtype={"id": str},
         )
-        return self._prepare_dataframe(df=df, cols_names=cols_names)
+        return self._prepare_dataframe(df=df, columns=columns)
 
-    def _prepare_dataframe(self, df, cols_names: list[str] = []):
-        if cols_names:
-            df.columns = cols_names
+    def _prepare_dataframe(self, df, columns: list[str] = []):
+        if columns:
+            df.columns = columns
         else:
-            cols_names = df.columns
+            columns = df.columns
 
         for col in df.columns:
-            if "Data" in col:
+            if "date" in col:
                 df[col] = df[col].apply(self._convert_date)
                 df[col] = pd.to_datetime(df[col], dayfirst=True, errors="coerce")
                 df[col] = df[col].dt.strftime("%d/%m/%Y")
 
-        if "CPF" in df.columns:
-            df["CPF"] = df["CPF"].fillna("").astype(str).str.zfill(11)
+        if "cpf" in df.columns:
+            df["cpf"] = df["cpf"].fillna("").astype(str).str.zfill(11)
 
-        if "Cod" in df.columns:
-            df["Cod"] = df["Cod"].fillna("").astype(str).str.zfill(3)
+        if "cod" in df.columns:
+            df["cod"] = df["cod"].fillna("").astype(str).str.zfill(3)
 
-        if "Nome" in df.columns:
-            df["Nome"] = df["Nome"].str.strip().str.upper()
+        if "name" in df.columns:
+            df["name"] = df["name"].str.strip().str.upper()
 
-        if "Matricula" in df.columns:
-            df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
+        if "id" in df.columns:
+            df["id"] = df["id"].astype(str).str.zfill(6)
 
         return df
 
@@ -207,121 +207,134 @@ class DataManager:
             sep="|",
             encoding="latin1",
             header=None,
-            cols_names=[
-                "Matricula",
-                "Nome",
-                "CPF",
-                "Sexo",
-                "Data Nascimento",
-                "PIS-PASEP",
-                "Cargo",
-                "Localizacao",
-                "Departamento",
-                "Vinculo",
-                "Data Admissao",
-                "Data Desligamento",
+            columns=[
+                "id",
+                "name",
+                "cpf",
+                "sex",
+                "birth_date",
+                "pis_pasep",
+                "position",
+                "location",
+                "department",
+                "binding",
+                "admission_date",
+                "dismissal_date",
             ],
         )
 
         ahgora_employees = self._read_csv(
             ahgora_employees_path,
             header=None,
-            cols_names=[
-                "Matricula",
-                "Nome",
-                "Cargo",
-                "Escala",
-                "Departamento",
-                "Localizacao",
-                "Data Admissao",
-                "Data Desligamento",
+            columns=[
+                "id",
+                "name",
+                "position",
+                "scale",
+                "department",
+                "location",
+                "admission_date",
+                "dismissal_date",
             ],
         )
         return fiorilli_employees, ahgora_employees
 
-    def _get_leaves_data(self) -> (pd.DataFrame, pd.DataFrame):
-        fiorilli_leaves_path = self.data_dir_path / "fiorilli" / "leaves.txt"
-        fiorilli_vacation_path = self.data_dir_path / "fiorilli" / "vacation.txt"
-        ahgora_leaves_path = self.data_dir_path / "ahgora" / "leaves.csv"
+    def _get_absences_data(self) -> (pd.DataFrame, pd.DataFrame):
+        fiorilli_absences_path = self.data_dir_path / "fiorilli" / "absences.txt"
+        fiorilli_vacationss_path = self.data_dir_path / "fiorilli" / "vacations.txt"
+        ahgora_absences_path = self.data_dir_path / "ahgora" / "absences.csv"
 
         fiorilli_columns = [
-            "Matricula",
-            "Cod",
-            "Data Inicio",
-            "Hora Inicio",
-            "Data Fim",
-            "Hora Fim",
+            "id",
+            "cod",
+            "start_date",
+            "start_time",
+            "end_date",
+            "end_time",
         ]
-        # fiorilli_leaves = pd.concat(
+        # fiorilli_absences = pd.concat(
         #     [
         #         self._read_csv(
-        #             fiorilli_vacation_path,
+        #             fiorilli_vacations_path,
         #             header=None,
-        #             cols_names=fiorilli_columns,
+        #             columns=fiorilli_columns,
         #         ),
         #         self._read_csv(
-        #             fiorilli_leaves_path,
+        #             fiorilli_absences_path,
         #             header=None,
-        #             cols_names=fiorilli_columns,
+        #             columns=fiorilli_columns,
         #         ),
         #     ]
         # )
 
-        fiorilli_leaves = self._read_csv(
-            fiorilli_leaves_path,
+        fiorilli_absences = self._read_csv(
+            fiorilli_absences_path,
             header=None,
-            cols_names=fiorilli_columns,
+            columns=fiorilli_columns,
         )
-
-        ahgora_leaves = self._read_csv(
-            ahgora_leaves_path,
+        ahgora_absences = self._read_csv(
+            ahgora_absences_path,
             sep=";",
-            cols_names=[
-                "Nome",
-                "Matricula",
-                "Cod",
-                "Motivo",
-                "Data Inicio",
-                "Data Fim",
+            columns=[
+                "name",
+                "id",
+                "pis_pasep",
+                "cpf",
+                "cod",
+                "admission_date",
+                "birth_date",
+                "position",
+                "department",
+                "branch",
+                "regime",
+                "cost_center",
+                "location",
+                "day",
+                "week_day",
+                "total_absence",
+                "reason",
+                "start_date",
+                "end_date",
+                "dismissal_date",
             ],
         )
 
-        return fiorilli_leaves, ahgora_leaves
+        return fiorilli_absences, ahgora_absences
 
     def _generate_actions_dfs(
         self, fiorilli_employees: pd.DataFrame, ahgora_employees: pd.DataFrame
     ):
         fiorilli_dismissed_df = fiorilli_employees[
-            fiorilli_employees["Data Desligamento"].notna()
+            fiorilli_employees["dismissal_date"].notna()
         ]
-        fiorilli_dismissed_ids = set(fiorilli_dismissed_df["Matricula"])
+        fiorilli_dismissed_ids = set(fiorilli_dismissed_df["id"])
 
         ahgora_dismissed_df = ahgora_employees[
-            ahgora_employees["Data Desligamento"].notna()
+            ahgora_employees["dismissal_date"].notna()
         ]
-        ahgora_dismissed_ids = set(ahgora_dismissed_df["Matricula"])
+        ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
 
         dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
 
         fiorilli_active_df = fiorilli_employees[
-            ~fiorilli_employees["Matricula"].isin(dismissed_ids)
+            ~fiorilli_employees["id"].isin(dismissed_ids)
         ]
 
-        ahgora_ids = set(ahgora_employees["Matricula"])
+        ahgora_ids = set(ahgora_employees["id"])
 
         new_employees = fiorilli_active_df[
-            ~fiorilli_active_df["Matricula"].isin(ahgora_ids)
+            ~fiorilli_active_df["id"].isin(ahgora_ids)
         ]
 
         dismissed_employees = ahgora_employees[
-            ahgora_employees["Matricula"].isin(fiorilli_dismissed_ids)
-            & ~ahgora_employees["Matricula"].isin(ahgora_dismissed_ids)
+            ahgora_employees["id"].isin(fiorilli_dismissed_ids)
+            & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
         ]
 
-        dismissed_employees = dismissed_employees.drop(columns=["Data Desligamento"])
+        dismissed_employees = dismissed_employees.drop(columns=["dismissal_date"])
         dismissed_employees = dismissed_employees.merge(
-            fiorilli_dismissed_df[["Matricula", "Data Desligamento"]],
-            on="Matricula",
+            fiorilli_dismissed_df[["id", "dismissal_date"]],
+            on="id",
             how="left",
         )
 
@@ -329,21 +342,21 @@ class DataManager:
 
         # merged_employees = fiorilli_employees.merge(
         #     ahgora_employees,
-        #     on="Matricula",
+        #     on="id",
         #     suffixes=('_fiorilli', '_ahgora'),
         #     how="inner"
         # )
         #
         # changed_position_employees = merged_employees[
-        #     merged_employees["Cargo_fiorilli"] == merged_employees["Cargo_ahgora"]
+        #     merged_employees["position_fiorilli"] == merged_employees["position_ahgora"]
         # ]
         #
         # for i, r in merged_employees.iterrows():
         #     print(i)
         #     print(r)
         #     print('\n')
-        #     print(type(r["Data Desligamento_fiorilli"]))
-        #     print(r["Data Desligamento_fiorilli"] + 55)
+        #     print(type(r["dismissal_date_fiorilli"]))
+        #     print(r["dismissal_date_fiorilli"] + 55)
         #     break
         # print("Pronto")
         # sleep(999)

@@ -22,10 +22,10 @@ def verify_paths():
 
     needed_files = [
         Path(working_dir_path / "data" / "ahgora" / "employees.csv"),
-        Path(working_dir_path / "data" / "ahgora" / "leaves.csv"),
+        Path(working_dir_path / "data" / "ahgora" / "absences.csv"),
         Path(working_dir_path / "data" / "fiorilli" / "employees.txt"),
-        Path(working_dir_path / "data" / "fiorilli" / "leaves.txt"),
-        Path(working_dir_path / "data" / "fiorilli" / "vacation.txt"),
+        Path(working_dir_path / "data" / "fiorilli" / "absences.txt"),
+        Path(working_dir_path / "data" / "fiorilli" / "vacations.txt"),
     ]
 
     for path in needed_directories:

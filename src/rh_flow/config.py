@@ -34,7 +34,7 @@ class Config:
             )
 
             ignored_list = [
-                f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+                f"{id} - {data['admission_date']} - {data['name']} - {data['binding']}"
                 for id, data in ignore_data.items()
             ]
 
@@ -98,30 +98,30 @@ class Config:
     def update_employees_to_ignore(self, df: pd.DataFrame, to: str) -> pd.DataFrame:
         if to == "add":
             employees_dict = {
-                str(series["Matricula"]): {
-                    "Matricula": series["Matricula"],
-                    "Data Admissao": series["Data Admissao"],
-                    "Nome": series["Nome"],
-                    "Vinculo": series["Vinculo"],
+                str(series["id"]): {
+                    "id": series["id"],
+                    "admission_date": series["admission_date"],
+                    "name": series["name"],
+                    "binding": series["binding"],
                 }
                 for _, series in df.iterrows()
             }
             employees_list = [
-                f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+                f"{id} - {data['admission_date']} - {data['name']} - {data['binding']}"
                 for id, data in employees_dict.items()
             ]
         if to == "remove":
             employees_dict = {
-                str(series["Matricula"]): {
-                    "Matricula": series["Matricula"],
-                    "Data Admissao": series["Data Admissao"],
-                    "Nome": series["Nome"],
-                    "Vinculo": series["Data Desligamento"],
+                str(series["id"]): {
+                    "id": series["id"],
+                    "admission_date": series["admission_date"],
+                    "name": series["name"],
+                    "binding": series["dismissal_date"],
                 }
                 for _, series in df.iterrows()
             }
             employees_list = [
-                f"{id} - {data['Data Admissao']} - {data['Nome']} - {data['Vinculo']}"
+                f"{id} - {data['admission_date']} - {data['name']} - {data['binding']}"
                 for id, data in employees_dict.items()
             ]
 
@@ -142,7 +142,7 @@ class Config:
 
         self._update("ignore", value=to_ignore_dict)
 
-        return df[~df["Matricula"].isin(to_ignore_dict.keys())]
+        return df[~df["id"].isin(to_ignore_dict.keys())]
 
     def update_last_analisys(self):
         now = datetime.now()
@@ -157,11 +157,11 @@ class Config:
             if "funcionarios" in file.name.lower():
                 file.replace(self.data_dir_path / 'ahgora' / 'employees.csv')
             if "tabledownloadcsv" in file.name.lower():
-                file.replace(self.data_dir_path / 'ahgora' / 'leaves.csv')
+                file.replace(self.data_dir_path / 'ahgora' / 'absences.csv')
             if "pontoafastamentos" in file.name.lower():
-                file.replace(self.data_dir_path / 'fiorilli' / 'leaves.txt')
+                file.replace(self.data_dir_path / 'fiorilli' / 'absences.txt')
             if "pontoferias" in file.name.lower():
-                file.replace(self.data_dir_path / 'fiorilli' / 'vacation.txt')
+                file.replace(self.data_dir_path / 'fiorilli' / 'vacations.txt')
 
     def _load(self) -> dict:
         if self.path.exists():

@@ -22,7 +22,7 @@ class AhgoraApp:
         self.import_files = import_files
         self.center = None
 
-    def add_leaves(self):
+    def add_absences(self):
         print("--- ADICIONAR AFASTAMENTOS ---")
         service = webdriver.ChromeService(service_args=["--log-level=OFF"])
 

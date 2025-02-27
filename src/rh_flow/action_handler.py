@@ -160,7 +160,7 @@ class ActionHandler:
                 f"Pressione {self.KEY_STOP.colored} para [bold white]sair...[/bold white]"
             )
             for index, field in series.items():
-                if index == "Matricula":
+                if index == "id":
                     continue
                 copy(field)
                 print(f"({index} '{field}' copiado para a área de transferência!)")
@@ -203,13 +203,13 @@ class ActionHandler:
             print(
                 f"Pressione {self.KEY_STOP.colored} para [bold white]sair...[/bold white]"
             )
-            name = series["Nome"]
-            print(f"(Nome '{name}' copiado para a área de transferência!)")
+            name = series["name"]
+            print(f"(name '{name}' copiado para a área de transferência!)")
             copy(name)
             while True:
                 if keyboard.is_pressed(self.KEY_CONTINUE.key):
-                    date = series["Data Desligamento"]
-                    print(f"(Matricula '{date}' copiado para a área de transferência!)")
+                    date = series["dismissal_date"]
+                    print(f"(id '{date}' copiado para a área de transferência!)")
                     copy(date)
                     sleep(0.5)
                     continue
@@ -226,7 +226,7 @@ class ActionHandler:
 
     def _semi_auto_add(self, row):
         print(
-            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/] e Aperte {self.KEY_SEMI_AUTO.colored} para começar ou {self.KEY_STOP.colored} para sair."
+            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]name[/] e Aperte {self.KEY_SEMI_AUTO.colored} para começar ou {self.KEY_STOP.colored} para sair."
         )
         while True:
             if keyboard.is_pressed(self.KEY_SEMI_AUTO.key):
@@ -236,18 +236,18 @@ class ActionHandler:
                 print("Interrompido pelo usuário.")
                 return
 
-        pyautogui.write(row["Nome"], interval=0.02)
+        pyautogui.write(row["name"], interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab", presses=7, interval=0.005)
         sleep(0.2)
 
         print(
-            f"Confira o PIS-PASEP e Pressione {self.KEY_SEMI_AUTO.colored} para continuar"
+            f"Confira o pis_pasep e Pressione {self.KEY_SEMI_AUTO.colored} para continuar"
         )
-        print(str(row["PIS-PASEP"]))
+        print(str(row["pis_pasep"]))
 
-        pyautogui.write(str(row["PIS-PASEP"]), interval=0.02)
+        pyautogui.write(str(row["pis_pasep"]), interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab")
@@ -262,20 +262,20 @@ class ActionHandler:
         pyautogui.press("tab")
         sleep(0.2)
 
-        pyautogui.write(str(row["CPF"]), interval=0.02)
+        pyautogui.write(str(row["cpf"]), interval=0.02)
         sleep(0.2)
 
         for i in range(5):
             pyautogui.hotkey("shift", "tab")
             sleep(0.005)
 
-        pyautogui.write(row["Data Nascimento"], interval=0.02)
+        pyautogui.write(row["birth_date"], interval=0.02)
         sleep(0.2)
 
         pyautogui.hotkey("shift", "tab")
         sleep(0.1)
 
-        pyautogui.write(row["Sexo"], interval=0.02)
+        pyautogui.write(row["sex"], interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab", presses=19, interval=0.005)
@@ -287,13 +287,13 @@ class ActionHandler:
         pyautogui.press("tab")
         sleep(0.2)
 
-        pyautogui.write(str(row["Matricula"]), interval=0.02)
+        pyautogui.write(str(row["id"]), interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab", presses=2, interval=0.005)
         sleep(0.2)
 
-        pyautogui.write(row["Data Admissao"], interval=0.02)
+        pyautogui.write(row["admission_date"], interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab", presses=3, interval=0.005)
@@ -305,13 +305,13 @@ class ActionHandler:
         pyautogui.press("tab", presses=7, interval=0.005)
         sleep(0.2)
 
-        pyautogui.write(row["Cargo"], interval=0.02)
+        pyautogui.write(row["position"], interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab", presses=2, interval=0.005)
         sleep(0.2)
 
-        pyautogui.write(row["Localizacao"][:15], interval=0.02)
+        pyautogui.write(row["location"][:15], interval=0.02)
         sleep(0.2)
 
         pyautogui.press("tab", presses=3, interval=0.005)
@@ -324,7 +324,7 @@ class ActionHandler:
         sleep(0.2)
 
         print(
-            f"Insira a Localização\n[yellow]{row['Localizacao']}\n[/]Pressione {self.KEY_NEXT.colored} para o próximo funcionário..."
+            f"Insira a Localização\n[yellow]{row['location']}\n[/]Pressione {self.KEY_NEXT.colored} para o próximo funcionário..."
         )
 
         while True:

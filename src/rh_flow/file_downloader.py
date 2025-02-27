@@ -74,12 +74,12 @@ class FileDownloader:
 
             if "PontoFerias" in file_path:
                 os.replace(
-                    file_path, os.path.join(self.data_dir, "fiorilli", "vacations.txt")
+                    file_path, os.path.join(self.data_dir, "fiorilli", "vacationss.txt")
                 )
 
             if "PontoAfastamentos" in file_path:
                 os.replace(
-                    file_path, os.path.join(self.data_dir, "fiorilli", "leaves.txt")
+                    file_path, os.path.join(self.data_dir, "fiorilli", "absences.txt")
                 )
 
             if "FUNCIONARIOS_ATIVOS" in file_path:
@@ -334,12 +334,12 @@ class FileDownloader:
 #     ]
 #     afastamentos_df = os.path.concat(df_list)
 #     afastamentos_df.columns = [
-#         "Matricula",
-#         "Motivo",
-#         "Data Inicio",
-#         "Hora Inicio",
-#         "Data Fim",
-#         "Hora Fim",
+#         "id",
+#         "reason",
+#         "start_date",
+#         "start_time",
+#         "end_date",
+#         "end_time",
 #     ]
 #     print("--- Afastamentos Baixados ---")
 #     print(afastamentos_df)
@@ -348,7 +348,7 @@ class FileDownloader:
 #     if start_import == "s" or start_import == "":
 #         ahgora_app = AhgoraApp(
 #             download_dir=data_dir,
-#             assets_path=join(working_dir, "leaves", "ahgora_app", "assets"),
+#             assets_path=join(working_dir, "absences", "ahgora_app", "assets"),
 #             interval=INTERVAL,
 #             write_interval=WRITE_INTERVAL,
 #             import_files=afastamentos,
