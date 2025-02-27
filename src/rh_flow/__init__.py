@@ -1,12 +1,11 @@
 from config import Config
-import datetime
 from pathlib import Path
 import json
 
 
 def verify_paths():
     working_dir_path = Path.cwd()
-    config_path = Path(working_dir_path / 'data' / 'config.json')
+    config_path = Path(working_dir_path / "data" / "config.json")
     if config_path.exists():
         with open(config_path, "r") as f:
             config_json = json.load(f)
@@ -23,7 +22,10 @@ def verify_paths():
 
     needed_files = [
         Path(working_dir_path / "data" / "ahgora" / "employees.csv"),
+        Path(working_dir_path / "data" / "ahgora" / "leaves.csv"),
         Path(working_dir_path / "data" / "fiorilli" / "employees.txt"),
+        Path(working_dir_path / "data" / "fiorilli" / "leaves.txt"),
+        Path(working_dir_path / "data" / "fiorilli" / "vacation.txt"),
     ]
 
     for path in needed_directories:
@@ -34,7 +36,16 @@ def verify_paths():
         if not path.exists():
             path.touch()
         else:
-            if any(keyword in path.name for keyword in ["Trabalhador", "funcionarios"]):
+            if any(
+                keyword in path.name.lower()
+                for keyword in [
+                    "trabalhador",
+                    "funcionarios",
+                    "tabledownloadcsv",
+                    "pontoafastamentos",
+                    "pontoferias",
+                ]
+            ):
                 backup_path = path.with_name(f"backup_{path.name}")
                 path.replace(backup_path)
                 path.touch()

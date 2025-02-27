@@ -56,7 +56,7 @@ def main():
                     config.config_panel(console)
 
                 case "Sair":
-                    break
+                   raise KeyboardInterrupt 
 
     except KeyboardInterrupt:
         print("Saindo...")

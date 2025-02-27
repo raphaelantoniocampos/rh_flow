@@ -1,3 +1,4 @@
+import numpy as np
 from time import sleep
 from pathlib import Path
 import os
@@ -12,6 +13,7 @@ from config import Config
 class Actions:
     to_add: pd.DataFrame | None
     to_remove: pd.DataFrame | None
+    leaves: pd.DataFrame | None
 
 
 class DataManager:
@@ -26,6 +28,7 @@ class DataManager:
             new_employees, dismissed_employees = self._generate_actions_dfs(
                 fiorilli_employees, ahgora_employees
             )
+            self.analyze_leaves()
             save_dir = self.data_dir_path / "actions"
 
             if not new_employees.empty:
@@ -54,21 +57,26 @@ class DataManager:
 
         new_employees_path = actions_dir / "new_employees.csv"
         dismissed_employees_path = actions_dir / "dismissed_employees.csv"
+        leaves_path = actions_dir / "leaves.csv"
 
         ignore_list = self.config.data.get("ignore", {})
         ignore_ids = set(ignore_list.keys())
 
-        actions = Actions(None, None)
+        actions = Actions(None, None, None)
 
-        if os.path.isfile(new_employees_path):
+        if new_employees_path.exists():
             df_new = self._read_csv(new_employees_path)
             df_new = df_new[~df_new["Matricula"].isin(ignore_ids)]
             actions.to_add = df_new
 
-        if os.path.isfile(dismissed_employees_path):
+        if dismissed_employees_path.exists():
             df_dismissed = self._read_csv(dismissed_employees_path)
             # df_dismissed = df_dismissed[~df_dismissed["Matricula"].isin(ignore_ids)]
             actions.to_remove = df_dismissed
+
+        if leaves_path.exists():
+            df_leaves = self._read_csv(leaves_path)
+            actions.leaves = df_leaves
 
         return actions
 
@@ -104,8 +112,8 @@ class DataManager:
                 ~fiorilli_leaves["key"].isin(ahgora_leaves["key"])
             ].drop(columns=["key"])
 
-            not_common_leaves.to_csv("no.csv", index=False, header=False)
-            print(not_common_leaves)
+            not_common_leaves.to_csv("data\\actions\\leaves.csv", index=False, header=False)
+            # print(not_common_leaves)
 
             print("[bold green]Afastamentos comparados com sucesso![/bold green]\n")
             sleep(1)
@@ -129,30 +137,30 @@ class DataManager:
             header=header,
             dtype={"Matricula": str},
         )
-
         return self._prepare_dataframe(df=df, cols_names=cols_names)
 
     def _prepare_dataframe(self, df, cols_names: list[str] = []):
-        if not cols_names:
+        if cols_names:
+            df.columns = cols_names
+        else:
             cols_names = df.columns
-        df.columns = cols_names
 
-        for col in cols_names:
+        for col in df.columns:
             if "Data" in col:
                 df[col] = df[col].apply(self._convert_date)
                 df[col] = pd.to_datetime(df[col], dayfirst=True, errors="coerce")
                 df[col] = df[col].dt.strftime("%d/%m/%Y")
 
-        if "CPF" in cols_names:
+        if "CPF" in df.columns:
             df["CPF"] = df["CPF"].fillna("").astype(str).str.zfill(11)
 
-        if "Cod" in cols_names:
+        if "Cod" in df.columns:
             df["Cod"] = df["Cod"].fillna("").astype(str).str.zfill(3)
 
-        if "Nome" in cols_names:
+        if "Nome" in df.columns:
             df["Nome"] = df["Nome"].str.strip().str.upper()
 
-        if "Matricula" in cols_names:
+        if "Matricula" in df.columns:
             df["Matricula"] = df["Matricula"].astype(str).str.zfill(6)
 
         return df
@@ -173,7 +181,7 @@ class DataManager:
             "Dez": "Dec",
         }
         if pd.isna(data_str) or not isinstance(data_str, str):
-            return None
+            return np.nan
         partes = data_str.split(", ")
         if len(partes) > 1:
             data_str = partes[1]
@@ -188,6 +196,7 @@ class DataManager:
                 return pd.to_datetime(
                     data_str, format="%d/%b/%Y %H:%M", errors="coerce"
                 )
+                
 
     def _get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
         fiorilli_employees_path = self.data_dir_path / "fiorilli" / "employees.txt"
@@ -228,7 +237,6 @@ class DataManager:
                 "Data Desligamento",
             ],
         )
-
         return fiorilli_employees, ahgora_employees
 
     def _get_leaves_data(self) -> (pd.DataFrame, pd.DataFrame):
@@ -318,3 +326,28 @@ class DataManager:
         )
 
         return new_employees, dismissed_employees
+
+        # merged_employees = fiorilli_employees.merge(
+        #     ahgora_employees,
+        #     on="Matricula",
+        #     suffixes=('_fiorilli', '_ahgora'),
+        #     how="inner"
+        # )
+        #
+        # changed_position_employees = merged_employees[
+        #     merged_employees["Cargo_fiorilli"] == merged_employees["Cargo_ahgora"]
+        # ]
+        #
+        # for i, r in merged_employees.iterrows():
+        #     print(i)
+        #     print(r)
+        #     print('\n')
+        #     print(type(r["Data Desligamento_fiorilli"]))
+        #     print(r["Data Desligamento_fiorilli"] + 55)
+        #     break
+        # print("Pronto")
+        # sleep(999)
+        #
+        # return new_employees, dismissed_employees, changed_position_employees
+        #
+        #

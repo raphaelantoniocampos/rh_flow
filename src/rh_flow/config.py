@@ -152,10 +152,16 @@ class Config:
     def _move_files_from_download(self, working_dir_path: Path):
         downloads_path = Path(working_dir_path / 'downloads')
         for file in downloads_path.iterdir():
-            if "Trabalhador" in file.name:
+            if "trabalhador" in file.name.lower():
                 file.replace(self.data_dir_path / 'fiorilli' / 'employees.txt')
-            if "funcionarios" in file.name:
+            if "funcionarios" in file.name.lower():
                 file.replace(self.data_dir_path / 'ahgora' / 'employees.csv')
+            if "tabledownloadcsv" in file.name.lower():
+                file.replace(self.data_dir_path / 'ahgora' / 'leaves.csv')
+            if "pontoafastamentos" in file.name.lower():
+                file.replace(self.data_dir_path / 'fiorilli' / 'leaves.txt')
+            if "pontoferias" in file.name.lower():
+                file.replace(self.data_dir_path / 'fiorilli' / 'vacation.txt')
 
     def _load(self) -> dict:
         if self.path.exists():
