@@ -101,7 +101,9 @@ class ActionHandler:
             sleep(0.5)
             df = self.config.update_employees_to_ignore(df, to)
 
-        ok_input = inquirer.prompt([inquirer.Confirm("yes", message="Começar?")])
+        ok_input = inquirer.prompt(
+            [inquirer.Confirm("yes", message="Começar?", default="yes")]
+        )
         sleep(0.5)
         if not ok_input["yes"]:
             return

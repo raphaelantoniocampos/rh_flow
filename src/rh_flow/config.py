@@ -8,15 +8,6 @@ from rich.panel import Panel
 from pathlib import Path
 import json
 
-INIT_CONFIG = {
-    "init_date": "",
-    "ignore": {},
-    "last_analisys": {"datetime": "", "time_since": ""},
-    "last_download": {
-        "ahgora": {"datetime": "", "time_since": ""},
-        "fiorilli": {"datetime": "", "time_since": ""},
-    },
-}
 
 NO_IGNORED_STR = (
     "\n    [yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"
@@ -29,6 +20,7 @@ class Config:
         self.path: Path = self.data_dir_path / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
+        self._move_files_from_download(working_dir_path)
 
     def config_panel(self, console: Console) -> None:
         while True:
@@ -148,7 +140,7 @@ class Config:
             for ignore in employees_to_ignore
         }
 
-        self.update("ignore", value=to_ignore_dict)
+        self._update("ignore", value=to_ignore_dict)
 
         return df[~df["Matricula"].isin(to_ignore_dict.keys())]
 
@@ -156,6 +148,14 @@ class Config:
         now = datetime.now()
         last_analisys = {"datetime": now.strftime("%d/%m/%Y, %H:%M"), "time_since": now}
         self._update_analysis_time_since(last_analisys, now)
+
+    def _move_files_from_download(self, working_dir_path: Path):
+        downloads_path = Path(working_dir_path / 'downloads')
+        for file in downloads_path.iterdir():
+            if "Trabalhador" in file.name:
+                file.replace(self.data_dir_path / 'fiorilli' / 'employees.txt')
+            if "funcionarios" in file.name:
+                file.replace(self.data_dir_path / 'ahgora' / 'employees.csv')
 
     def _load(self) -> dict:
         if self.path.exists():
@@ -167,7 +167,7 @@ class Config:
     def _read(self) -> dict:
         return self.data
 
-    def update(self, *keys, value=None) -> dict:
+    def _update(self, *keys, value=None) -> dict:
         data = self.data
         *path, last_key = keys
 
@@ -188,8 +188,17 @@ class Config:
 
     def _create(self) -> dict:
         with open(self.path, "w") as f:
-            json.dump(INIT_CONFIG, f, indent=4)
-        return INIT_CONFIG
+            init_config = {
+                "init_date": datetime.now().strftime("%d/%m/%Y, %H:%M"),
+                "ignore": {},
+                "last_analisys": {"datetime": "", "time_since": ""},
+                "last_download": {
+                    "ahgora": {"datetime": "", "time_since": ""},
+                    "fiorilli": {"datetime": "", "time_since": ""},
+                },
+            }
+            json.dump(init_config, f, indent=4)
+        return init_config
 
     def _delete(self, field: str, key: str) -> str:
         if field in self.data and key in self.data[field]:
@@ -229,7 +238,7 @@ class Config:
             last_analisys["time_since"] = self._format_timedelta(
                 time_since_last_analisys
             )
-            self.update("last_analisys", value=last_analisys)
+            self._update("last_analisys", value=last_analisys)
 
     def _update_downloads_time_since(
         self, last_download: dict, app_name: str, now: timedelta
@@ -246,7 +255,7 @@ class Config:
             time_since_last_download
         )
 
-        self.update("last_download", app_name, value=app_last_download)
+        self._update("last_download", app_name, value=app_last_download)
 
     def _get_last_download(self, app_name: str) -> str:
         file_path = Path(
@@ -265,4 +274,3 @@ class Config:
             str_return += f"{key}: {value}\n"
 
         return str_return
-

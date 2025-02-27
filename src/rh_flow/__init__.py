@@ -1,10 +1,18 @@
+from config import Config
 import datetime
 from pathlib import Path
-from config import Config
+import json
 
 
 def verify_paths():
     working_dir_path = Path.cwd()
+    config_path = Path(working_dir_path / 'data' / 'config.json')
+    if config_path.exists():
+        with open(config_path, "r") as f:
+            config_json = json.load(f)
+            if config_json.get("init_date"):
+                return
+
     needed_directories = [
         Path(working_dir_path / "downloads"),
         Path(working_dir_path / "data"),
@@ -31,6 +39,4 @@ def verify_paths():
                 path.replace(backup_path)
                 path.touch()
 
-    config = Config(working_dir_path)
-    if not config.data.get("init_date"):
-        config.update("init_date", value=datetime.now().strftime("%d/%m/%Y"))
+    Config(working_dir_path)
