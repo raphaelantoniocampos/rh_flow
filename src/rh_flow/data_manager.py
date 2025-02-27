@@ -24,11 +24,11 @@ class DataManager:
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):
         try:
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
+            self.analyze_absences()
             fiorilli_employees, ahgora_employees = self._get_employees_data()
             new_employees, dismissed_employees = self._generate_actions_dfs(
                 fiorilli_employees, ahgora_employees
             )
-            # self.analyze_absences()
             save_dir = self.data_dir_path / "actions"
 
             if not new_employees.empty:
@@ -290,6 +290,7 @@ class DataManager:
                 "cost_center",
                 "location",
                 "day",
+                "scale",
                 "week_day",
                 "total_absence",
                 "reason",
