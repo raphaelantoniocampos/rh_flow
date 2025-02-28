@@ -107,9 +107,7 @@ class Action:
                     "[bold yellow]Nenhum cargo para alterar no momento.[/bold yellow]"
                 )
             else:
-                order = (
-                    f"[bold cyan]•[/] Alterar [cyan]{self.len}[/] cargos no Ahgora"
-                )
+                order = f"[bold cyan]•[/] Alterar [cyan]{self.len}[/] cargos no Ahgora"
         if self.name == "absences":
             if self.is_empty():
                 order = "[bold yellow]Nenhum novo afastamento para adicionar no momento.[/bold yellow]"
@@ -117,3 +115,14 @@ class Action:
                 order = f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] afastamentos no Ahgora"
 
         return order
+
+        def __str__(self):
+            return f"""
+-name: {self.name}
+-path: {self.path}
+-df: {self.df}
+-len: {self.len}
+-option: {self.option}
+-order: {self.order}
+-fun: {self.fun}
+-"""
