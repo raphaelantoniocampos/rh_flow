@@ -1,6 +1,5 @@
-from pathlib import Path
-
 from data_manager import read_csv
+from pathlib import Path
 from pandas import DataFrame
 
 
@@ -61,6 +60,7 @@ class Action:
     def _get_df(self) -> DataFrame | None:
         if not self.path_exists():
             return DataFrame()
+
         return read_csv(self.path)
 
     def _get_path(self):
@@ -117,14 +117,3 @@ class Action:
                 order = f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] afastamentos no Ahgora"
 
         return order
-
-        def __str__(self):
-            return f"""
-name: {self.name}
-path: {self.path}
-df: {self.df}
-len: {self.len}
-option: {self.option}
-order: {self.order}
-fun: {self.fun}
-"""

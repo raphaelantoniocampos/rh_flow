@@ -1,16 +1,17 @@
 from dataclasses import dataclass
-from pathlib import Path
 from time import sleep
 
 import inquirer
 import keyboard
-import pandas as pd
 import pyautogui
-from action import Action
+from rich import print
+from pyperclip import copy
+import pandas as pd
+
 from config import Config
 from data_manager import DataManager
-from pyperclip import copy
-from rich import print
+from pathlib import Path
+from action import Action
 
 
 @dataclass
@@ -40,8 +41,8 @@ class ActionHandler:
             for action in self.actions:
                 if option == action.option:
                     sleep(1)
-                    if action.len == 0:
-                        print(action.option)
+                    if action.length == 0:
+                        print(action.order_string)
                         return
                     self._prepare_list_and_run(action)
 
@@ -53,26 +54,14 @@ class ActionHandler:
             Action("absences", None),
         ]
 
-    def _show_actions_menu(self) -> dict[str, str]:
-        orders = []
-
-        for action in self.actions:
-            orders.append(action.option)
-
-        choices = [f"{index}. {order}" for index, order in enumerate(orders, start=1)]
-        choices.append(f"{len(choices) + 1}. Sair")
-        questions = [
-            inquirer.List("option", message="Selecione uma opção", choices=choices),
-        ]
-        answers = inquirer.prompt(questions)
-        return answers["option"]
-
     def _prepare_list_and_run(
         self,
         action: Action,
     ):
         sleep(1)
-        print(action.order)
+        ignore_ids = self.config.data.get("ignore", {}).keys()
+        action.df = action.df[~action.df["id"].isin(ignore_ids)]
+        print(action.order_string)
         see_list = inquirer.prompt(
             [
                 inquirer.Confirm(
@@ -98,6 +87,20 @@ class ActionHandler:
             return
 
         action.fun(df)
+
+    def _show_actions_menu(self) -> dict[str, str]:
+        options = []
+
+        for action in self.actions:
+            options.append(action.option)
+
+        choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]
+        choices.append(f"{len(choices) + 1}. Sair")
+        questions = [
+            inquirer.List("option", message="Selecione uma opção", choices=choices),
+        ]
+        answers = inquirer.prompt(questions)
+        return answers["option"]
 
     def _add_employees(self, df: pd.DataFrame) -> None:
         for i, series in df.iterrows():
