@@ -1,11 +1,10 @@
-from datetime import date
 import os
+from datetime import date
 from time import sleep
-
-from rich import print
 
 import pyautogui
 from dotenv import load_dotenv
+from rich import print
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -74,7 +73,7 @@ class FileDownloader:
 
             if "PontoFerias" in file_path:
                 os.replace(
-                    file_path, os.path.join(self.data_dir, "fiorilli", "vacationss.txt")
+                    file_path, os.path.join(self.data_dir, "fiorilli", "vacations.txt")
                 )
 
             if "PontoAfastamentos" in file_path:

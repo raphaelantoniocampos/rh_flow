@@ -1,17 +1,16 @@
-from __init__ import verify_paths
-
-from pathlib import Path
 import time
+from pathlib import Path
 
 import inquirer
+from __init__ import verify_paths
+from action_handler import ActionHandler
+from action import Action
+from config import Config
+from data_manager import DataManager
+from file_downloader import FileDownloader
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
-
-from file_downloader import FileDownloader
-from data_manager import DataManager, Actions
-from action_handler import ActionHandler
-from config import Config
 
 verify_paths()
 
@@ -32,11 +31,11 @@ def main():
     try:
         config = Config(WORKING_DIR_PATH)
         data_manager = DataManager(WORKING_DIR_PATH, config)
-
+        action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
         file_downloader = FileDownloader(WORKING_DIR_PATH)
 
         while True:
-            actions = data_manager.get_actions()
+            actions = action_handler.get_actions()
             option = show_menu(actions)
             match option:
                 case "Baixar arquivos":
@@ -49,14 +48,13 @@ def main():
                     data_manager.analyze()
 
                 case "Ações":
-                    action_handler = ActionHandler(actions, config)
                     action_handler.run()
 
                 case "Configurações":
                     config.config_panel(console)
 
                 case "Sair":
-                   raise KeyboardInterrupt 
+                    raise KeyboardInterrupt
 
     except KeyboardInterrupt:
         print("Saindo...")
@@ -64,7 +62,7 @@ def main():
     #     print(e)
 
 
-def show_menu(actions: Actions):
+def show_menu(actions: list[Action]):
     console.print(
         Panel.fit(
             f"{'-' * 14}RH FLOW{'-' * 14}\nBem-vindo ao Sistema de. Automação",
@@ -87,29 +85,14 @@ def show_menu(actions: Actions):
     return answers["option"]
 
 
-def get_actions_panel(actions: Actions) -> Panel:
-    actions_list = []
+def get_actions_panel(actions: list[Action]) -> Panel:
+    orders = []
+    for action in actions:
+        if action.get_len() > 0:
+            orders.append(action.order)
 
-    if actions.to_add is not None:
-        if not actions.to_add.empty:
-            actions_list.append(
-                f"[bold cyan]•[/] Adicionar [cyan]{len(actions.to_add)}[/] funcionários ao Ahgora"
-            )
-
-    if actions.to_remove is not None:
-        if not actions.to_remove.empty:
-            actions_list.append(
-                f"[bold cyan]•[/] Remover [cyan]{len(actions.to_remove)}[/] funcionários do Ahgora"
-            )
-
-    if actions.absences is not None:
-        if not actions.absences.empty:
-            actions_list.append(
-                f"[bold cyan]•[/] Adicionar [cyan]{len(actions.absences)}[/] afastamentos/férias no Ahgora"
-            )
-
-    if not actions_list:
-        actions_list.append("[green]• Nenhuma ação pendente.[/green]")
+    if not orders:
+        orders.append("[green]• Nenhuma ação pendente.[/green]")
 
         return Panel.fit(
             "[green]• Nenhuma ação pendente.[/green]",
@@ -119,7 +102,7 @@ def get_actions_panel(actions: Actions) -> Panel:
         )
 
     return Panel.fit(
-        "\n".join(actions_list),
+        "\n".join(orders),
         title="[bold]Ações Pendentes[/bold]",
         border_style="yellow",
         padding=(1, 2),

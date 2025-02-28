@@ -1,13 +1,13 @@
-import pandas as pd
-from datetime import datetime, timedelta
-from rich.console import Console
-import inquirer
-from rich import print
-from rich.panel import Panel
-
-from pathlib import Path
 import json
+from datetime import datetime, timedelta
+from pathlib import Path
 
+import inquirer
+import pandas as pd
+from action import Action
+from rich import print
+from rich.console import Console
+from rich.panel import Panel
 
 NO_IGNORED_STR = (
     "\n    [yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"
@@ -95,54 +95,27 @@ class Config:
                         f"[bold green]Funcionário com matrícula {employee[:6]} removido da lista de ignorados.[/bold green]"
                     )
 
-    def update_employees_to_ignore(self, df: pd.DataFrame, to: str) -> pd.DataFrame:
-        if to == "add":
-            employees_dict = {
-                str(series["id"]): {
-                    "id": series["id"],
-                    "admission_date": series["admission_date"],
-                    "name": series["name"],
-                    "binding": series["binding"],
-                }
-                for _, series in df.iterrows()
-            }
-            employees_list = [
-                f"{id} - {data['admission_date']} - {data['name']} - {data['binding']}"
-                for id, data in employees_dict.items()
-            ]
-        if to == "remove":
-            employees_dict = {
-                str(series["id"]): {
-                    "id": series["id"],
-                    "admission_date": series["admission_date"],
-                    "name": series["name"],
-                    "binding": series["dismissal_date"],
-                }
-                for _, series in df.iterrows()
-            }
-            employees_list = [
-                f"{id} - {data['admission_date']} - {data['name']} - {data['binding']}"
-                for id, data in employees_dict.items()
-            ]
-
+    def update_employees_to_ignore(self, action: Action) -> pd.DataFrame:
+        ignore_dict = action.get_ignore_dict()
+        ignore_list = action.get_ignore_list(ignore_dict)
         questions = [
             inquirer.Checkbox(
                 "ignore",
                 message="Selecione os funcionários para ignorar",
-                choices=employees_list,
+                choices=ignore_list,
             )
         ]
 
         employees_to_ignore = inquirer.prompt(questions).get("ignore")
 
         to_ignore_dict = {
-            ignore.split(" - ")[0]: employees_dict[ignore.split(" - ")[0]]
+            ignore.split(" - ")[0]: ignore_dict[ignore.split(" - ")[0]]
             for ignore in employees_to_ignore
         }
 
         self._update("ignore", value=to_ignore_dict)
 
-        return df[~df["id"].isin(to_ignore_dict.keys())]
+        return action.df[~action.df["id"].isin(to_ignore_dict.keys())]
 
     def update_last_analisys(self):
         now = datetime.now()
@@ -150,18 +123,18 @@ class Config:
         self._update_analysis_time_since(last_analisys, now)
 
     def _move_files_from_download(self, working_dir_path: Path):
-        downloads_path = Path(working_dir_path / 'downloads')
+        downloads_path = Path(working_dir_path / "downloads")
         for file in downloads_path.iterdir():
             if "trabalhador" in file.name.lower():
-                file.replace(self.data_dir_path / 'fiorilli' / 'employees.txt')
+                file.replace(self.data_dir_path / "fiorilli" / "employees.txt")
             if "funcionarios" in file.name.lower():
-                file.replace(self.data_dir_path / 'ahgora' / 'employees.csv')
+                file.replace(self.data_dir_path / "ahgora" / "employees.csv")
             if "tabledownloadcsv" in file.name.lower():
-                file.replace(self.data_dir_path / 'ahgora' / 'absences.csv')
+                file.replace(self.data_dir_path / "ahgora" / "absences.csv")
             if "pontoafastamentos" in file.name.lower():
-                file.replace(self.data_dir_path / 'fiorilli' / 'absences.txt')
+                file.replace(self.data_dir_path / "fiorilli" / "absences.txt")
             if "pontoferias" in file.name.lower():
-                file.replace(self.data_dir_path / 'fiorilli' / 'vacations.txt')
+                file.replace(self.data_dir_path / "fiorilli" / "vacations.txt")
 
     def _load(self) -> dict:
         if self.path.exists():
