@@ -3,8 +3,8 @@ from pathlib import Path
 
 import inquirer
 from __init__ import verify_paths
-from action_handler import ActionHandler
 from action import Action
+from action_handler import ActionHandler
 from config import Config
 from data_manager import DataManager
 from file_downloader import FileDownloader
@@ -88,7 +88,7 @@ def show_menu(actions: list[Action]):
 def get_actions_panel(actions: list[Action]) -> Panel:
     orders = []
     for action in actions:
-        if action.get_len() > 0:
+        if action.len > 0:
             orders.append(action.order)
 
     if not orders:

@@ -104,21 +104,21 @@ class DataManager:
 
             if not new_employees.empty:
                 new_employees.to_csv(
-                    os.path.join(save_dir, "new_employees.csv"),
+                    os.path.join(save_dir, "new.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
             if not dismissed_employees.empty:
                 dismissed_employees.to_csv(
-                    os.path.join(save_dir, "dismissed_employees.csv"),
+                    os.path.join(save_dir, "dismissed.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
             if not changed_position_employees.empty:
                 changed_position_employees.to_csv(
-                    os.path.join(save_dir, "changed_position_employees.csv"),
+                    os.path.join(save_dir, "position.csv"),
                     index=False,
                     encoding="utf-8",
                 )
