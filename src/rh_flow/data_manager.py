@@ -4,6 +4,7 @@ from time import sleep
 
 import pandas as pd
 from rich import print
+from rich.progress import Progress
 
 
 def read_csv(
@@ -89,15 +90,18 @@ class DataManager:
 
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):
         try:
+            # TODO: add progress bars
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
             fiorilli_employees, ahgora_employees = self._get_employees_data()
             fiorilli_absences, ahgora_absences = self._get_absences_data()
+
             new_df, dismissed_df, position_df, absences_df = self._generate_actions_dfs(
                 fiorilli_employees,
                 ahgora_employees,
                 ahgora_absences,
                 fiorilli_absences,
             )
+
             save_dir = self.data_dir_path / "actions"
 
             if not new_df.empty:
@@ -289,31 +293,40 @@ class DataManager:
         ahgora_employees: pd.DataFrame,
         ahgora_absences: pd.DataFrame,
         fiorilli_absences: pd.DataFrame,
+        progress: Progress,
+        employees_task: int,
+        position_task: int,
+        absences_task: int,
     ):
         fiorilli_dismissed_df = fiorilli_employees[
             fiorilli_employees["dismissal_date"].notna()
         ]
         fiorilli_dismissed_ids = set(fiorilli_dismissed_df["id"])
+        progress.update(employees_task, advance=10)
 
         ahgora_dismissed_df = ahgora_employees[
             ahgora_employees["dismissal_date"].notna()
         ]
         ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
+        progress.update(employees_task, advance=10)
 
         dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
 
         fiorilli_active_df = fiorilli_employees[
             ~fiorilli_employees["id"].isin(dismissed_ids)
         ]
+        progress.update(employees_task, advance=10)
 
         ahgora_ids = set(ahgora_employees["id"])
 
         new_df = fiorilli_active_df[~fiorilli_active_df["id"].isin(ahgora_ids)]
+        progress.update(employees_task, advance=10)
 
         dismissed_df = ahgora_employees[
             ahgora_employees["id"].isin(fiorilli_dismissed_ids)
             & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
         ]
+        progress.update(employees_task, advance=10)
 
         dismissed_df = dismissed_df.drop(columns=["dismissal_date"])
         dismissed_df = dismissed_df.merge(
@@ -321,6 +334,7 @@ class DataManager:
             on="id",
             how="left",
         )
+        progress.update(employees_task, advance=10)
 
         # return new_employees, dismissed_employees
 

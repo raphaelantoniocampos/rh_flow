@@ -30,6 +30,7 @@ OPTIONS = [
 def main():
     try:
         while True:
+            # TODO: configure the panel to be central and prettier
             config = Config(WORKING_DIR_PATH)
             data_manager = DataManager(WORKING_DIR_PATH, config)
             action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
