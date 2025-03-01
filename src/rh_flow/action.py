@@ -57,6 +57,13 @@ class Action:
             for id, data in ignore_dict.items()
         ]
 
+    def update_df(self, df: DataFrame):
+        self.df = df
+        self.len = self.get_len()
+        self.option = self._get_option()
+        self.order = self._get_order()
+        return self
+
     def _get_df(self) -> DataFrame | None:
         if not self.path_exists():
             return DataFrame()
@@ -65,6 +72,7 @@ class Action:
 
     def _get_path(self):
         working_dir_path = Path.cwd()
+
         if self.name == "new":
             path = Path(working_dir_path / "data" / "actions" / "new.csv")
         if self.name == "dismissed":
@@ -77,47 +85,48 @@ class Action:
         return path
 
     def _get_option(self):
-        option = ""
+        check = '➤' if not self.is_empty() else ''
         if self.name == "new":
-            option = "Adicionar no Ahgora"
-        if self.name == "dismissed":
-            option = "Remover do Ahgora"
-        if self.name == "position":
-            option = "Alterar cargo"
-        if self.name == "absences":
-            option = "Adicionar afastamento"
+            return f"Adicionar no Ahgora {check}"
 
-        return option
+        if self.name == "dismissed":
+            return f"Remover do Ahgora {check}"
+
+        if self.name == "position":
+            return f"Alterar cargos {check}"
+
+        if self.name == "absences":
+            return f"Adicionar afastamentos {check}"
 
     def _get_order(self):
-        order = ""
         if self.name == "new":
             if self.is_empty():
-                order = "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]"
-            else:
-                order = f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] funcionários no Ahgora"
+                return "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]"
+            return (
+                f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] funcionários no Ahgora"
+            )
+
         if self.name == "dismissed":
             if self.is_empty():
-                order = "[bold yellow]Nenhum novo funcionário para remover no momento.[/bold yellow]"
-            else:
-                order = f"[bold cyan]•[/] Remover [cyan]{self.len}[/] funcionários do Ahgora"
+                return "[bold yellow]Nenhum novo funcionário para remover no momento.[/bold yellow]"
+            return f"[bold cyan]•[/] Remover [cyan]{self.len}[/] funcionários do Ahgora"
+
         if self.name == "position":
             if self.is_empty():
-                order = (
+                return (
                     "[bold yellow]Nenhum cargo para alterar no momento.[/bold yellow]"
                 )
-            else:
-                order = f"[bold cyan]•[/] Alterar [cyan]{self.len}[/] cargos no Ahgora"
+            return f"[bold cyan]•[/] Alterar [cyan]{self.len}[/] cargos no Ahgora"
+
         if self.name == "absences":
             if self.is_empty():
-                order = "[bold yellow]Nenhum novo afastamento para adicionar no momento.[/bold yellow]"
-            else:
-                order = f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] afastamentos no Ahgora"
+                return "[bold yellow]Nenhum novo afastamento para adicionar no momento.[/bold yellow]"
+            return (
+                f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] afastamentos no Ahgora"
+            )
 
-        return order
-
-        def __str__(self):
-            return f"""
+    def __str__(self):
+        return f"""
 -name: {self.name}
 -path: {self.path}
 -df: {self.df}

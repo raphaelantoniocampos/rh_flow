@@ -92,7 +92,7 @@ class DataManager:
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
             fiorilli_employees, ahgora_employees = self._get_employees_data()
             fiorilli_absences, ahgora_absences = self._get_absences_data()
-            new_employees, dismissed_employees, changed_position_employees = (
+            new_df, dismissed_df, position_df, absences_df = (
                 self._generate_actions_dfs(
                     fiorilli_employees,
                     ahgora_employees,
@@ -102,23 +102,23 @@ class DataManager:
             )
             save_dir = self.data_dir_path / "actions"
 
-            if not new_employees.empty:
-                new_employees.to_csv(
-                    os.path.join(save_dir, "new_employees.csv"),
+            if not new_df.empty:
+                new_df.to_csv(
+                    os.path.join(save_dir, "new.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
-            if not dismissed_employees.empty:
-                dismissed_employees.to_csv(
-                    os.path.join(save_dir, "dismissed_employees.csv"),
+            if not dismissed_df.empty:
+                dismissed_df.to_csv(
+                    os.path.join(save_dir, "dismissed.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
-            if not changed_position_employees.empty:
-                changed_position_employees.to_csv(
-                    os.path.join(save_dir, "changed_position_employees.csv"),
+            if not position_df.empty:
+                position_df.to_csv(
+                    os.path.join(save_dir, "position.csv"),
                     index=False,
                     encoding="utf-8",
                 )
@@ -326,5 +326,37 @@ class DataManager:
         changed_position_employees = merged_employees[
             merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
         ]
+
+        # fiorilli_ids = set(fiorilli_absences["id"])
+        # ahgora_ids = set(ahgora_absences["id"])
+
+        # no_fio = fiorilli_absences[~fiorilli_absences["id"].isin(ahgora_ids)]
+        # no_agora = ahgora_absences[~ahgora_absences["id"].isin(fiorilli_ids)]
+
+        fiorilli_absences["key"] = (
+            fiorilli_absences["id"].astype(str)
+            + "-"
+            + fiorilli_absences["start_date"].astype(str)
+            + "-"
+            + fiorilli_absences["end_date"].astype(str)
+        )
+
+        ahgora_absences["key"] = (
+            ahgora_absences["id"].astype(str)
+            + "-"
+            + ahgora_absences["start_date"].astype(str)
+            + "-"
+            + ahgora_absences["end_date"].astype(str)
+        )
+
+        not_common_absences = fiorilli_absences[
+            ~fiorilli_absences["key"].isin(ahgora_absences["key"])
+        ].drop(columns=["key"])
+
+        not_common_absences.to_csv(
+            Path(self.data_dir_path / "actions" / "absences.csv"),
+            index=False,
+            header=False,
+        )
 
         return new_employees, dismissed_employees, changed_position_employees

@@ -18,25 +18,25 @@ WORKING_DIR_PATH = Path.cwd()
 
 console = Console()
 
-OPTIONS = {
-    1: "Baixar arquivos",
-    2: "Analisar dados",
-    3: "Ações",
-    4: "Configurações",
-    5: "Sair",
-}
+OPTIONS = [
+    "1. Baixar arquivos",
+    "2. Analisar dados",
+    "3. Ações",
+    "4. Configurações",
+    "5. Sair",
+]
 
 
 def main():
     try:
-        config = Config(WORKING_DIR_PATH)
-        data_manager = DataManager(WORKING_DIR_PATH, config)
-        action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
-        file_downloader = FileDownloader(WORKING_DIR_PATH)
-
         while True:
+            config = Config(WORKING_DIR_PATH)
+            data_manager = DataManager(WORKING_DIR_PATH, config)
+            action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
+            file_downloader = FileDownloader(WORKING_DIR_PATH)
+
             actions = action_handler.get_actions()
-            option = show_menu(actions)
+            option = show_menu(actions)[3:]
             match option:
                 case "Baixar arquivos":
                     print("[bold red]DESATIVADO NO MOMENTO[/bold red]")
@@ -58,8 +58,6 @@ def main():
 
     except KeyboardInterrupt:
         print("Saindo...")
-    # except Exception as e:
-    #     print(e)
 
 
 def show_menu(actions: list[Action]):
@@ -76,9 +74,7 @@ def show_menu(actions: list[Action]):
 
     questions = [
         inquirer.List(
-            "option",
-            message="Selecione uma opção",
-            choices=OPTIONS.values(),
+            "option", message="Selecione uma opção", choices=OPTIONS, carousel=True
         ),
     ]
     answers = inquirer.prompt(questions)
@@ -89,7 +85,7 @@ def get_actions_panel(actions: list[Action]) -> Panel:
     orders = []
     for action in actions:
         if action.get_len() > 0:
-            orders.append(action.option)
+            orders.append(action.order)
 
     if not orders:
         orders.append("[green]• Nenhuma ação pendente.[/green]")

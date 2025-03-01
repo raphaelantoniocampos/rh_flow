@@ -1,12 +1,11 @@
-from dataclasses import dataclass
-from time import sleep
+import pyautogui
+import pandas as pd
+import time
 
 import inquirer
 import keyboard
-import pyautogui
 from rich import print
 from pyperclip import copy
-import pandas as pd
 
 from config import Config
 from data_manager import DataManager
@@ -14,16 +13,18 @@ from pathlib import Path
 from action import Action
 
 
-@dataclass
 class Key:
-    key: str
-    colored: str
+    def __init__(self, key: str):
+        self.key = key
+
+    def __str__(self):
+        return f"[bold cyan1]{self.key.upper()}[/bold cyan1]"
 
 
-KEY_SEMI_AUTO = Key("F4", "[bold cyan1]F4[/bold cyan1]")
-KEY_CONTINUE = Key("F2", "[bold green1]F2[/bold green1]")
-KEY_NEXT = Key("F3", "[bold yellow]F3[/bold yellow]")
-KEY_STOP = Key("F5", "[bold red3]F5[/bold red3]")
+KEY_AUTO = Key("F4")
+KEY_CONTINUE = Key("F2")
+KEY_NEXT = Key("F3")
+KEY_STOP = Key("F5")
 
 
 class ActionHandler:
@@ -36,57 +37,81 @@ class ActionHandler:
     def run(self):
         while True:
             option: str = self._show_actions_menu()[3:]
-            if option == "Sair":
+            if option == "Voltar":
                 return
             for action in self.actions:
                 if option == action.option:
-                    sleep(1)
-                    if action.length == 0:
-                        print(action.order_string)
+                    time.sleep(1)
+                    if action.len == 0:
+                        print(action.order)
                         return
                     self._prepare_list_and_run(action)
 
     def get_actions(self) -> list[Action]:
         return [
-            Action("new", self._add_employees),
-            Action("dismissed", self._remove_employees),
-            Action("position", None),
-            Action("absences", None),
+            self.name_to_action("new"),
+            self.name_to_action("dismissed"),
+            self.name_to_action("position"),
+            self.name_to_action("absences"),
         ]
+
+
+    def name_to_action(self, name: str) -> Action:
+        action = Action(name, self._action_name_to_fun(name))
+        if name == "new":
+            ignore_ids = self.config.data.get("ignore", {}).keys()
+            filtered_df = action.df[~action.df["id"].isin(ignore_ids)]
+            action = action.update_df(filtered_df)
+        return action
+
+    def _action_name_to_fun(self, name: str):
+        def fun(df):
+            return
+
+        if name == "new":
+            fun = self._add_employees
+        if name == "dismissed":
+            fun = self._remove_employees
+        if name == "position":
+            fun = fun
+        if name == "absences":
+            fun = fun
+
+        return fun
 
     def _prepare_list_and_run(
         self,
         action: Action,
     ):
-        sleep(1)
-        ignore_ids = self.config.data.get("ignore", {}).keys()
-        action.df = action.df[~action.df["id"].isin(ignore_ids)]
-        print(action.order_string)
-        see_list = inquirer.prompt(
-            [
-                inquirer.Confirm(
-                    "yes",
-                    message="Ver lista de funcionários",
-                )
-            ]
-        )
+        time.sleep(1)
+        print(action.order)
+        print("\n")
+        if action.df.size > 0:
+            see_list = inquirer.prompt(
+                [
+                    inquirer.Confirm(
+                        "yes",
+                        message="Ver lista de funcionários",
+                    )
+                ]
+            )
 
-        if see_list["yes"] is None:
-            return
+            if see_list["yes"] is None:
+                return
 
-        see_list: dict[str, bool] = see_list["yes"]
-        if see_list:
-            sleep(0.5)
-            df = self.config.update_employees_to_ignore(action)
+            see_list: dict[str, bool] = see_list["yes"]
+            if see_list:
+                time.sleep(0.5)
+                df = self.config.update_employees_to_ignore(action)
 
-        ok_input = inquirer.prompt(
-            [inquirer.Confirm("yes", message="Começar?", default="yes")]
-        )
-        sleep(0.5)
-        if not ok_input["yes"]:
-            return
+            ok_input = inquirer.prompt(
+                [inquirer.Confirm("yes", message="Começar?", default="yes")]
+            )
+            time.sleep(0.5)
+            if not ok_input["yes"]:
+                return
 
-        action.fun(df)
+            action.fun(df)
 
     def _show_actions_menu(self) -> dict[str, str]:
         options = []
@@ -95,9 +120,9 @@ class ActionHandler:
             options.append(action.option)
 
         choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]
-        choices.append(f"{len(choices) + 1}. Sair")
+        choices.append(f"{len(choices) + 1}. Voltar")
         questions = [
-            inquirer.List("option", message="Selecione uma opção", choices=choices),
+            inquirer.List("option",  message="Selecione uma opção", choices=choices, carousel=True),
         ]
         answers = inquirer.prompt(questions)
         return answers["option"]
@@ -109,37 +134,142 @@ class ActionHandler:
             )
             print(series)
             print(
-                f"\nPressione {KEY_SEMI_AUTO.colored} para o processo [bold white]semi automático[/bold white]."
+                f"\nPressione {KEY_AUTO} para o processo [bold white]semi automático[/bold white]."
             )
             print(
-                f"Pressione {KEY_CONTINUE.colored} para o próximo [bold white]campo[/bold white]."
+                f"Pressione {KEY_CONTINUE} para o próximo [bold white]campo[/bold white]."
             )
             print(
-                f"Pressione {KEY_NEXT.colored} para próximo [bold white]funcionário[/bold white]."
+                f"Pressione {KEY_NEXT} para próximo [bold white]funcionário[/bold white]."
             )
-            print(f"Pressione {KEY_STOP.colored} para [bold white]sair...[/bold white]")
+            print(f"Pressione {KEY_STOP} para [bold white]sair...[/bold white]")
             for index, field in series.items():
                 if index == "id":
                     continue
                 copy(field)
                 print(f"({index} '{field}' copiado para a área de transferência!)")
                 while True:
-                    if keyboard.is_pressed(KEY_SEMI_AUTO.key):
-                        sleep(0.5)
-                        self._semi_aunew(series)
+                    if keyboard.is_pressed(KEY_AUTO):
+                        time.sleep(0.5)
+                        self._auto_new(series)
                         break
-                    if keyboard.is_pressed(KEY_CONTINUE.key):
-                        sleep(0.5)
+                    if keyboard.is_pressed(KEY_CONTINUE):
+                        time.sleep(0.5)
                         break
-                    if keyboard.is_pressed(KEY_NEXT.key):
+                    if keyboard.is_pressed(KEY_NEXT):
                         break
-                    if keyboard.is_pressed(KEY_STOP.key):
-                        sleep(0.5)
+                    if keyboard.is_pressed(KEY_STOP):
+                        time.sleep(0.5)
                         print("Interrompido pelo usuário.")
                         return
-                if keyboard.is_pressed(KEY_NEXT.key):
-                    sleep(0.5)
+                if keyboard.is_pressed(KEY_NEXT):
+                    time.sleep(0.5)
                     break
+
+    def _auto_new(self, row):
+        print(
+            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]name[/] e Aperte {KEY_AUTO} para começar ou {KEY_STOP} para sair."
+        )
+        while True:
+            if keyboard.is_pressed(KEY_AUTO):
+                time.sleep(0.5)
+                break
+            if keyboard.is_pressed(KEY_STOP):
+                print("Interrompido pelo usuário.")
+                return
+
+        pyautogui.write(row["name"], interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab", presses=7, interval=0.005)
+        time.sleep(0.2)
+
+        print(f"Confira o pis_pasep e Pressione {KEY_AUTO} para continuar")
+        print(str(row["pis_pasep"]))
+
+        pyautogui.write(str(row["pis_pasep"]), interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab")
+        time.sleep(0.2)
+        while True:
+            if keyboard.is_pressed(KEY_AUTO):
+                time.sleep(0.1)
+                break
+
+        time.sleep(0.2)
+
+        pyautogui.press("tab")
+        time.sleep(0.2)
+
+        pyautogui.write(str(row["cpf"]), interval=0.02)
+        time.sleep(0.2)
+
+        for i in range(5):
+            pyautogui.hotkey("shift", "tab")
+            time.sleep(0.005)
+
+        pyautogui.write(row["birth_date"], interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.hotkey("shift", "tab")
+        time.sleep(0.1)
+
+        pyautogui.write(row["sex"], interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab", presses=19, interval=0.005)
+        time.sleep(0.2)
+
+        pyautogui.write("es", interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab")
+        time.sleep(0.2)
+
+        pyautogui.write(str(row["id"]), interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab", presses=2, interval=0.005)
+        time.sleep(0.2)
+
+        pyautogui.write(row["admission_date"], interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab", presses=3, interval=0.005)
+        time.sleep(0.2)
+
+        pyautogui.write("12345", interval=0.02)
+        time.sleep(0.5)
+
+        pyautogui.press("tab", presses=7, interval=0.005)
+        time.sleep(0.2)
+
+        pyautogui.write(row["position"], interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab", presses=2, interval=0.005)
+        time.sleep(0.2)
+
+        pyautogui.write(row["location"][:15], interval=0.02)
+        time.sleep(0.2)
+
+        pyautogui.press("tab", presses=3, interval=0.005)
+        time.sleep(0.2)
+
+        pyautogui.scroll(-350)
+        time.sleep(0.2)
+
+        pyautogui.press("space")
+        time.sleep(0.2)
+
+        print(
+            f"Insira a Localização\n[yellow]{row['location']}\n[/]Pressione {KEY_NEXT} para o próximo funcionário..."
+        )
+
+        while True:
+            if keyboard.is_pressed(KEY_NEXT):
+                return
 
     def _remove_employees(self, df):
         for i, series in df.iterrows():
@@ -154,134 +284,29 @@ class ActionHandler:
             print(series)
 
             print(
-                f"Pressione {KEY_CONTINUE.colored} para copiar a [bold white]Data de Desligamento[/bold white]."
+                f"Pressione {KEY_CONTINUE} para copiar a [bold white]Data de Desligamento[/bold white]."
             )
             print(
-                f"Pressione {KEY_NEXT.colored} para próximo [bold white]funcionário[/bold white]."
+                f"Pressione {KEY_NEXT} para próximo [bold white]funcionário[/bold white]."
             )
-            print(f"Pressione {KEY_STOP.colored} para [bold white]sair...[/bold white]")
+            print(f"Pressione {KEY_STOP} para [bold white]sair...[/bold white]")
             name = series["name"]
             print(f"(name '{name}' copiado para a área de transferência!)")
             copy(name)
             while True:
-                if keyboard.is_pressed(KEY_CONTINUE.key):
+                if keyboard.is_pressed(KEY_CONTINUE):
                     date = series["dismissal_date"]
                     print(f"(id '{date}' copiado para a área de transferência!)")
                     copy(date)
-                    sleep(0.5)
+                    time.sleep(0.5)
                     continue
-                if keyboard.is_pressed(KEY_NEXT.key):
-                    sleep(0.5)
+                if keyboard.is_pressed(KEY_NEXT):
+                    time.sleep(0.5)
                     break
-                if keyboard.is_pressed(KEY_STOP.key):
-                    sleep(0.5)
+                if keyboard.is_pressed(KEY_STOP):
+                    time.sleep(0.5)
                     print("Interrompido pelo usuário.")
                     return
-            if keyboard.is_pressed(KEY_NEXT.key):
-                sleep(0.5)
+            if keyboard.is_pressed(KEY_NEXT):
+                time.sleep(0.5)
                 continue
-
-    def _semi_aunew(self, row):
-        print(
-            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]name[/] e Aperte {KEY_SEMI_AUTO.colored} para começar ou {KEY_STOP.colored} para sair."
-        )
-        while True:
-            if keyboard.is_pressed(KEY_SEMI_AUTO.key):
-                sleep(0.5)
-                break
-            if keyboard.is_pressed(KEY_STOP.key):
-                print("Interrompido pelo usuário.")
-                return
-
-        pyautogui.write(row["name"], interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab", presses=7, interval=0.005)
-        sleep(0.2)
-
-        print(f"Confira o pis_pasep e Pressione {KEY_SEMI_AUTO.colored} para continuar")
-        print(str(row["pis_pasep"]))
-
-        pyautogui.write(str(row["pis_pasep"]), interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab")
-        sleep(0.2)
-        while True:
-            if keyboard.is_pressed(KEY_SEMI_AUTO.key):
-                sleep(0.1)
-                break
-
-        sleep(0.2)
-
-        pyautogui.press("tab")
-        sleep(0.2)
-
-        pyautogui.write(str(row["cpf"]), interval=0.02)
-        sleep(0.2)
-
-        for i in range(5):
-            pyautogui.hotkey("shift", "tab")
-            sleep(0.005)
-
-        pyautogui.write(row["birth_date"], interval=0.02)
-        sleep(0.2)
-
-        pyautogui.hotkey("shift", "tab")
-        sleep(0.1)
-
-        pyautogui.write(row["sex"], interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab", presses=19, interval=0.005)
-        sleep(0.2)
-
-        pyautogui.write("es", interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab")
-        sleep(0.2)
-
-        pyautogui.write(str(row["id"]), interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab", presses=2, interval=0.005)
-        sleep(0.2)
-
-        pyautogui.write(row["admission_date"], interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab", presses=3, interval=0.005)
-        sleep(0.2)
-
-        pyautogui.write("12345", interval=0.02)
-        sleep(0.5)
-
-        pyautogui.press("tab", presses=7, interval=0.005)
-        sleep(0.2)
-
-        pyautogui.write(row["position"], interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab", presses=2, interval=0.005)
-        sleep(0.2)
-
-        pyautogui.write(row["location"][:15], interval=0.02)
-        sleep(0.2)
-
-        pyautogui.press("tab", presses=3, interval=0.005)
-        sleep(0.2)
-
-        pyautogui.scroll(-350)
-        sleep(0.2)
-
-        pyautogui.press("space")
-        sleep(0.2)
-
-        print(
-            f"Insira a Localização\n[yellow]{row['location']}\n[/]Pressione {KEY_NEXT.colored} para o próximo funcionário..."
-        )
-
-        while True:
-            if keyboard.is_pressed(KEY_NEXT.key):
-                return
