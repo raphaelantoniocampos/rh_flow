@@ -92,13 +92,11 @@ class DataManager:
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
             fiorilli_employees, ahgora_employees = self._get_employees_data()
             fiorilli_absences, ahgora_absences = self._get_absences_data()
-            new_df, dismissed_df, position_df, absences_df = (
-                self._generate_actions_dfs(
-                    fiorilli_employees,
-                    ahgora_employees,
-                    ahgora_absences,
-                    fiorilli_absences,
-                )
+            new_df, dismissed_df, position_df, absences_df = self._generate_actions_dfs(
+                fiorilli_employees,
+                ahgora_employees,
+                ahgora_absences,
+                fiorilli_absences,
             )
             save_dir = self.data_dir_path / "actions"
 
@@ -121,6 +119,13 @@ class DataManager:
                     os.path.join(save_dir, "position.csv"),
                     index=False,
                     encoding="utf-8",
+                )
+
+            if not absences_df.empty:
+                absences_df.to_csv(
+                    Path(self.data_dir_path / "actions" / "absences.csv"),
+                    index=False,
+                    header=False,
                 )
 
             self.config.update_last_analisys()
@@ -303,15 +308,15 @@ class DataManager:
 
         ahgora_ids = set(ahgora_employees["id"])
 
-        new_employees = fiorilli_active_df[~fiorilli_active_df["id"].isin(ahgora_ids)]
+        new_df = fiorilli_active_df[~fiorilli_active_df["id"].isin(ahgora_ids)]
 
-        dismissed_employees = ahgora_employees[
+        dismissed_df = ahgora_employees[
             ahgora_employees["id"].isin(fiorilli_dismissed_ids)
             & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
         ]
 
-        dismissed_employees = dismissed_employees.drop(columns=["dismissal_date"])
-        dismissed_employees = dismissed_employees.merge(
+        dismissed_df = dismissed_df.drop(columns=["dismissal_date"])
+        dismissed_df = dismissed_df.merge(
             fiorilli_dismissed_df[["id", "dismissal_date"]],
             on="id",
             how="left",
@@ -323,7 +328,7 @@ class DataManager:
             ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
         )
 
-        changed_position_employees = merged_employees[
+        position_df = merged_employees[
             merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
         ]
 
@@ -349,14 +354,8 @@ class DataManager:
             + ahgora_absences["end_date"].astype(str)
         )
 
-        not_common_absences = fiorilli_absences[
+        absences_df = fiorilli_absences[
             ~fiorilli_absences["key"].isin(ahgora_absences["key"])
         ].drop(columns=["key"])
 
-        not_common_absences.to_csv(
-            Path(self.data_dir_path / "actions" / "absences.csv"),
-            index=False,
-            header=False,
-        )
-
-        return new_employees, dismissed_employees, changed_position_employees
+        return new_df, dismissed_df, position_df, absences_df
