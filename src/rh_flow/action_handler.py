@@ -32,14 +32,13 @@ class ActionHandler:
         self.data_dir_path = Path(working_dir / "data")
         self.config = config
         self.data_manager = data_manager
-        self.actions = self.get_actions()
 
-    def run(self):
+    def run(self, actions):
         while True:
-            option: str = self._show_actions_menu()[3:]
+            option: str = self._show_actions_menu(actions)[3:]
             if option == "Voltar":
                 return
-            for action in self.actions:
+            for action in actions:
                 if option == action.option:
                     time.sleep(1)
                     if action.len == 0:
@@ -58,7 +57,7 @@ class ActionHandler:
 
     def name_to_action(self, name: str) -> Action:
         action = Action(name, self._action_name_to_fun(name))
-        if name == "new":
+        if name == "new" and not action.df.empty:
             ignore_ids = self.config.data.get("ignore", {}).keys()
             filtered_df = action.df[~action.df["id"].isin(ignore_ids)]
             action = action.update_df(filtered_df)
@@ -113,10 +112,10 @@ class ActionHandler:
 
             action.fun(df)
 
-    def _show_actions_menu(self) -> dict[str, str]:
+    def _show_actions_menu(self, actions) -> dict[str, str]:
         options = []
 
-        for action in self.actions:
+        for action in actions:
             options.append(action.option)
 
         choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]

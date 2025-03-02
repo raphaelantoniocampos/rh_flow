@@ -51,7 +51,7 @@ def prepare_dataframe(df, columns: list[str] = []):
     return df
 
 
-def convert_date(data_str):
+def convert_date(date_str):
     meses = {
         "Jan": "Jan",
         "Fev": "Feb",
@@ -66,20 +66,26 @@ def convert_date(data_str):
         "Nov": "Nov",
         "Dez": "Dec",
     }
-    if pd.isna(data_str) or not isinstance(data_str, str):
-        return None
-    partes = data_str.split(", ")
+    not_a_date = pd.isna(date_str) or not isinstance(date_str, str) or date_str == " "
+
+    if not_a_date:
+        return pd.NaT
+
+    partes = date_str.split(", ")
     if len(partes) > 1:
-        data_str = partes[1]
+        date_str = partes[1]
     for pt, en in meses.items():
-        data_str = data_str.replace(f"{pt}/", f"{en}/")
+        date_str = date_str.replace(f"{pt}/", f"{en}/")
     try:
-        return pd.to_datetime(data_str, format="%d/%b/%Y", errors="raise")
+        return pd.to_datetime(date_str, format="%d/%b/%Y", errors="raise")
     except ValueError:
         try:
-            return pd.to_datetime(data_str, format="%d/%m/%Y", errors="raise")
+            return pd.to_datetime(date_str, format="%d/%m/%Y", errors="raise")
         except ValueError:
-            return pd.to_datetime(data_str, format="%d/%b/%Y %H:%M", errors="coerce")
+            try:
+                return pd.to_datetime(date_str, format="%d/%b/%Y %H:%M", errors="raise")
+            except ValueError:
+                return pd.to_datetime(date_str, format="ISO8601", errors="coerce")
 
 
 class DataManager:
@@ -284,27 +290,32 @@ class DataManager:
         return fiorilli_absences, ahgora_absences
 
     def _split_absence(self, fiorilli_row, ahgora_absences_for_employee):
-        f_start = fiorilli_row["start_date"]
-        f_end = fiorilli_row["end_date"]
+        f_start = pd.to_datetime(
+            fiorilli_row["start_date"], format="%d/%m/%Y", errors="raise"
+        )
+        f_end = pd.to_datetime(
+            fiorilli_row["end_date"], format="%d/%m/%Y", errors="raise"
+        )
+        abcenses_start = ahgora_absences_for_employee["start_date"].apply(convert_date)
+        absences_end = ahgora_absences_for_employee["end_date"].apply(convert_date)
 
         # Filtrar ausências do Ahgora que sobrepõem com o Fiorilli
-        mask = (ahgora_absences_for_employee["start_date"] <= f_end) & (
-            ahgora_absences_for_employee["end_date"] >= f_start
-        )
+        mask = (abcenses_start <= f_end) & (absences_end >= f_start)
         overlaps = ahgora_absences_for_employee[mask].sort_values(by="start_date")
 
         new_periods = []
         current_start = f_start
 
         for _, overlap in overlaps.iterrows():
-            a_start = overlap["start_date"]
-            a_end = overlap["end_date"]
-
+            a_start = pd.to_datetime(
+                overlap["start_date"], format="%d/%m/%Y", errors="raise"
+            )
+            a_end = pd.to_datetime(
+                overlap["end_date"], format="%d/%m/%Y", errors="raise"
+            )
             if current_start < a_start:
                 new_periods.append((current_start, a_start - pd.Timedelta(days=1)))
 
-            print(a_start)
-            print(a_end)
             current_start = max(current_start, a_end + pd.Timedelta(days=1))
 
         if current_start <= f_end:
@@ -314,8 +325,8 @@ class DataManager:
         new_rows = []
         for start, end in new_periods:
             new_row = fiorilli_row.copy()
-            new_row["start_date"] = start
-            new_row["end_date"] = end
+            new_row["start_date"] = start.strftime("%d/%m/%Y")
+            new_row["end_date"] = end.strftime("%d/%m/%Y")
             new_rows.append(new_row)
 
         return new_rows
@@ -367,29 +378,6 @@ class DataManager:
             merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
         ]
 
-        # Agrupar ausências do Ahgora por ID para busca eficiente
-        ahgora_absences_grouped = ahgora_absences.groupby("id")
-
-        split_absences = []
-
-        # Processar cada ausência do Fiorilli
-        for _, f_row in fiorilli_absences.iterrows():
-            employee_id = f_row["id"]
-
-            # Obter ausências do Ahgora para o mesmo funcionário
-            if employee_id in ahgora_absences_grouped.groups:
-                ahgora_for_employee = ahgora_absences_grouped.get_group(employee_id)
-            else:
-                ahgora_for_employee = pd.DataFrame()
-
-            # Dividir ausência do Fiorilli em períodos não sobrepostos
-            split_rows = self._split_absence(f_row, ahgora_for_employee)
-            split_absences.extend(split_rows)
-
-        absences_df = pd.DataFrame(split_absences).drop(
-            columns=["key"], errors="ignore"
-        )
-
         # fiorilli_absences["key"] = (
         #     fiorilli_absences["id"].astype(str)
         #     + "-"
@@ -409,5 +397,28 @@ class DataManager:
         # absences_df = fiorilli_absences[
         #     ~fiorilli_absences["key"].isin(ahgora_absences["key"])
         # ].drop(columns=["key"])
+
+        # TODO: check if new absences enter
+
+        ahgora_absences_grouped = ahgora_absences.groupby("id")
+
+        split_absences = []
+
+        for _, f_row in fiorilli_absences.iterrows():
+            employee_id = f_row["id"]
+
+            if (
+                employee_id in ahgora_absences_grouped.groups
+            ):
+                ahgora_for_employee = ahgora_absences_grouped.get_group(employee_id)
+
+                split_rows = self._split_absence(f_row, ahgora_for_employee)
+                split_absences.extend(split_rows)
+            else:
+                ahgora_for_employee = pd.DataFrame()
+
+        absences_df = pd.DataFrame(split_absences).drop(
+            columns=["key"], errors="ignore"
+        )
 
         return new_df, dismissed_df, position_df, absences_df
