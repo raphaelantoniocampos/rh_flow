@@ -36,6 +36,8 @@ def main():
             action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
             file_downloader = FileDownloader(WORKING_DIR_PATH)
 
+            data_manager.analyze()
+
             actions = action_handler.get_actions()
             option = show_menu(actions)[3:]
             match option:
