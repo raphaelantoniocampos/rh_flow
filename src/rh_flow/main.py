@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 
 import inquirer
@@ -26,23 +25,20 @@ OPTIONS = [
     "5. Sair",
 ]
 
-
 def main():
     try:
         while True:
+            # TODO: make last downloads and analyze appear on main screen
             # TODO: configure the panel to be central and prettier
             config = Config(WORKING_DIR_PATH)
             data_manager = DataManager(WORKING_DIR_PATH, config)
             action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
-            file_downloader = FileDownloader(WORKING_DIR_PATH)
 
             actions = action_handler.get_actions()
             option = show_menu(actions)[3:]
             match option:
                 case "Baixar arquivos":
-                    print("[bold red]DESATIVADO NO MOMENTO[/bold red]")
-                    time.sleep(1)
-                    continue
+                    file_downloader = FileDownloader(WORKING_DIR_PATH)
                     file_downloader.run()
 
                 case "Analisar dados":

@@ -1,363 +1,421 @@
 import os
-from datetime import date
-from time import sleep
+import time
+from pathlib import Path
 
-import pyautogui
 from dotenv import load_dotenv
 from rich import print
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import (
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+    MoveTargetOutOfBoundsException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+)
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+MAX_TRIES = 200
+DELAY = 0.25
+IGNORED_EXCEPTIONS = (
+    ElementClickInterceptedException,
+    ElementNotInteractableException,
+    MoveTargetOutOfBoundsException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+)
 
 
 class FileDownloader:
-    WAIT_SECONDS = 0.2
-    WRITE_INTERVAL = 0.01
-    TAB_INTERVAL = 0.005
-
     def __init__(self, working_dir):
-        self.working_dir = working_dir
-        self.download_dir = os.path.join(working_dir, "downloads")
-        self.assets_dir = os.path.join(working_dir, "assets")
-        self.data_dir = os.path.join(working_dir, "data")
+        self.download_path = Path(working_dir / "downloads")
+        self.data_path = Path(working_dir / "data")
+        self.driver = self._get_web_driver()
 
     def run(self):
-        print("--- [red]Por favor, afaste-se do teclado e mouse![/] ---")
-        for i in range(3, 0, -1):
-            sleep(1)
-            print(i)
+        # TODO: add multiple downloads
+        # TODO: add progress panels
 
-        print("--- Iniciando Exportação ---")
-        sleep(1)
+        # self._fiorilli_downloads()
+        self.ahgora_downloads()
 
-        print("--- Limpando pasta de downloads ---")
-        for file_paths in self._get_file_paths_from_dir(self.download_dir):
-            os.remove(file_paths)
+        files = []
+        while not len(files) >= 4:
+            for file in self.download_path.iterdir():
+                if "grid" in file.name.lower():
+                    files.append(file.name.lower())
+                if "pontoferias" in file.name.lower():
+                    files.append(file.name.lower())
+                if "pontoafastamentos" in file.name.lower():
+                    files.append(file.name.lower())
+                if "funcionarios" in file.name.lower():
+                    files.append(file.name.lower())
+                    print(file.name)
+                    time.sleep(60)
 
-        self._get_file_paths_from_dir(self.download_dir)
-        web_driver = self._create_web_driver()
+        time.sleep(2**10)
 
-        web_driver = self._download_from_fiorilli(web_driver)
-
-        web_driver = self._download_from_ahgora(web_driver)
-
-        web_driver.close()
-
-        downloaded_files = self._get_file_paths_from_dir(self.download_dir)
-
-        self._move_and_rename_files_to_data_dir(downloaded_files)
-
-        print("[bold green]--- Exportação Concluida ---[/bold green]")
-
-    def _get_file_paths_from_dir(self, dir: str) -> list[str]:
-        try:
-            file_paths = [
-                os.path.join(self.download_dir, file_name)
-                for file_name in os.listdir(self.download_dir)
-            ]
-            return file_paths
-        except FileNotFoundError:
-            return []
-
-    def _move_and_rename_files_to_data_dir(self, file_paths: list[str]) -> None:
-        print("--- Movendo arquivos ---")
-        for file_path in file_paths:
-            if "funcionarios.csv" in file_path:
-                os.replace(
-                    file_path, os.path.join(self.data_dir, "ahgora", "employees.csv")
-                )
-
-            if "PontoFuncionario" in file_path:
-                os.replace(
-                    file_path, os.path.join(self.data_dir, "fiorilli", "employees.txt")
-                )
-
-            if "PontoFerias" in file_path:
-                os.replace(
-                    file_path, os.path.join(self.data_dir, "fiorilli", "vacations.txt")
-                )
-
-            if "PontoAfastamentos" in file_path:
-                os.replace(
-                    file_path, os.path.join(self.data_dir, "fiorilli", "absences.txt")
-                )
-
-            if "FUNCIONARIOS_ATIVOS" in file_path:
-                os.replace(
-                    file_path,
-                    os.path.join(self.data_dir, "fiorilli", "employees_portable.csv"),
-                )
-
-    def _create_web_driver(self) -> webdriver.Chrome:
+    def _get_web_driver(self) -> webdriver.Firefox:
         print("--- Iniciando Web Driver ---")
-        chrome_options = Options()
-        prefs = {
-            "download.default_directory": self.download_dir,
-            "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-        }
-        chrome_options.add_experimental_option("prefs", prefs)
-        service = webdriver.ChromeService(service_args=["--log-level=OFF"])
+        options = webdriver.FirefoxOptions()
+        # options.add_argument("-headless")
+        options.set_preference("browser.download.folderList", 2)
+        options.set_preference("browser.download.dir", str(self.download_path))
 
-        web_driver = webdriver.Chrome(options=chrome_options, service=service)
-        return web_driver
+        driver = webdriver.Firefox(options=options)
+        driver.implicitly_wait(DELAY)
 
-    def _download_from_fiorilli(self, web_driver: webdriver.Chrome) -> webdriver.Chrome:
-        print("--- EXPORTAÇÃO FIORILLI ---")
+        return driver
 
-        web_driver.get("https://pompeu-pm-sip.sigmix.net/sip/")
-
-        self._login_to_fiorilli()
-
-        while True:
-            try:
-                button_location = pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "fiorilli", "7_utilitarios.png"),
-                    grayscale=True,
-                )
-                pyautogui.click(button_location)
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
-
-        pyautogui.click(
-            os.path.join(self.assets_dir, "fiorilli", "importar_exportar.png")
-        )
-        sleep(self.WAIT_SECONDS)
-
-        pyautogui.click(os.path.join(self.assets_dir, "fiorilli", "exportar.png"))
-        sleep(self.WAIT_SECONDS)
-
-        pyautogui.click(
-            os.path.join(self.assets_dir, "fiorilli", "exportar_arquivo.png")
-        )
-        sleep(self.WAIT_SECONDS)
-
-        today = date.today()
-        today_formatted = today.strftime("%d/%m/%Y")
-        year_start_formatted = today.replace(month=1, day=1).strftime("%d/%m/%Y")
-
-        self._download_fiorilli_file(
-            "PontoFuncionario.png", today_formatted[3:5], today_formatted[6:]
-        )
-        self._download_fiorilli_file(
-            "FUNCIONARIOS_ATIVOS2.png", "01/01/2000", today_formatted
-        )
-        self._download_fiorilli_file(
-            "ponto_ferias2.png", year_start_formatted, today_formatted
-        )
-        self._download_fiorilli_file(
-            "ponto_afastamentos2.png", year_start_formatted, today_formatted
-        )
-
-        sleep(5)
-
-        return web_driver
-
-    def _login_to_fiorilli(self) -> None:
+    def fiorilli_downloads(self):
+        self.driver.get("https://pompeu-pm-sip.sigmix.net/sip/")
         load_dotenv()
 
         user = os.getenv("FIORILLI_USER")
         pwd = os.getenv("FIORILLI_PASSWORD")
 
-        while True:
-            try:
-                pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "fiorilli", "login.png"),
-                    grayscale=True,
-                )
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
+        # user input
+        self.send_keys("O30_id-inputEl", user)
 
-        pyautogui.write(user, interval=self.WRITE_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+        # password input
+        self.send_keys("O34_id-inputEl", pwd)
 
-        pyautogui.press("tab")
-        sleep(self.WAIT_SECONDS)
+        # login btn
+        self.click_button("O40_id-btnEl")
 
-        pyautogui.write(pwd, interval=self.WRITE_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+        self._download_fiorilli_employees()
+        self._download_fiorilli_absences()
 
-        pyautogui.press("tab")
-        sleep(self.WAIT_SECONDS)
+    def _download_fiorilli_employees(self) -> None:
+        # manutencao btn
+        self.click_button("O472_id-btnInnerEl")
 
-        pyautogui.press("enter")
-        sleep(self.WAIT_SECONDS)
+        # cadastro btn
+        self.click_button("O47E_id-textEl")
 
-    def _download_fiorilli_file(
-        self, image_name: str, from_date: str, to_date: str
-    ) -> None:
-        while True:
-            try:
-                button_location = pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "fiorilli", image_name),
-                    grayscale=True,
-                )
-                pyautogui.click(button_location)
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
+        # situacao li
+        self.click_button("boundlist-1118-listEl")
 
-        while True:
-            try:
-                pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "fiorilli", "parametros_folha.png"),
-                    grayscale=True,
-                )
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
+        # conteudo input
+        self.send_keys("OF05_id-inputEl", "\\0\\2\\3\\4\\5\\6")
 
-        pyautogui.hotkey(["ctrl", "a"])
-        sleep(self.WAIT_SECONDS)
+        # plus btn
+        self.click_button("OF31_id-btnIconEl")
 
-        pyautogui.write(from_date, interval=self.WRITE_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+        # filtrar btn
+        self.click_button("OF6B_id-btnInnerEl")
 
-        pyautogui.press("tab")
-        sleep(self.WAIT_SECONDS)
+        # grid tbl
+        self.context_click_button("gridview-1109")
 
-        pyautogui.write(to_date, interval=self.WRITE_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+        # grid btn
+        self.click_button("O2D5A_id-itemEl")
 
-        pyautogui.press("tab")
-        sleep(self.WAIT_SECONDS)
+        # exportar btn
+        self.click_button("O2D8B_id-textEl")
 
-        pyautogui.press("enter")
-        sleep(self.WAIT_SECONDS)
+        # txt btn
+        self.click_button("O2D97_id-textEl")
 
-        pyautogui.click(os.path.join(self.assets_dir, "fiorilli", "processar.png"))
-        sleep(self.WAIT_SECONDS)
+    def _download_fiorilli_absences(self) -> None:
+        # utilidades btn
+        self.click_button("OAF7_id-btnInnerEl")
 
-        sleep(3)
+        # importar exportar btn
+        self.click_button("OB7F_id-textEl")
 
-    def _download_from_ahgora(self, web_driver: webdriver.Chrome) -> webdriver.Chrome:
-        print("--- EXPORTAÇÃO AHGORA ---")
+        # exportar btn
+        self.click_button("OBA6_id-textEl")
 
-        web_driver.get("https://app.ahgora.com.br/funcionarios")
+        # exportar arquivo btn
+        self.click_button("OBB7_id-textEl")
 
-        self._login_to_ahgora()
-        sleep(self.WAIT_SECONDS)
+        # PontoFerias2 li
+        self._insert_date_fiorilli_input(name="PontoFerias2", id="OE22_id-inputEl")
 
-        while True:
-            try:
-                pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "ahgora", "funcionarios.png"),
-                    grayscale=True,
-                )
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
+        # PontoAfastamentos2 li
+        self._insert_date_fiorilli_input(
+            name="PontoAfastamentos2", id="OE90_id-inputEl"
+        )
 
-        pyautogui.press("tab", presses=13, interval=self.TAB_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+    def _insert_date_fiorilli_input(self, name: str, id: str):
+        # inicio input
+        self.click_button(f"//*[contains(text(), '{name}')]", selector_type=By.XPATH)
+        # inicio input
+        self.select_and_send_keys(id, "01/01/2025")
 
-        pyautogui.press("enter")
-        sleep(self.WAIT_SECONDS)
+        # prosseguir btn
+        self.click_button("ODEE_id-btnEl")
 
-        while True:
-            try:
-                button_location = pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "ahgora", "ExportarCSV.png"),
-                    grayscale=True,
-                )
-                pyautogui.click(button_location)
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
+        # processar btn
+        self.click_button("OD1F_id-btnInnerEl")
 
-        sleep(3)
-        return web_driver
-
-    def _login_to_ahgora(self) -> None:
+    def ahgora_downloads(self):
+        self.driver.get("https://app.ahgora.com.br/")
         load_dotenv()
 
         user = os.getenv("AHGORA_USER")
         pwd = os.getenv("AHGORA_PASSWORD")
+        company = os.getenv("AHGORA_COMPANY")
 
-        sleep(2)
+        te = self.find_and_wait("email")
+        print(te)
+        print(type(te))
+        time.sleep(600)
+        # email input
+        self.send_keys("email", user)
 
-        pyautogui.press("tab", presses=2, interval=self.TAB_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+        # entrar btn
+        self.click_button("//*[contains(text(), 'Entrar')]", selector_type=By.XPATH)
 
-        pyautogui.write(user, interval=self.WRITE_INTERVAL)
-        sleep(self.WAIT_SECONDS)
+        # password input
+        self.send_keys("password", pwd)
 
-        pyautogui.press("enter")
-        sleep(self.WAIT_SECONDS)
+        self.click_button("//*[contains(text(), 'Entrar')]", selector_type=By.XPATH)
 
-        while True:
+        # company input
+        self.click_button(f"//*[contains(text(), '{company}')]", selector_type=By.XPATH)
+
+        self.click_button("buttonAdjustPunch")
+        self._download_ahgora_employees()
+        self._download_ahgora_absences()
+
+    def _download_ahgora_employees(self):
+        self.driver.get("https://app.ahgora.com.br/funcionarios")
+
+        # mostrar desligados btn
+        self.click_button("filtro_demitido")
+
+        # plus btn
+        self.click_button("mais")
+
+        # exportar csv
+        self.click_button("arquivo_csv")
+
+    def _download_ahgora_absences(self):
+        self.driver.get("https://app.ahgora.com.br/relatorios")
+
+        # gerar novos relatorios btn
+        self.click_button(
+            "//*[contains(text(), 'Gerar novos relatórios')]", selector_type=By.XPATH
+        )
+
+        # selecione btn
+        self.send_keys(
+            "id-autocomplete-multiple-Selecione um relatório (obrigatório)",
+            "Afastamentos",
+        )
+
+        # afastamentos li
+        self.click_button(
+            "//*[contains(text(), 'Afastamentos')]", selector_type=By.XPATH
+        )
+
+        # panel out
+        self.click_button("tabpanel-0")
+
+        # # date btn
+        # self.click_button("_2t8pekO7_rn5BQDaNUsF79", selector_type=By.CLASS_NAME)
+        #
+        # # janeiro
+        # self.click_button("//*[contains(text(), 'janeiro')]", selector_type=By.XPATH)
+
+        # gerar btn
+        self.click_button("//*[contains(text(), 'Gerar')]", selector_type=By.XPATH)
+
+        time.sleep(180)
+        # relatorio btn
+        self.click_button(
+            "//a[contains(@href,'/relatorios/afastamentos')]", selector_type=By.XPATH
+        )
+
+        # formato do resultado btn
+        self.click_button("generateReportFilter")
+
+        # matricula option
+        self.click_button(
+            "//*[contains(text(), 'Agrupado por Mat')]", selector_type=By.XPATH
+        )
+
+        # date
+        self.send_keys("filterByStartDate", "01/01")
+
+        # gerar relatorio
+        self.click_button("generateReport")
+
+        # download icon
+        self.click_button(
+            "//*[contains(data-testid(), 'CloudDownloadIcon')]", selector_type=By.XPATH
+        )
+
+        # baixar em csv btn
+        self.click_button(
+            "//*[contains(text(), 'Baixar em .csv')]", selector_type=By.XPATH
+        )
+
+    def click_button(
+        self,
+        selector,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+        max_tries=MAX_TRIES,
+    ):
+        time.sleep(DELAY)
+        self._retry_func(
+            lambda: self._click_button_helper(
+                self.driver, selector, selector_type, delay, ignored_exceptions
+            ),
+            max_tries,
+        )
+
+    def send_keys(
+        self,
+        selector,
+        keys,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+        max_tries=MAX_TRIES,
+    ):
+        time.sleep(DELAY)
+        self._retry_func(
+            lambda: self._send_keys_helper(
+                self.driver, selector, keys, selector_type, delay, ignored_exceptions
+            ),
+            max_tries,
+        )
+
+    def context_click_button(
+        self,
+        selector,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+        max_tries=MAX_TRIES,
+    ):
+        time.sleep(DELAY)
+        self._retry_func(
+            lambda: self._context_click_button_helper(
+                self.driver, selector, selector_type, delay, ignored_exceptions
+            ),
+            max_tries,
+        )
+
+    def select_and_send_keys(
+        self,
+        selector,
+        keys,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+        max_tries=MAX_TRIES,
+    ):
+        time.sleep(DELAY)
+        self._retry_func(
+            lambda: self._select_and_send_keys_helper(
+                self.driver, selector, keys, selector_type, delay, ignored_exceptions
+            ),
+            max_tries,
+        )
+
+    def find_and_wait(
+        self,
+        selector,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+        max_tries=MAX_TRIES,
+    ):
+        time.sleep(DELAY)
+        return self._retry_func(
+            lambda: self._find_and_wait_helper(
+                self.driver, selector, selector_type, delay, ignored_exceptions
+            ),
+            max_tries,
+        )
+
+    def _click_button_helper(
+        self,
+        driver,
+        selector,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+    ):
+        WebDriverWait(driver, delay, ignored_exceptions=ignored_exceptions).until(
+            EC.presence_of_element_located((selector_type, selector))
+        ).click()
+
+    def _send_keys_helper(
+        self,
+        driver,
+        selector,
+        keys,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+    ):
+        WebDriverWait(driver, delay, ignored_exceptions=ignored_exceptions).until(
+            EC.presence_of_element_located((selector_type, selector))
+        ).send_keys(keys)
+
+    def _context_click_button_helper(
+        self,
+        driver,
+        selector,
+        keys,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+    ):
+        ActionChains(self.driver).context_click(
+            WebDriverWait(driver, delay, ignored_exceptions=ignored_exceptions).until(
+                EC.presence_of_element_located((selector_type, selector))
+            )
+        ).perform()
+
+    def _select_and_send_keys_helper(
+        self,
+        driver,
+        selector,
+        keys,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+    ):
+        ActionChains(self.driver).context_click(
+            WebDriverWait(driver, delay, ignored_exceptions=ignored_exceptions).until(
+                EC.presence_of_element_located((selector_type, selector))
+            )
+        ).key_down(Keys.CONTROL).send_keys("a").key_up(Keys.CONTROL).send_keys(
+            keys
+        ).perform()
+
+    def _find_and_wait_helper(
+        self,
+        driver,
+        selector,
+        selector_type=By.ID,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
+    ):
+        WebDriverWait(driver, 60).until(EC.invisibility_of_element_located((selector_type, selector)))
+
+    def _retry_func(self, func, max_tries=MAX_TRIES):
+        for i in range(max_tries):
             try:
-                pyautogui.locateOnScreen(
-                    os.path.join(self.assets_dir, "ahgora", "senha.png"), grayscale=True
-                )
-                sleep(1)
-                break
-            except pyautogui.ImageNotFoundException:
-                sleep(1)
+                return func()
+            except Exception as e:
+                time.sleep(DELAY)
+                if i >= max_tries - 1:
+                    raise e
 
-        pyautogui.press("tab")
-        sleep(self.WAIT_SECONDS)
+    def __exit__(self, exc_type, exc_value, traceback):
+        print("Exiting context: ", self, exc_type, exc_value, traceback)
+        self.driver.close()
 
-        pyautogui.write(pwd, interval=self.WRITE_INTERVAL)
-        sleep(self.WAIT_SECONDS)
-
-        pyautogui.press("enter")
-        sleep(self.WAIT_SECONDS)
-
-        sleep(2)
-
-        pyautogui.press("tab", presses=2, interval=self.TAB_INTERVAL)
-        sleep(self.WAIT_SECONDS)
-
-        pyautogui.press("enter")
-        sleep(self.WAIT_SECONDS)
-
-
-# afastamentos = [
-#     file_name
-#     for file_name in os.listdir(data_dir)
-#     if os.getsize(os.path.join(data_dir, file_name)) > 0
-# ]
-#
-# if afastamentos:
-#     df_list = [
-#         read_csv(os.path.join(data_dir, file_name), sep=",", header=None)
-#         for file_name in afastamentos
-#     ]
-#     afastamentos_df = os.path.concat(df_list)
-#     afastamentos_df.columns = [
-#         "id",
-#         "reason",
-#         "start_date",
-#         "start_time",
-#         "end_date",
-#         "end_time",
-#     ]
-#     print("--- Afastamentos Baixados ---")
-#     print(afastamentos_df)
-#
-#     start_import = input("Iniciar Importação? (s/n)")
-#     if start_import == "s" or start_import == "":
-#         ahgora_app = AhgoraApp(
-#             download_dir=data_dir,
-#             assets_path=join(working_dir, "absences", "ahgora_app", "assets"),
-#             interval=INTERVAL,
-#             write_interval=WRITE_INTERVAL,
-#             import_files=afastamentos,
-#         )
-#         ahgora_app.run()
-# else:
-#     print(f"Nenhum afastamento pro dia {export_date}.")
-#
-# sleep(1)
-# print("--- Concluído ---")
-# sleep(1)
-# print("--- Fechando Automação ---")
-# sleep(3)
+        return True

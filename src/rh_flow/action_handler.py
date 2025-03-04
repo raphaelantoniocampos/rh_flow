@@ -1,4 +1,3 @@
-import pyautogui
 import pandas as pd
 import time
 

@@ -374,6 +374,7 @@ class DataManager:
             ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
         )
 
+        # TODO: verify characters on positions
         position_df = merged_employees[
             merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
         ]
@@ -407,9 +408,7 @@ class DataManager:
         for _, f_row in fiorilli_absences.iterrows():
             employee_id = f_row["id"]
 
-            if (
-                employee_id in ahgora_absences_grouped.groups
-            ):
+            if employee_id in ahgora_absences_grouped.groups:
                 ahgora_for_employee = ahgora_absences_grouped.get_group(employee_id)
 
                 split_rows = self._split_absence(f_row, ahgora_for_employee)
