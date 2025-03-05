@@ -19,7 +19,6 @@ def read_csv(
         encoding=encoding,
         index_col=False,
         header=header,
-        dtype={"id": str},
     )
     return prepare_dataframe(df=df, columns=columns)
 
@@ -89,8 +88,8 @@ def convert_date(date_str):
 
 
 class DataManager:
-    def __init__(self, working_dir_path: str, config):
-        self.data_dir_path = Path(working_dir_path) / "data"
+    def __init__(self, base_dir_path: str, config):
+        self.data_dir_path = Path(base_dir_path) / "data"
         self.config = config
 
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):

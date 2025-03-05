@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+from datetime import date, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -18,6 +19,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from config import Config
 
 MAX_TRIES = 200
 DELAY = 0.25
@@ -31,16 +33,16 @@ IGNORED_EXCEPTIONS = (
 
 
 class FileDownloader:
-    def __init__(self, working_dir):
-        self.download_path = Path(working_dir / "downloads")
-        self.data_path = Path(working_dir / "data")
+    def __init__(self, base_dir, config: Config):
+        self.download_path = Path(base_dir / "downloads")
+        self.data_path = Path(base_dir / "data")
 
     def run(self):
-        # TODO: add multiple downloads
         # TODO: add progress panels
+        downloaded_files = []
 
         fiorilli_thread = threading.Thread(target=self.fiorilli_downloads)
-        ahora_thread = threading.Thread(target=self.ahgora_downloads)
+        # ahora_thread = threading.Thread(target=self.ahgora_downloads)
 
         fiorilli_thread.start()
         # ahora_thread.start()
@@ -48,25 +50,29 @@ class FileDownloader:
         fiorilli_thread.join()
         # ahora_thread.join()
 
-        files = []
-        while not len(files) >= 4:
+        while not len(downloaded_files) >= 4:
             for file in self.download_path.iterdir():
                 if "grid" in file.name.lower():
-                    files.append(file.name.lower())
+                    if file.name not in downloaded_files:
+                        downloaded_files.append(file.name)
                 if "pontoferias" in file.name.lower():
-                    files.append(file.name.lower())
-                if "pontoafastamentos" in file.name.lower():
-                    files.append(file.name.lower())
+                    if file.name not in downloaded_files:
+                        downloaded_files.append(file.name)
+                if "pontoafast" in file.name.lower():
+                    if file.name not in downloaded_files:
+                        downloaded_files.append(file.name)
                 if "funcionarios" in file.name.lower():
-                    files.append(file.name.lower())
-                print(files)
-                time.sleep(60)
+                    if file.name not in downloaded_files:
+                        downloaded_files.append(file.name)
+            time.sleep(30)
 
-        time.sleep(2**10)
+        print(downloaded_files)
+        self.config.move_files_from_downloads_dir
 
     def _get_web_driver(self, app_name: str) -> webdriver.Firefox:
         print(f"--- Iniciando {app_name.upper()} Web Driver ---")
         options = webdriver.FirefoxOptions()
+        # TODO: uncomment headless
         # options.add_argument("-headless")
         options.set_preference("browser.download.folderList", 2)
         options.set_preference("browser.download.dir", str(self.download_path))
@@ -75,6 +81,15 @@ class FileDownloader:
         driver.implicitly_wait(DELAY)
 
         return driver
+
+    def _get_today_date(self) -> (str, str):
+        today = datetime.today()
+
+        today_str = today.strftime("%d/%m/%Y")
+
+        first_day_str = date(today.year, 1, 1).strftime("%d/%m/%Y")
+
+        return first_day_str, today_str
 
     def fiorilli_downloads(self):
         driver = self._get_web_driver("fiorilli")
@@ -98,23 +113,37 @@ class FileDownloader:
 
     def _download_fiorilli_employees(self, driver) -> None:
         # manutencao btn
-        self.click_button(driver, "O472_id-btnInnerEl")
-
+        self.click_button(
+            driver, "//*[contains(text(), '2 - Manutenção')]", selector_type=By.XPATH
+        )
         # cadastro btn
-        self.click_button(driver, "O47E_id-textEl")
+        self.click_button(
+            driver,
+            "//*[contains(text(), '2.1 - Cadastro de Trabalhadores')]",
+            selector_type=By.XPATH,
+        )
 
         # situacao li
-        self.click_button(driver, "boundlist-1118-listEl")
+        # self.click_button(
+        #     driver, "//*[contains(text(), 'Situação ')]", selector_type=By.XPATH
+        # )
 
         # conteudo input
-        # TODO: uncomment
-        # self.send_keys(driver, "OF05_id-inputEl", "\\0\\2\\3\\4\\5\\6")
-
+        self.send_keys(
+            driver,
+            "//*[@data-ref='inputEl']",
+            "\\0\\2\\3\\4\\5\\6",
+            selector_type=By.XPATH,
+        )
         # plus btn
-        self.click_button(driver, "OF31_id-btnIconEl")
+        self.click_button(driver, "//*[@data-ref='btnIconEl']", selector_type=By.XPATH)
 
         # filtrar btn
-        self.click_button(driver, "OF6B_id-btnInnerEl")
+        self.click_button(
+            driver,
+            "//*[contains(text(), 'Filtrar')]",
+            selector_type=By.XPATH,
+        )
 
         # grid tbl
         self.context_click_button(
@@ -122,52 +151,84 @@ class FileDownloader:
         )
 
         # grid btn
-        self.click_button(driver, "O2D5A_id-itemEl")
+        self.click_button(
+            driver,
+            "//*[contains(text(), 'Grid')]",
+            selector_type=By.XPATH,
+        )
 
         # exportar btn
-        self.click_button(driver, "O2D8B_id-textEl")
+        self.click_button(
+            driver,
+            "//*[contains(text(), 'Exportar')]",
+            selector_type=By.XPATH,
+        )
 
         # txt btn
-        self.click_button(driver, "O2D97_id-textEl")
-
-        self.wait_desappear(driver, "O34E7_id")
+        self.click_button(
+            driver,
+            "//*[contains(text(), 'Exportar em TXT')]",
+            selector_type=By.XPATH,
+        )
+        # exportando
+        self.wait_desappear(
+            driver,
+            "//*[contains(text(), 'Exportando')]",
+            selector_type=By.XPATH,
+        )
 
     def _download_fiorilli_absences(self, driver) -> None:
-        # utilidades btn
-        self.click_button(driver, "OAF7_id-btnInnerEl")
+        # utilitarios btn
+        self.click_button(
+            driver, "//*[contains(text(), '7 - Utilitários')]", selector_type=By.XPATH
+        )
 
         # importar exportar btn
-        self.click_button(driver, "OB7F_id-textEl")
+        self.click_button(
+            driver,
+            "//*[contains(text(), '7.14 - Importar/Exportar')]",
+            selector_type=By.XPATH,
+        )
 
         # exportar btn
-        self.click_button(driver, "OBA6_id-textEl")
-
+        self.click_button(
+            driver, "//*[contains(text(), '7.14.2 - Exportar')]", selector_type=By.XPATH
+        )
         # exportar arquivo btn
-        self.click_button(driver, "OBB7_id-textEl")
+        self.click_button(
+            driver,
+            "//*[contains(text(), '7.14.2.2 - Exportar Arquivo')]",
+            selector_type=By.XPATH,
+        )
 
         # PontoFerias2 li
-        self._insert_date_fiorilli_input(
-            driver, name="PontoFerias2", id="OE22_id-inputEl"
-        )
+        self._insert_date_fiorilli_input(driver, name="PontoFerias2")
 
         # PontoAfastamentos2 li
-        self._insert_date_fiorilli_input(
-            driver, name="PontoAfastamentos2", id="OE90_id-inputEl"
-        )
+        self._insert_date_fiorilli_input(driver, name="PontoAfastamentos2")
 
-    def _insert_date_fiorilli_input(self, driver, name: str, id: str):
+    def _insert_date_fiorilli_input(self, driver, name: str):
+        first_day_str, today_str = self._get_today_date()
+
         # inicio input
         self.click_button(
             driver, f"//*[contains(text(), '{name}')]", selector_type=By.XPATH
         )
         # inicio input
-        self.select_and_send_keys(driver, id, "01/01/2025")
-
+        self.select_and_send_keys(
+            driver,
+            f"//*[@value='{today_str}'][1]",
+            first_day_str,
+            selector_type=By.XPATH,
+        )
         # prosseguir btn
-        self.click_button(driver, "ODEE_id-btnEl")
-
+        self.click_button(
+            driver, "//*[contains(text(), 'Prosseguir')]", selector_type=By.XPATH
+        )
         # processar btn
-        self.click_button(driver, "OD1F_id-btnInnerEl")
+        self.click_button(
+            driver, "//*[contains(text(), 'Processar')]", selector_type=By.XPATH
+        )
 
     def ahgora_downloads(self):
         driver = self._get_web_driver("ahgora")
@@ -284,7 +345,7 @@ class FileDownloader:
         # download icon
         self.click_button(
             driver,
-            "//*[contains(data-testid(), 'CloudDownloadIcon')]",
+            "//*[@data-testid='CloudDownloadIcon']",
             selector_type=By.XPATH,
         )
 

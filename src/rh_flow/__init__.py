@@ -2,22 +2,22 @@ from pathlib import Path
 
 
 def verify_paths():
-    working_dir_path = Path.cwd()
+    base_dir_path = Path.cwd()
 
     needed_directories = [
-        Path(working_dir_path / "downloads"),
-        Path(working_dir_path / "data"),
-        Path(working_dir_path / "data" / "ahgora"),
-        Path(working_dir_path / "data" / "fiorilli"),
-        Path(working_dir_path / "data" / "actions"),
+        Path(base_dir_path / "downloads"),
+        Path(base_dir_path / "data"),
+        Path(base_dir_path / "data" / "ahgora"),
+        Path(base_dir_path / "data" / "fiorilli"),
+        Path(base_dir_path / "data" / "actions"),
     ]
 
     needed_files = [
-        Path(working_dir_path / "data" / "ahgora" / "employees.csv"),
-        Path(working_dir_path / "data" / "ahgora" / "absences.csv"),
-        Path(working_dir_path / "data" / "fiorilli" / "employees.txt"),
-        Path(working_dir_path / "data" / "fiorilli" / "absences.txt"),
-        Path(working_dir_path / "data" / "fiorilli" / "vacations.txt"),
+        Path(base_dir_path / "data" / "ahgora" / "employees.csv"),
+        Path(base_dir_path / "data" / "ahgora" / "absences.csv"),
+        Path(base_dir_path / "data" / "fiorilli" / "employees.txt"),
+        Path(base_dir_path / "data" / "fiorilli" / "absences.txt"),
+        Path(base_dir_path / "data" / "fiorilli" / "vacations.txt"),
     ]
 
     for path in needed_directories:

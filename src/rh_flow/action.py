@@ -71,16 +71,16 @@ class Action:
         return read_csv(self.path)
 
     def _get_path(self):
-        working_dir_path = Path.cwd()
+        base_dir_path = Path.cwd()
 
         if self.name == "new":
-            path = Path(working_dir_path / "data" / "actions" / "new.csv")
+            path = Path(base_dir_path / "data" / "actions" / "new.csv")
         if self.name == "dismissed":
-            path = Path(working_dir_path / "data" / "actions" / "dismissed.csv")
+            path = Path(base_dir_path / "data" / "actions" / "dismissed.csv")
         if self.name == "position":
-            path = Path(working_dir_path / "data" / "actions" / "position.csv")
+            path = Path(base_dir_path / "data" / "actions" / "position.csv")
         if self.name == "absences":
-            path = Path(working_dir_path / "data" / "actions" / "absences.csv")
+            path = Path(base_dir_path / "data" / "actions" / "absences.csv")
 
         return path
 

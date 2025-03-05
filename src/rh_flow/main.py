@@ -13,7 +13,7 @@ from rich.panel import Panel
 
 verify_paths()
 
-WORKING_DIR_PATH = Path.cwd()
+BASE_DIR = Path.cwd()
 
 console = Console()
 
@@ -25,20 +25,21 @@ OPTIONS = [
     "5. Sair",
 ]
 
+
 def main():
     try:
         while True:
             # TODO: make last downloads and analyze appear on main screen
             # TODO: configure the panel to be central and prettier
-            config = Config(WORKING_DIR_PATH)
-            data_manager = DataManager(WORKING_DIR_PATH, config)
-            action_handler = ActionHandler(WORKING_DIR_PATH, config, data_manager)
+            config = Config(BASE_DIR)
+            data_manager = DataManager(BASE_DIR, config)
+            action_handler = ActionHandler(BASE_DIR, config, data_manager)
 
             actions = action_handler.get_actions()
             option = show_menu(actions)[3:]
             match option:
                 case "Baixar arquivos":
-                    file_downloader = FileDownloader(WORKING_DIR_PATH)
+                    file_downloader = FileDownloader(BASE_DIR, config)
                     file_downloader.run()
 
                 case "Analisar dados":

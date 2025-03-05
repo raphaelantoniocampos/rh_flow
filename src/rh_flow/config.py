@@ -15,12 +15,12 @@ NO_IGNORED_STR = (
 
 
 class Config:
-    def __init__(self, working_dir_path: Path):
-        self.data_dir_path = Path(working_dir_path / "data")
+    def __init__(self, base_dir_path: Path):
+        self.data_dir_path = Path(base_dir_path / "data")
         self.path: Path = self.data_dir_path / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
-        self.move_files_from_download(working_dir_path)
+        self.move_files_from_downloads_dir(base_dir_path)
 
     def config_panel(self, console: Console) -> None:
         # TODO: add all files downloads periods
@@ -123,8 +123,8 @@ class Config:
         last_analisys = {"datetime": now.strftime("%d/%m/%Y, %H:%M"), "time_since": now}
         self._update_analysis_time_since(last_analisys, now)
 
-    def move_files_from_download(self, working_dir_path: Path):
-        downloads_path = Path(working_dir_path / "downloads")
+    def move_files_from_downloads_dir(self, base_dir_path: Path):
+        downloads_path = Path(base_dir_path / "downloads")
         for file in downloads_path.iterdir():
             if "trabalhador" in file.name.lower():
                 file.replace(self.data_dir_path / "fiorilli" / "employees.txt")
