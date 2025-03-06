@@ -21,8 +21,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from config import Config
 
-MAX_TRIES = 200
-DELAY = 0.25
+MAX_TRIES = 500
+DELAY = 0.1
 IGNORED_EXCEPTIONS = (
     ElementClickInterceptedException,
     ElementNotInteractableException,
@@ -100,49 +100,84 @@ class FileDownloader:
         pwd = os.getenv("FIORILLI_PASSWORD")
 
         # user input
-        self.send_keys(driver, "O30_id-inputEl", user)
+        self.send_keys(driver, "O30_id-inputEl", user, selector_type=By.ID)
 
         # password input
-        self.send_keys(driver, "O34_id-inputEl", pwd)
+        self.send_keys(driver, "O34_id-inputEl", pwd, selector_type=By.ID)
 
         # login btn
-        self.click_button(driver, "O40_id-btnEl")
+        self.click_button(driver, "O40_id-btnEl", selector_type=By.ID)
+
+        # wait acessando sip
+        self.wait_desappear(
+            driver,
+            "//*[contains(text(), 'Acessando SIP 7.5')]",
+        )
 
         self._download_fiorilli_employees(driver)
         self._download_fiorilli_absences(driver)
 
     def _download_fiorilli_employees(self, driver) -> None:
         # manutencao btn
-        self.click_button(
-            driver, "//*[contains(text(), '2 - Manutenção')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), '2 - Manutenção')]")
         # cadastro btn
         self.click_button(
             driver,
             "//*[contains(text(), '2.1 - Cadastro de Trabalhadores')]",
-            selector_type=By.XPATH,
+        )
+
+        # wait abrindo a tela
+        self.wait_desappear(
+            driver,
+            "//*[contains(text(), 'Abrindo a tela, aguarde...')]",
         )
 
         # situacao li
-        # self.click_button(
-        #     driver, "//*[contains(text(), 'Situação ')]", selector_type=By.XPATH
-        # )
+        self.click_button(
+            driver,
+            "(//div[contains(@class, 'x-boundlist-list-ct')]//li)[1]",
+        )
+
+        # search btn
+        self.click_button(
+            driver,
+            "x-btn-icon-el x-btn-icon-el-default-small fas fa-search",
+            selector_type=By.CLASS_NAME
+        )
+
+        # selecionar todos checkbox
+        self.click_button(
+            driver,
+            "//*[contains(text(), 'Selecionar Todos')]",
+        )
+
+        # selecionar btn
+        self.click_button(
+            driver,
+            "x-btn-inner x-btn-inner-default-small",
+            selector_type=By.CLASS_NAME
+        )
 
         # conteudo input
-        self.send_keys(
-            driver,
-            "//*[@data-ref='inputEl']",
-            "\\0\\2\\3\\4\\5\\6",
-            selector_type=By.XPATH,
-        )
+        # self.send_keys(
+        #     driver,
+        #     "//input["
+        #     "contains(@class, 'x-form-field') and "
+        #     "contains(@class, 'x-form-text') and "
+        #     "contains(@class, 'x-form-text-default') and "
+        #     "contains(@class, 'x-form-empty-field') and "
+        #     "contains(@class, 'x-form-empty-field-default')"
+        #     "]",
+        #     "\\0\\2\\3\\4\\5\\6",
+        # )
+
         # plus btn
-        self.click_button(driver, "//*[@data-ref='btnIconEl']", selector_type=By.XPATH)
+        self.click_button(driver, "x-btn-icon-el x-btn-icon-el-default-small fas fa-plus", selector_type=By.CLASS_NAME)
 
         # filtrar btn
         self.click_button(
             driver,
             "//*[contains(text(), 'Filtrar')]",
-            selector_type=By.XPATH,
         )
 
         # grid tbl
@@ -154,51 +189,41 @@ class FileDownloader:
         self.click_button(
             driver,
             "//*[contains(text(), 'Grid')]",
-            selector_type=By.XPATH,
         )
 
         # exportar btn
         self.click_button(
             driver,
             "//*[contains(text(), 'Exportar')]",
-            selector_type=By.XPATH,
         )
 
         # txt btn
         self.click_button(
             driver,
             "//*[contains(text(), 'Exportar em TXT')]",
-            selector_type=By.XPATH,
         )
         # exportando
         self.wait_desappear(
             driver,
             "//*[contains(text(), 'Exportando')]",
-            selector_type=By.XPATH,
         )
 
     def _download_fiorilli_absences(self, driver) -> None:
         # utilitarios btn
-        self.click_button(
-            driver, "//*[contains(text(), '7 - Utilitários')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), '7 - Utilitários')]")
 
         # importar exportar btn
         self.click_button(
             driver,
             "//*[contains(text(), '7.14 - Importar/Exportar')]",
-            selector_type=By.XPATH,
         )
 
         # exportar btn
-        self.click_button(
-            driver, "//*[contains(text(), '7.14.2 - Exportar')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), '7.14.2 - Exportar')]")
         # exportar arquivo btn
         self.click_button(
             driver,
             "//*[contains(text(), '7.14.2.2 - Exportar Arquivo')]",
-            selector_type=By.XPATH,
         )
 
         # PontoFerias2 li
@@ -211,24 +236,17 @@ class FileDownloader:
         first_day_str, today_str = self._get_today_date()
 
         # inicio input
-        self.click_button(
-            driver, f"//*[contains(text(), '{name}')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, f"//*[contains(text(), '{name}')]")
         # inicio input
         self.select_and_send_keys(
             driver,
             f"//*[@value='{today_str}'][1]",
             first_day_str,
-            selector_type=By.XPATH,
         )
         # prosseguir btn
-        self.click_button(
-            driver, "//*[contains(text(), 'Prosseguir')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Prosseguir')]")
         # processar btn
-        self.click_button(
-            driver, "//*[contains(text(), 'Processar')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Processar')]")
 
     def ahgora_downloads(self):
         driver = self._get_web_driver("ahgora")
@@ -240,26 +258,20 @@ class FileDownloader:
         company = os.getenv("AHGORA_COMPANY")
 
         # email input
-        self.send_keys(driver, "email", user)
+        self.send_keys(driver, "email", user, selector_type=By.ID)
 
         # entrar btn
-        self.click_button(
-            driver, "//*[contains(text(), 'Entrar')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Entrar')]")
 
         # password input
-        self.send_keys(driver, "password", pwd)
+        self.send_keys(driver, "password", pwd, selector_type=By.ID)
 
-        self.click_button(
-            driver, "//*[contains(text(), 'Entrar')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Entrar')]")
 
         # company input
-        self.click_button(
-            driver, f"//*[contains(text(), '{company}')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, f"//*[contains(text(), '{company}')]")
 
-        self.click_button(driver, "buttonAdjustPunch")
+        self.click_button(driver, "buttonAdjustPunch", selector_type=By.ID)
         self._download_ahgora_employees(driver)
         self._download_ahgora_absences(driver)
 
@@ -267,13 +279,13 @@ class FileDownloader:
         driver.get("https://app.ahgora.com.br/funcionarios")
 
         # mostrar desligados btn
-        self.click_button(driver, "filtro_demitido")
+        self.click_button(driver, "filtro_demitido", selector_type=By.ID)
 
         # plus btn
-        self.click_button(driver, "mais")
+        self.click_button(driver, "mais", selector_type=By.ID)
 
         # exportar csv
-        self.click_button(driver, "arquivo_csv")
+        self.click_button(driver, "arquivo_csv", selector_type=By.ID)
 
     def _download_ahgora_absences(self, driver):
         driver.get("https://app.ahgora.com.br/relatorios")
@@ -282,7 +294,6 @@ class FileDownloader:
         self.click_button(
             driver,
             "//*[contains(text(), 'Gerar novos relatórios')]",
-            selector_type=By.XPATH,
         )
 
         # selecione btn
@@ -290,15 +301,14 @@ class FileDownloader:
             driver,
             "id-autocomplete-multiple-Selecione um relatório (obrigatório)",
             "Afastamentos",
+            selector_type=By.ID,
         )
 
         # afastamentos li
-        self.click_button(
-            driver, "//*[contains(text(), 'Afastamentos')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Afastamentos')]")
 
         # panel out
-        self.click_button(driver, "tabpanel-0")
+        self.click_button(driver, "tabpanel-0", selector_type=By.ID)
 
         # date btn
         self.click_button(
@@ -306,59 +316,48 @@ class FileDownloader:
         )
 
         # janeiro
-        self.click_button(
-            driver, "//*[contains(text(), 'janeiro')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'janeiro')]")
 
         # gerar btn
-        self.click_button(
-            driver, "//*[contains(text(), 'Gerar')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Gerar')]")
 
         # gerando relatorio progress bar
         self.wait_desappear(
             driver,
             "//*[contains(text(), 'Estamos gerando seus relatórios...')]",
-            selector_type=By.XPATH,
         )
         # relatorio btn
         self.click_button(
             driver,
             "//a[contains(@href,'/relatorios/afastamentos')]",
-            selector_type=By.XPATH,
         )
 
         # formato do resultado btn
-        self.click_button(driver, "generateReportFilter")
+        self.click_button(driver, "generateReportFilter", selector_type=By.ID)
 
         # matricula option
-        self.click_button(
-            driver, "//*[contains(text(), 'Agrupado por Mat')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Agrupado por Mat')]")
 
         # date
-        self.send_keys(driver, "filterByStartDate", "01/01")
+        self.send_keys(driver, "filterByStartDate", "01/01", selector_type=By.ID)
 
         # gerar relatorio
-        self.click_button(driver, "generateReport")
+        self.click_button(driver, "generateReport", selector_type=By.ID)
 
         # download icon
         self.click_button(
             driver,
             "//*[@data-testid='CloudDownloadIcon']",
-            selector_type=By.XPATH,
         )
 
         # baixar em csv btn
-        self.click_button(
-            driver, "//*[contains(text(), 'Baixar em .csv')]", selector_type=By.XPATH
-        )
+        self.click_button(driver, "//*[contains(text(), 'Baixar em .csv')]")
 
     def click_button(
         self,
         driver,
         selector,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
@@ -376,7 +375,7 @@ class FileDownloader:
         driver,
         selector,
         keys,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
@@ -393,7 +392,7 @@ class FileDownloader:
         self,
         driver,
         selector,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         max_tries=MAX_TRIES,
     ):
@@ -408,7 +407,7 @@ class FileDownloader:
         driver,
         selector,
         keys,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
@@ -425,8 +424,8 @@ class FileDownloader:
         self,
         driver,
         selector,
-        selector_type=By.ID,
-        delay=DELAY,
+        selector_type=By.XPATH,
+        delay=30,
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
@@ -442,7 +441,7 @@ class FileDownloader:
         self,
         driver,
         selector,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
@@ -455,7 +454,7 @@ class FileDownloader:
         driver,
         selector,
         keys,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
@@ -467,7 +466,7 @@ class FileDownloader:
         self,
         driver,
         selector,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
     ):
         ActionChains(driver).context_click(
             driver.find_element(selector_type, selector)
@@ -478,7 +477,7 @@ class FileDownloader:
         driver,
         selector,
         keys,
-        selector_type=By.ID,
+        selector_type=By.XPATH,
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
@@ -494,11 +493,11 @@ class FileDownloader:
         self,
         driver,
         selector,
-        selector_type=By.ID,
-        delay=DELAY,
+        selector_type=By.XPATH,
+        delay=30,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
-        WebDriverWait(driver, 60).until(
+        WebDriverWait(driver, delay).until(
             EC.invisibility_of_element_located((selector_type, selector))
         )
 
