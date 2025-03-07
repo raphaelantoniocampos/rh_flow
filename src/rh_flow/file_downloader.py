@@ -42,13 +42,13 @@ class FileDownloader:
         downloaded_files = []
 
         fiorilli_thread = threading.Thread(target=self.fiorilli_downloads)
-        # ahora_thread = threading.Thread(target=self.ahgora_downloads)
+        ahora_thread = threading.Thread(target=self.ahgora_downloads)
 
-        fiorilli_thread.start()
-        # ahora_thread.start()
+        # fiorilli_thread.start()
+        ahora_thread.start()
 
-        fiorilli_thread.join()
-        # ahora_thread.join()
+        # fiorilli_thread.join()
+        ahora_thread.join()
 
         while not len(downloaded_files) >= 4:
             for file in self.download_path.iterdir():
@@ -325,6 +325,7 @@ class FileDownloader:
         self.wait_desappear(
             driver,
             "//*[contains(text(), 'Estamos gerando seus relatórios...')]",
+            delay=240
         )
         # relatorio btn
         self.click_button(
