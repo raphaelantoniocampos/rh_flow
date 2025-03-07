@@ -330,7 +330,7 @@ class FileDownloader:
         # relatorio btn
         self.click_button(
             driver,
-            "//a[contains(@href,'/relatorios/afastamentos')]",
+            "//a[contains(text(),'Afastamentos')]",
         )
 
         # formato do resultado btn
