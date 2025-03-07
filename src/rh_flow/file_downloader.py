@@ -44,11 +44,11 @@ class FileDownloader:
         fiorilli_thread = threading.Thread(target=self.fiorilli_downloads)
         ahora_thread = threading.Thread(target=self.ahgora_downloads)
 
-        # fiorilli_thread.start()
-        ahora_thread.start()
+        fiorilli_thread.start()
+        # ahora_thread.start()
 
-        # fiorilli_thread.join()
-        ahora_thread.join()
+        fiorilli_thread.join()
+        # ahora_thread.join()
 
         while not len(downloaded_files) >= 4:
             for file in self.download_path.iterdir():
@@ -74,10 +74,18 @@ class FileDownloader:
         options = webdriver.FirefoxOptions()
         # TODO: uncomment headless
         # options.add_argument("-headless")
-        options.set_preference("browser.download.folderList", 2)
-        options.set_preference("browser.download.dir", str(self.download_path))
+        options.set_preference(
+            "browser.download.folderList",
+            2,
+        )
+        options.set_preference(
+            "browser.download.dir",
+            str(self.download_path),
+        )
 
-        driver = webdriver.Firefox(options=options)
+        driver = webdriver.Firefox(
+            options=options,
+        )
         driver.implicitly_wait(DELAY)
 
         return driver
@@ -100,13 +108,27 @@ class FileDownloader:
         pwd = os.getenv("FIORILLI_PASSWORD")
 
         # user input
-        self.send_keys(driver, "O30_id-inputEl", user, selector_type=By.ID)
+        self.send_keys(
+            driver,
+            "O30_id-inputEl",
+            user,
+            selector_type=By.ID,
+        )
 
         # password input
-        self.send_keys(driver, "O34_id-inputEl", pwd, selector_type=By.ID)
+        self.send_keys(
+            driver,
+            "O34_id-inputEl",
+            pwd,
+            selector_type=By.ID,
+        )
 
         # login btn
-        self.click_button(driver, "O40_id-btnEl", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "O40_id-btnEl",
+            selector_type=By.ID,
+        )
 
         # wait acessando sip
         self.wait_desappear(
@@ -138,41 +160,33 @@ class FileDownloader:
             "(//div[contains(@class, 'x-boundlist-list-ct')]//li)[1]",
         )
 
-        # search btn
-        self.click_button(
-            driver,
-            "x-btn-icon-el x-btn-icon-el-default-small fas fa-search",
-            selector_type=By.CLASS_NAME
-        )
+        element = driver.find_element()
+        print(element.get_attribute("id"))
+        time.sleep(300)
 
-        # selecionar todos checkbox
-        self.click_button(
-            driver,
-            "//*[contains(text(), 'Selecionar Todos')]",
-        )
+        """
+        <label id="OF53_id-labelEl" data-ref="labelEl" class="x-form-item-label x-form-item-label-default   x-unselectable" style="padding-right:5px;width:105px;" for="OF53_id-inputEl">
+        <span class="x-form-item-label-inner x-form-item-label-inner-default" style="width:100px">
+        <span id="OF53_id-labelTextEl" data-ref="labelTextEl" class="x-form-item-label-text"></span>
+        </span></label>
 
-        # selecionar btn
-        self.click_button(
-            driver,
-            "x-btn-inner x-btn-inner-default-small",
-            selector_type=By.CLASS_NAME
-        )
-
+        <div id="OF53_id-bodyEl" data-ref="bodyEl" role="presentation" class="x-form-item-body x-form-item-body-default x-form-text-field-body x-form-text-field-body-default  "><div id="OF53_id-triggerWrap" data-ref="triggerWrap" role="presentation" class="x-form-trigger-wrap x-form-trigger-wrap-default"><div id="OF53_id-inputWrap" data-ref="inputWrap" role="presentation" class="x-form-text-wrap x-form-text-wrap-default"><input id="OF53_id-inputEl" data-ref="inputEl" type="text" size="1" name="OF53" tabindex="328" style="font-family:Segoe UI" aria-hidden="false" aria-disabled="false" role="textbox" aria-invalid="false" aria-readonly="false" aria-describedby="OF53_id-ariaStatusEl" aria-required="false" class="x-form-field x-form-text x-form-text-default  x-form-empty-field x-form-empty-field-default" autocomplete="off" data-componentid="OF53_id"></div></div><span id="OF53_id-ariaStatusEl" data-ref="ariaStatusEl" aria-hidden="true" class="x-hidden-offsets"></span><span id="OF53_id-ariaErrorEl" data-ref="ariaErrorEl" aria-hidden="true" aria-live="assertive" class="x-hidden-clip"></span></div>
+        """
         # conteudo input
-        # self.send_keys(
-        #     driver,
-        #     "//input["
-        #     "contains(@class, 'x-form-field') and "
-        #     "contains(@class, 'x-form-text') and "
-        #     "contains(@class, 'x-form-text-default') and "
-        #     "contains(@class, 'x-form-empty-field') and "
-        #     "contains(@class, 'x-form-empty-field-default')"
-        #     "]",
-        #     "\\0\\2\\3\\4\\5\\6",
-        # )
+        self.send_keys(
+            driver,
+            "//div[contains(@style, '144px')]"
+            "//input[contains(@aria-hidden, 'false')"
+            "and contains(@style, 'font-family:Segoe UI')]",
+            "\\0\\2\\3\\4\\5\\6",
+        )
 
         # plus btn
-        self.click_button(driver, "x-btn-icon-el x-btn-icon-el-default-small fas fa-plus", selector_type=By.CLASS_NAME)
+        self.click_button(
+            driver,
+            "x-btn-icon-el x-btn-icon-el-default-small fas fa-plus",
+            selector_type=By.CLASS_NAME,
+        )
 
         # filtrar btn
         self.click_button(
@@ -182,7 +196,9 @@ class FileDownloader:
 
         # grid tbl
         self.context_click_button(
-            driver, "x-grid-item-container", selector_type=By.CLASS_NAME
+            driver,
+            "x-grid-item-container",
+            selector_type=By.CLASS_NAME,
         )
 
         # grid btn
@@ -258,20 +274,34 @@ class FileDownloader:
         company = os.getenv("AHGORA_COMPANY")
 
         # email input
-        self.send_keys(driver, "email", user, selector_type=By.ID)
+        self.send_keys(
+            driver,
+            "email",
+            user,
+            selector_type=By.ID,
+        )
 
         # entrar btn
         self.click_button(driver, "//*[contains(text(), 'Entrar')]")
 
         # password input
-        self.send_keys(driver, "password", pwd, selector_type=By.ID)
+        self.send_keys(
+            driver,
+            "password",
+            pwd,
+            selector_type=By.ID,
+        )
 
         self.click_button(driver, "//*[contains(text(), 'Entrar')]")
 
         # company input
         self.click_button(driver, f"//*[contains(text(), '{company}')]")
 
-        self.click_button(driver, "buttonAdjustPunch", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "buttonAdjustPunch",
+            selector_type=By.ID,
+        )
         self._download_ahgora_employees(driver)
         self._download_ahgora_absences(driver)
 
@@ -279,13 +309,25 @@ class FileDownloader:
         driver.get("https://app.ahgora.com.br/funcionarios")
 
         # mostrar desligados btn
-        self.click_button(driver, "filtro_demitido", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "filtro_demitido",
+            selector_type=By.ID,
+        )
 
         # plus btn
-        self.click_button(driver, "mais", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "mais",
+            selector_type=By.ID,
+        )
 
         # exportar csv
-        self.click_button(driver, "arquivo_csv", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "arquivo_csv",
+            selector_type=By.ID,
+        )
 
     def _download_ahgora_absences(self, driver):
         driver.get("https://app.ahgora.com.br/relatorios")
@@ -308,7 +350,11 @@ class FileDownloader:
         self.click_button(driver, "//*[contains(text(), 'Afastamentos')]")
 
         # panel out
-        self.click_button(driver, "tabpanel-0", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "tabpanel-0",
+            selector_type=By.ID,
+        )
 
         # date btn
         self.click_button(
@@ -325,7 +371,7 @@ class FileDownloader:
         self.wait_desappear(
             driver,
             "//*[contains(text(), 'Estamos gerando seus relatórios...')]",
-            delay=240
+            delay=240,
         )
         # relatorio btn
         self.click_button(
@@ -334,16 +380,29 @@ class FileDownloader:
         )
 
         # formato do resultado btn
-        self.click_button(driver, "generateReportFilter", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "generateReportFilter",
+            selector_type=By.ID,
+        )
 
         # matricula option
         self.click_button(driver, "//*[contains(text(), 'Agrupado por Mat')]")
 
         # date
-        self.send_keys(driver, "filterByStartDate", "01/01", selector_type=By.ID)
+        self.send_keys(
+            driver,
+            "filterByStartDate",
+            "01/01",
+            selector_type=By.ID,
+        )
 
         # gerar relatorio
-        self.click_button(driver, "generateReport", selector_type=By.ID)
+        self.click_button(
+            driver,
+            "generateReport",
+            selector_type=By.ID,
+        )
 
         # download icon
         self.click_button(
