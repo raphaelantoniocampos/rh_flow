@@ -25,16 +25,23 @@ OPTIONS = [
     "5. Sair",
 ]
 
+# TODO: check fiorilli downloads
+# TODO: check ahgora downloads
+# TODO: make last downloads and analyze appear on main screen
+# TODO: configure the panel to be central and prettier
+# TODO: refactor structure tree
+
 
 def main():
     try:
+        config = Config(BASE_DIR)
+        config.move_files_from_downloads_dir(
+            downloads_dir_path=Path(BASE_DIR / "downloads"),
+            data_dir_path=Path(BASE_DIR / "data"),
+        )
+        data_manager = DataManager(BASE_DIR, config)
+        action_handler = ActionHandler(BASE_DIR, config, data_manager)
         while True:
-            # TODO: make last downloads and analyze appear on main screen
-            # TODO: configure the panel to be central and prettier
-            config = Config(BASE_DIR)
-            data_manager = DataManager(BASE_DIR, config)
-            action_handler = ActionHandler(BASE_DIR, config, data_manager)
-
             actions = action_handler.get_actions()
             option = show_menu(actions)[3:]
             match option:
