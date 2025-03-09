@@ -4,6 +4,7 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 
+from config import Config
 from dotenv import load_dotenv
 from rich import print
 from selenium import webdriver
@@ -19,7 +20,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from config import Config
 
 MAX_TRIES = 100
 DELAY = 0.5
@@ -44,10 +44,10 @@ class FileDownloader:
         fiorilli_thread = threading.Thread(target=self.fiorilli_downloads)
         ahgora_thread = threading.Thread(target=self.ahgora_downloads)
 
-        fiorilli_thread.start()
+        # fiorilli_thread.start()
         ahgora_thread.start()
 
-        fiorilli_thread.join()
+        # fiorilli_thread.join()
         ahgora_thread.join()
 
         while not len(downloaded_files) >= 4:
@@ -140,12 +140,16 @@ class FileDownloader:
 
         self._download_fiorilli_employees(driver)
         self._download_fiorilli_absences(driver)
-        time.sleep(10)
-        driver.close()
+
+        time.sleep(1)
+        driver.quit()
 
     def _download_fiorilli_employees(self, driver) -> None:
         # manutencao btn
-        self.click_element(driver, "//*[contains(text(), '2 - Manutenção')]")
+        self.click_element(
+            driver,
+            "//*[contains(text(), '2 - Manutenção')]",
+        )
         # cadastro btn
         self.click_element(
             driver,
@@ -183,7 +187,10 @@ class FileDownloader:
             "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:275px;width:294px;height:41px')]//*[contains(text(), 'Filtrar')]",
         )
 
-        self.wait_desappear(driver, "//*[contains(text(), 'Aguarde')]")
+        self.wait_desappear(
+            driver,
+            "//*[contains(text(), 'Aguarde')]",
+        )
 
         # grid tbl
         self.right_click_element(
@@ -216,43 +223,71 @@ class FileDownloader:
 
     def _download_fiorilli_absences(self, driver) -> None:
         # utilitarios btn
-        self.click_element(driver, "//*[contains(text(), '7 - Utilitários')]")
-
-        # importar exportar btn
         self.click_element(
             driver,
-            "//*[contains(text(), '7.14 - Importar/Exportar')]",
+            "//span[contains(text(), '7 - Utilitários')]",
+        )
+
+        # importar exportar btn
+        self._retry_func(
+            lambda: self.click_element(
+                driver,
+                "//span[contains(text(), '7.14 - Importar/Exportar')]",
+            ),
+            2,
         )
 
         # exportar btn
-        self.click_element(driver, "//*[contains(text(), '7.14.2 - Exportar')]")
+        self._retry_func(
+            lambda: self.click_element(
+                driver,
+                "//span[contains(text(), '7.14.2 - Exportar')]",
+            ),
+            2,
+        )
+
         # exportar arquivo btn
         self.click_element(
             driver,
-            "//*[contains(text(), '7.14.2.2 - Exportar Arquivo')]",
+            "//span[contains(text(), '7.14.2.2 - Exportar Arquivo')]",
         )
 
         # PontoFerias2 li
-        self._insert_date_fiorilli_input(driver, name="PontoFerias2")
+        self._insert_date_fiorilli_input(
+            driver,
+            name="PontoFerias2",
+        )
 
         # PontoAfastamentos2 li
-        self._insert_date_fiorilli_input(driver, name="PontoAfastamentos2")
+        self._insert_date_fiorilli_input(
+            driver,
+            name="PontoAfastamentos2",
+        )
 
     def _insert_date_fiorilli_input(self, driver, name: str):
         first_day_str, today_str = self._get_today_date()
 
         # inicio input
-        self.click_element(driver, f"//*[contains(text(), '{name}')]")
+        self.click_element(
+            driver,
+            f"//div[contains(text(), '{name}')]",
+        )
         # inicio input
         self.select_and_send_keys(
             driver,
-            f"//*[@value='{today_str}'][1]",
+            f"//input[@value='{today_str}'][1]",
             first_day_str,
         )
         # prosseguir btn
-        self.click_element(driver, "//*[contains(text(), 'Prosseguir')]")
+        self.click_element(
+            driver,
+            "//span[contains(text(), 'Prosseguir')]",
+        )
         # processar btn
-        self.click_element(driver, "//*[contains(text(), 'Processar')]")
+        self.click_element(
+            driver,
+            "//span[contains(text(), 'Processar')]",
+        )
 
     def ahgora_downloads(self):
         driver = self._get_web_driver("ahgora")
@@ -272,7 +307,10 @@ class FileDownloader:
         )
 
         # entrar btn
-        self.click_element(driver, "//*[contains(text(), 'Entrar')]")
+        self.click_element(
+            driver,
+            "//*[contains(text(), 'Entrar')]",
+        )
 
         # password input
         self.send_keys(
@@ -282,10 +320,16 @@ class FileDownloader:
             selector_type=By.ID,
         )
 
-        self.click_element(driver, "//*[contains(text(), 'Entrar')]")
+        self.click_element(
+            driver,
+            "//*[contains(text(), 'Entrar')]",
+        )
 
         # company input
-        self.click_element(driver, f"//*[contains(text(), '{company}')]")
+        self.click_element(
+            driver,
+            f"//*[contains(text(), '{company}')]",
+        )
 
         self.click_element(
             driver,
@@ -294,6 +338,9 @@ class FileDownloader:
         )
         self._download_ahgora_employees(driver)
         self._download_ahgora_absences(driver)
+
+        time.sleep(1)
+        driver.quit()
 
     def _download_ahgora_employees(self, driver):
         driver.get("https://app.ahgora.com.br/funcionarios")
@@ -337,7 +384,10 @@ class FileDownloader:
         )
 
         # afastamentos li
-        self.click_element(driver, "//*[contains(text(), 'Afastamentos')]")
+        self.click_element(
+            driver,
+            "//*[contains(text(), 'Afastamentos')]",
+        )
 
         # panel out
         self.click_element(
@@ -348,20 +398,29 @@ class FileDownloader:
 
         # date btn
         self.click_element(
-            driver, "_2t8pekO7_rn5BQDaNUsF79", selector_type=By.CLASS_NAME
+            driver,
+            "_2t8pekO7_rn5BQDaNUsF79",
+            selector_type=By.CLASS_NAME,
         )
 
         # janeiro
-        self.click_element(driver, "//*[contains(text(), 'janeiro')]")
+        self.click_element(
+            driver,
+            "//*[contains(text(), 'janeiro')]",
+        )
 
         # gerar btn
-        self.click_element(driver, "//*[contains(text(), 'Gerar')]")
+        self.click_element(
+            driver,
+            "//*[contains(text(), 'Gerar')]",
+        )
 
         # gerando relatorio progress bar
+        time.sleep(120)
         self.wait_desappear(
             driver,
             "//*[contains(text(), 'Estamos gerando seus relatórios...')]",
-            delay=240,
+            delay=10,
         )
         # relatorio btn
         self.click_element(
@@ -372,26 +431,26 @@ class FileDownloader:
         # formato do resultado btn
         self.click_element(
             driver,
-            "generateReportFilter",
-            selector_type=By.ID,
+            "//div[contains(@comp-textselect, 'Formato do resultado')]",
         )
 
         # matricula option
-        self.click_element(driver, "//*[contains(text(), 'Agrupado por Mat')]")
+        self.click_element(
+            driver,
+            "//option[contains(@value, 'agrupadoM')]",
+        )
 
         # date
         self.send_keys(
             driver,
-            "filterByStartDate",
+            "//input[contains(@id, 'filterByStartDate')]",
             "01/01",
-            selector_type=By.ID,
         )
 
         # gerar relatorio
         self.click_element(
             driver,
-            "generateReport",
-            selector_type=By.ID,
+            "//button[contains(@id, 'generateReport')]",
         )
 
         # download icon
@@ -401,7 +460,10 @@ class FileDownloader:
         )
 
         # baixar em csv btn
-        self.click_element(driver, "//*[contains(text(), 'Baixar em .csv')]")
+        self.click_element(
+            driver,
+            "//li[contains(text(), 'Baixar em .csv')]",
+        )
 
     def click_element(
         self,

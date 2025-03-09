@@ -27,7 +27,7 @@ KEY_STOP = Key("F5")
 
 
 class ActionHandler:
-    def __init__(self, base_dir: Path, config: Config, data_manager: DataManager):
+    def __init__(self, base_dir_path: Path, config: Config, data_manager: DataManager):
         self.data_dir_path = Path(base_dir_path / "data")
         self.config = config
         self.data_manager = data_manager
