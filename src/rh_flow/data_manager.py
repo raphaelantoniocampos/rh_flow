@@ -3,6 +3,7 @@ from pathlib import Path
 from time import sleep
 
 import pandas as pd
+from pandas.errors import EmptyDataError
 from rich import print
 
 
@@ -96,8 +97,8 @@ class DataManager:
         try:
             # TODO: add progress bars
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
-            fiorilli_employees, ahgora_employees = self._get_employees_data()
-            fiorilli_absences, ahgora_absences = self._get_absences_data()
+            ahgora_employees, fiorilli_employees = self._get_employees_data()
+            ahgora_absences, fiorilli_absences = self._get_absences_data()
 
             new_df, dismissed_df, position_df, absences_df = self._generate_actions_dfs(
                 fiorilli_employees,
@@ -225,68 +226,77 @@ class DataManager:
                 "dismissal_date",
             ],
         )
-        return fiorilli_employees, ahgora_employees
+        return (
+            ahgora_employees,
+            fiorilli_employees,
+        )
 
-    def _get_absences_data(self) -> (pd.DataFrame, pd.DataFrame):
-        fiorilli_absences_path = self.data_dir_path / "fiorilli" / "absences.txt"
-        fiorilli_vacations_path = self.data_dir_path / "fiorilli" / "vacations.txt"
+    def get_ahgora_absences(self) -> pd.DataFrame:
         ahgora_absences_path = self.data_dir_path / "ahgora" / "absences.csv"
 
-        fiorilli_columns = [
-            "id",
-            "cod",
-            "start_date",
-            "start_time",
-            "end_date",
-            "end_time",
-        ]
+        try:
+            return read_csv(
+                ahgora_absences_path,
+                sep=";",
+                columns=[
+                    "name",
+                    "id",
+                    "pis_pasep",
+                    "cpf",
+                    "cod",
+                    "admission_date",
+                    "birth_date",
+                    "position",
+                    "department",
+                    "branch",
+                    "regime",
+                    "cost_center",
+                    "location",
+                    "reason_cod",
+                    "reason",
+                    "start_date",
+                    "end_date",
+                    "dismissal_date",
+                ],
+            )
+        except EmptyDataError:
+            return pd.DataFrame
 
-        fiorilli_absences = pd.concat(
-            [
-                read_csv(
-                    fiorilli_vacations_path,
-                    header=None,
-                    columns=fiorilli_columns,
-                ),
-                read_csv(
-                    fiorilli_absences_path,
-                    header=None,
-                    columns=fiorilli_columns,
-                ),
-            ]
-        )
+    def get_fiorilli_absences(self) -> pd.DataFrame:
+        fiorilli_absences_path = self.data_dir_path / "fiorilli" / "absences.txt"
+        fiorilli_vacations_path = self.data_dir_path / "fiorilli" / "vacations.txt"
 
-        fiorilli_absences = read_csv(
-            fiorilli_absences_path,
-            header=None,
-            columns=fiorilli_columns,
-        )
-        ahgora_absences = read_csv(
-            ahgora_absences_path,
-            sep=";",
-            columns=[
-                "name",
+        try:
+            fiorilli_columns = [
                 "id",
-                "pis_pasep",
-                "cpf",
                 "cod",
-                "admission_date",
-                "birth_date",
-                "position",
-                "department",
-                "branch",
-                "regime",
-                "cost_center",
-                "location",
-                "reason_cod",
-                "reason",
                 "start_date",
+                "start_time",
                 "end_date",
-                "dismissal_date",
-            ],
-        )
+                "end_time",
+            ]
 
-        return fiorilli_absences, ahgora_absences
+            return pd.concat(
+                [
+                    read_csv(
+                        fiorilli_vacations_path,
+                        header=None,
+                        columns=fiorilli_columns,
+                    ),
+                    read_csv(
+                        fiorilli_absences_path,
+                        header=None,
+                        columns=fiorilli_columns,
+                    ),
+                ]
+            )
+        except EmptyDataError:
+            return pd.DataFrame
+
+    def _get_absences_data(self) -> (pd.DataFrame, pd.DataFrame):
+        ahgora_absences = self.get_ahgora_absences()
+        fiorilli_absences = self.get_fiorilli_absences()
+        return ahgora_absences, fiorilli_absences
 
     def _split_absence(self, fiorilli_row, ahgora_absences_for_employee):
         f_start = pd.to_datetime(
@@ -400,23 +410,25 @@ class DataManager:
 
         # TODO: check if new absences enter
 
-        ahgora_absences_grouped = ahgora_absences.groupby("id")
+        # ahgora_absences_grouped = ahgora_absences.groupby("id")
+        #
+        # split_absences = []
+        #
+        # for _, f_row in fiorilli_absences.iterrows():
+        #     employee_id = f_row["id"]
+        #
+        #     if employee_id in ahgora_absences_grouped.groups:
+        #         ahgora_for_employee = ahgora_absences_grouped.get_group(employee_id)
+        #
+        #         split_rows = self._split_absence(f_row, ahgora_for_employee)
+        #         split_absences.extend(split_rows)
+        #     else:
+        #         ahgora_for_employee = pd.DataFrame()
+        #
+        # absences_df = pd.DataFrame(split_absences).drop(
+        #     columns=["key"], errors="ignore"
+        # )
 
-        split_absences = []
-
-        for _, f_row in fiorilli_absences.iterrows():
-            employee_id = f_row["id"]
-
-            if employee_id in ahgora_absences_grouped.groups:
-                ahgora_for_employee = ahgora_absences_grouped.get_group(employee_id)
-
-                split_rows = self._split_absence(f_row, ahgora_for_employee)
-                split_absences.extend(split_rows)
-            else:
-                ahgora_for_employee = pd.DataFrame()
-
-        absences_df = pd.DataFrame(split_absences).drop(
-            columns=["key"], errors="ignore"
-        )
+        absences_df = pd.DataFrame
 
         return new_df, dismissed_df, position_df, absences_df

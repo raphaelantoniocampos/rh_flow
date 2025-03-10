@@ -21,8 +21,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-MAX_TRIES = 100
-DELAY = 0.5
+MAX_TRIES = 20
+DELAY = 5
 IGNORED_EXCEPTIONS = (
     ElementClickInterceptedException,
     ElementNotInteractableException,
@@ -44,10 +44,10 @@ class FileDownloader:
         fiorilli_thread = threading.Thread(target=self.fiorilli_downloads)
         ahgora_thread = threading.Thread(target=self.ahgora_downloads)
 
-        # fiorilli_thread.start()
+        fiorilli_thread.start()
         ahgora_thread.start()
 
-        # fiorilli_thread.join()
+        fiorilli_thread.join()
         ahgora_thread.join()
 
         while not len(downloaded_files) >= 4:
@@ -138,8 +138,8 @@ class FileDownloader:
             "//*[contains(text(), 'Acessando SIP 7.5')]",
         )
 
-        self._download_fiorilli_employees(driver)
         self._download_fiorilli_absences(driver)
+        self._download_fiorilli_employees(driver)
 
         time.sleep(1)
         driver.quit()
@@ -474,7 +474,6 @@ class FileDownloader:
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
-        time.sleep(DELAY)
         self._retry_func(
             lambda: self._click_element_helper(
                 driver, selector, selector_type, delay, ignored_exceptions
@@ -492,7 +491,6 @@ class FileDownloader:
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
-        time.sleep(DELAY)
         self._retry_func(
             lambda: self._send_keys_helper(
                 driver, selector, keys, selector_type, delay, ignored_exceptions
@@ -508,7 +506,6 @@ class FileDownloader:
         delay=DELAY,
         max_tries=MAX_TRIES,
     ):
-        time.sleep(DELAY)
         self._retry_func(
             lambda: self._right_click_button_helper(driver, selector, selector_type),
             max_tries,
@@ -524,7 +521,6 @@ class FileDownloader:
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
-        time.sleep(DELAY)
         self._retry_func(
             lambda: self._select_and_send_keys_helper(
                 driver, selector, keys, selector_type, delay, ignored_exceptions
@@ -541,7 +537,6 @@ class FileDownloader:
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
-        time.sleep(DELAY)
         return self._retry_func(
             lambda: self._wait_desappear_helper(
                 driver, selector, selector_type, delay, ignored_exceptions
