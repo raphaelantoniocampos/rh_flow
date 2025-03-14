@@ -2,6 +2,8 @@ from data_manager import read_csv
 from pathlib import Path
 from pandas import DataFrame
 
+BASE_DIR = Path(Path.cwd() / "src")
+
 
 class Action:
     def __init__(self, name: str, fun):
@@ -71,21 +73,19 @@ class Action:
         return read_csv(self.path)
 
     def _get_path(self):
-        base_dir_path = Path.cwd()
-
         if self.name == "new":
-            path = Path(base_dir_path / "data" / "actions" / "new.csv")
+            path = Path(BASE_DIR / "data" / "actions" / "new.csv")
         if self.name == "dismissed":
-            path = Path(base_dir_path / "data" / "actions" / "dismissed.csv")
+            path = Path(BASE_DIR / "data" / "actions" / "dismissed.csv")
         if self.name == "position":
-            path = Path(base_dir_path / "data" / "actions" / "position.csv")
+            path = Path(BASE_DIR / "data" / "actions" / "position.csv")
         if self.name == "absences":
-            path = Path(base_dir_path / "data" / "actions" / "absences.csv")
+            path = Path(BASE_DIR / "data" / "actions" / "absences.csv")
 
         return path
 
     def _get_option(self):
-        check = '➤' if not self.is_empty() else ''
+        check = "➤" if not self.is_empty() else ""
         if self.name == "new":
             return f"Adicionar no Ahgora {check}"
 

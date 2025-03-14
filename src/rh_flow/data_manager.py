@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from time import sleep
 
@@ -98,12 +97,11 @@ class DataManager:
             # TODO: add progress bars
             print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
             ahgora_employees, fiorilli_employees = self._get_employees_data()
-            ahgora_absences, fiorilli_absences = self._get_absences_data()
+            fiorilli_absences = self._get_fiorilli_absences()
 
             new_df, dismissed_df, position_df, absences_df = self._generate_actions_dfs(
                 fiorilli_employees,
                 ahgora_employees,
-                ahgora_absences,
                 fiorilli_absences,
             )
 
@@ -111,30 +109,31 @@ class DataManager:
 
             if not new_df.empty:
                 new_df.to_csv(
-                    os.path.join(save_dir, "new.csv"),
+                    Path(save_dir / "new.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
             if not dismissed_df.empty:
                 dismissed_df.to_csv(
-                    os.path.join(save_dir, "dismissed.csv"),
+                    Path(save_dir / "dismissed.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
             if not position_df.empty:
                 position_df.to_csv(
-                    os.path.join(save_dir, "position.csv"),
+                    Path(save_dir / "position.csv"),
                     index=False,
                     encoding="utf-8",
                 )
 
             if not absences_df.empty:
                 absences_df.to_csv(
-                    Path(self.data_dir_path / "actions" / "absences.csv"),
+                    Path(save_dir / "absences.txt"),
                     index=False,
                     header=False,
+                    encoding="utf-8",
                 )
 
             self.config.update_last_analisys()
@@ -231,38 +230,41 @@ class DataManager:
             fiorilli_employees,
         )
 
-    def get_ahgora_absences(self) -> pd.DataFrame:
-        ahgora_absences_path = self.data_dir_path / "ahgora" / "absences.csv"
+    # def get_ahgora_absences(self) -> pd.DataFrame:
+    #     ahgora_absences_path = self.data_dir_path / "ahgora" / "absences.csv"
+    #     try:
+    #         return read_csv(
+    #             ahgora_absences_path,
+    #             sep=";",
+    #             columns=[
+    #                 "name",
+    #                 "id",
+    #                 "pis_pasep",
+    #                 "cpf",
+    #                 "cod",
+    #                 "admission_date",
+    #                 "birth_date",
+    #                 "position",
+    #                 "department",
+    #                 "branch",
+    #                 "regime",
+    #                 "cost_center",
+    #                 "location",
+    #                 "day",
+    #                 "scale",
+    #                 "weekday",
+    #                 "total",
+    #                 "reason",
+    #                 # "reason_cod",
+    #                 "start_date",
+    #                 "end_date",
+    #                 "dismissal_date",
+    #             ],
+    #         )
+    #     except EmptyDataError:
+    #         return pd.DataFrame
 
-        try:
-            return read_csv(
-                ahgora_absences_path,
-                sep=";",
-                columns=[
-                    "name",
-                    "id",
-                    "pis_pasep",
-                    "cpf",
-                    "cod",
-                    "admission_date",
-                    "birth_date",
-                    "position",
-                    "department",
-                    "branch",
-                    "regime",
-                    "cost_center",
-                    "location",
-                    "reason_cod",
-                    "reason",
-                    "start_date",
-                    "end_date",
-                    "dismissal_date",
-                ],
-            )
-        except EmptyDataError:
-            return pd.DataFrame
-
-    def get_fiorilli_absences(self) -> pd.DataFrame:
+    def _get_fiorilli_absences(self) -> pd.DataFrame:
         fiorilli_absences_path = self.data_dir_path / "fiorilli" / "absences.txt"
         fiorilli_vacations_path = self.data_dir_path / "fiorilli" / "vacations.txt"
 
@@ -292,11 +294,6 @@ class DataManager:
             )
         except EmptyDataError:
             return pd.DataFrame
-
-    def _get_absences_data(self) -> (pd.DataFrame, pd.DataFrame):
-        ahgora_absences = self.get_ahgora_absences()
-        fiorilli_absences = self.get_fiorilli_absences()
-        return ahgora_absences, fiorilli_absences
 
     def _split_absence(self, fiorilli_row, ahgora_absences_for_employee):
         f_start = pd.to_datetime(
@@ -344,7 +341,6 @@ class DataManager:
         self,
         fiorilli_employees: pd.DataFrame,
         ahgora_employees: pd.DataFrame,
-        ahgora_absences: pd.DataFrame,
         fiorilli_absences: pd.DataFrame,
     ):
         fiorilli_dismissed_df = fiorilli_employees[
@@ -429,6 +425,6 @@ class DataManager:
         #     columns=["key"], errors="ignore"
         # )
 
-        absences_df = pd.DataFrame
+        absences_df = fiorilli_absences
 
         return new_df, dismissed_df, position_df, absences_df

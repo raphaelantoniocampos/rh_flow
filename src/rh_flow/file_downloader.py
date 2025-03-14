@@ -21,8 +21,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-MAX_TRIES = 20
-DELAY = 5
+MAX_TRIES = 10
+DELAY = 1
 IGNORED_EXCEPTIONS = (
     ElementClickInterceptedException,
     ElementNotInteractableException,
@@ -38,7 +38,7 @@ class FileDownloader:
         self.data_dir_path = Path(base_dir_path / "data")
 
     def run(self):
-        # TODO: add progress panels
+        # TODO: add progress panels later
         downloaded_files = []
 
         fiorilli_thread = threading.Thread(target=self.fiorilli_downloads)
@@ -50,185 +50,169 @@ class FileDownloader:
         fiorilli_thread.join()
         ahgora_thread.join()
 
-        while not len(downloaded_files) >= 4:
+        self._wait_for_downloads_to_complete(downloaded_files)
+        self._move_files_to_data_dir()
+
+    def _wait_for_downloads_to_complete(self, downloaded_files):
+        while len(downloaded_files) < 4:
             for file in self.downloads_dir_path.iterdir():
-                if "grid" in file.name.lower():
-                    if file.name not in downloaded_files:
-                        downloaded_files.append(file.name)
-                if "pontoferias" in file.name.lower():
-                    if file.name not in downloaded_files:
-                        downloaded_files.append(file.name)
-                if "pontoafast" in file.name.lower():
-                    if file.name not in downloaded_files:
-                        downloaded_files.append(file.name)
-                if "funcionarios" in file.name.lower():
+                if any(
+                    keyword in file.name.lower()
+                    for keyword in ["grid", "pontoferias", "pontoafast", "funcionarios"]
+                ):
                     if file.name not in downloaded_files:
                         downloaded_files.append(file.name)
             time.sleep(30)
             print(downloaded_files)
 
-        Config().move_files_from_downloads_dir(
+    def _move_files_to_data_dir(self):
+        Config.move_files_from_downloads_dir(
             self.downloads_dir_path, self.data_dir_path
         )
 
-    def _get_web_driver(self, app_name: str) -> webdriver.Firefox:
-        print(f"--- Iniciando {app_name.upper()} Web Driver ---")
+    def _get_web_driver(self) -> webdriver.Firefox:
         options = webdriver.FirefoxOptions()
-        # TODO: uncomment headless
+        # TODO: uncomment headless later
         # options.add_argument("-headless")
-        options.set_preference(
-            "browser.download.folderList",
-            2,
-        )
-        options.set_preference(
-            "browser.download.dir",
-            str(self.downloads_dir_path),
-        )
+        options.set_preference("browser.download.folderList", 2)
+        options.set_preference("browser.download.dir", str(self.downloads_dir_path))
 
-        driver = webdriver.Firefox(
-            options=options,
-        )
+        driver = webdriver.Firefox(options=options)
         driver.implicitly_wait(DELAY)
 
         return driver
 
-    def _get_today_date(self) -> (str, str):
-        today = datetime.today()
+    def fiorilli_downloads(self) -> None:
+        print("--- Iniciando FIORILLI Web Driver ---")
+        driver = self._initialize_driver_and_navigate(
+            "https://pompeu-pm-sip.sigmix.net/sip/"
+        )
+        self._login_to_fiorilli(driver)
+        self._download_fiorilli_data(driver)
+        self._close_driver(driver)
+        print("--- Downloads FIORILLI Concluídos ---")
 
-        today_str = today.strftime("%d/%m/%Y")
+    def ahgora_downloads(self) -> None:
+        print("--- Iniciando AHGORA Web Driver ---")
+        driver = self._initialize_driver_and_navigate("https://app.ahgora.com.br/")
+        self._login_to_ahgora(driver)
+        self._select_company(driver)
+        self._navigate_to_adjust_punch(driver)
+        self._download_ahgora_data(driver)
+        self._close_driver(driver)
+        print("--- Downloads AHGORA Concluídos ---")
 
-        first_day_str = date(today.year, 1, 1).strftime("%d/%m/%Y")
-
-        return first_day_str, today_str
-
-    def fiorilli_downloads(self):
-        driver = self._get_web_driver("fiorilli")
-        driver.get("https://pompeu-pm-sip.sigmix.net/sip/")
+    def _initialize_driver_and_navigate(self, url):
+        driver = self._get_web_driver()
+        driver.get(url)
         load_dotenv()
+        return driver
 
+    def _login_to_fiorilli(self, driver) -> None:
         user = os.getenv("FIORILLI_USER")
         pwd = os.getenv("FIORILLI_PASSWORD")
 
-        # user input
-        self.send_keys(
-            driver,
-            "O30_id-inputEl",
-            user,
-            selector_type=By.ID,
-        )
+        self._enter_username(driver, "O30_id-inputEl", user)
+        self._enter_password(driver, "O34_id-inputEl", pwd)
+        self._click_login_button(driver)
+        self._wait_for_login_to_complete(driver)
 
-        # password input
-        self.send_keys(
-            driver,
-            "O34_id-inputEl",
-            pwd,
-            selector_type=By.ID,
-        )
+    def _click_login_button(self, driver) -> None:
+        self.click_element(driver, "O40_id-btnEl", selector_type=By.ID)
 
-        # login btn
-        self.click_element(
-            driver,
-            "O40_id-btnEl",
-            selector_type=By.ID,
-        )
+    def _wait_for_login_to_complete(self, driver) -> None:
+        self.wait_desappear(driver, "//*[contains(text(), 'Acessando SIP 7.5')]")
 
-        # wait acessando sip
-        self.wait_desappear(
-            driver,
-            "//*[contains(text(), 'Acessando SIP 7.5')]",
-        )
-
-        self._download_fiorilli_absences(driver)
+    def _download_fiorilli_data(self, driver) -> None:
         self._download_fiorilli_employees(driver)
+        time.sleep(DELAY)
+        self._download_fiorilli_absences(driver)
+        time.sleep(DELAY)
 
-        time.sleep(1)
+    def _close_driver(self, driver) -> None:
         driver.quit()
 
     def _download_fiorilli_employees(self, driver) -> None:
-        # manutencao btn
+        self._navigate_to_maintenance_section(driver)
+        self._navigate_to_worker_registration(driver)
+        self._wait_for_screen_to_load(driver)
+        self._select_situation(driver)
+        self._input_content(driver)
+        self._click_add_button(driver)
+        self._click_filter_button(driver)
+        self._wait_for_processing(driver)
+        self._right_click_grid(driver)
+        self._click_grid_option(driver)
+        self._click_export_option(driver)
+        self._click_export_txt_option(driver)
+        self._wait_for_export_to_complete(driver)
+
+    def _navigate_to_maintenance_section(self, driver) -> None:
+        self.click_element(driver, "//*[contains(text(), '2 - Manutenção')]")
+
+    def _navigate_to_worker_registration(self, driver) -> None:
         self.click_element(
-            driver,
-            "//*[contains(text(), '2 - Manutenção')]",
-        )
-        # cadastro btn
-        self.click_element(
-            driver,
-            "//*[contains(text(), '2.1 - Cadastro de Trabalhadores')]",
+            driver, "//*[contains(text(), '2.1 - Cadastro de Trabalhadores')]"
         )
 
-        # wait abrindo a tela
+    def _wait_for_screen_to_load(self, driver) -> None:
+        self.wait_desappear(
+            driver, "//*[contains(text(), 'Abrindo a tela, aguarde...')]"
+        )
+
+    def _select_situation(self, driver) -> None:
+        self.click_element(
+            driver, "(//div[contains(@class, 'x-boundlist-list-ct')]//li)[1]"
+        )
+
+    def _input_content(self, driver) -> None:
+        content_input_xpath = "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:22px')]//div[contains(@data-ref, 'inputWrap')]//input[contains(@data-ref, 'inputEl') and contains(@style, 'font-family:Segoe UI') and contains(@role, 'textbox') and contains(@aria-hidden, 'false') and contains(@aria-disabled, 'false')]"
+        self.select_and_send_keys(driver, content_input_xpath, "0\\1\\2\\3\\4\\5\\6")
+
+    def _click_add_button(self, driver) -> None:
+        plus_button_xpath = "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:22px')]//span[contains(@class, 'x-btn-icon-el x-btn-icon-el-default-small fas fa-plus')]"
+        self.click_element(driver, plus_button_xpath)
+
+    def _click_filter_button(self, driver) -> None:
+        filter_button_xpath = "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:275px;width:294px;height:41px')]//*[contains(text(), 'Filtrar')]"
+        self.click_element(driver, filter_button_xpath)
+
+    def _wait_for_processing(self, driver) -> None:
         self.wait_desappear(
             driver,
-            "//*[contains(text(), 'Abrindo a tela, aguarde...')]",
+            "//div[contains(@class, 'x-mask-loading')]//div[contains(text(), 'Aguarde')]",
         )
 
-        # situacao li
+    def _right_click_grid(self, driver) -> None:
+        grid_xpath = "//div[contains(@class, 'x-grid-item-container')]//table[contains(@style, ';width:0')]//td[contains(@style , ';font-family:Segoe UI') and not(contains(@class, 'unselectable'))][1]"
+        self.right_click_element(driver, grid_xpath)
+
+    def _click_grid_option(self, driver) -> None:
         self.click_element(
-            driver,
-            "(//div[contains(@class, 'x-boundlist-list-ct')]//li)[1]",
+            driver, "//span[contains(text(), 'Grid') and contains(@data-ref, 'textEl')]"
         )
 
-        # conteudo input
-        self.select_and_send_keys(
-            driver,
-            "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:22px')]//div[contains(@data-ref, 'inputWrap')]//input[contains(@data-ref, 'inputEl') and contains(@style, 'font-family:Segoe UI') and contains(@role, 'textbox') and contains(@aria-hidden, 'false') and contains(@aria-disabled, 'false')]",
-            "0\\1\\2\\3\\4\\5\\6",
-        )
+    def _click_export_option(self, driver) -> None:
+        self.click_element(driver, "//span[contains(text(), 'Exportar')]")
 
-        # plus btn
-        self.click_element(
-            driver,
-            "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:22px')]//span[contains(@class, 'x-btn-icon-el x-btn-icon-el-default-small fas fa-plus')]",
-        )
+    def _click_export_txt_option(self, driver) -> None:
+        self.click_element(driver, "//span[contains(text(), 'Exportar em TXT')]")
 
-        # filtrar btn
-        self.click_element(
-            driver,
-            "//div[contains(@style, 'border:none;font-family:Segoe UI;left:0px;top:275px;width:294px;height:41px')]//*[contains(text(), 'Filtrar')]",
-        )
-
-        self.wait_desappear(
-            driver,
-            "//*[contains(text(), 'Aguarde')]",
-        )
-
-        # grid tbl
-        self.right_click_element(
-            driver,
-            "//div[contains(@class, 'x-grid-item-container')]",
-        )
-
-        # grid btn
-        self.click_element(
-            driver,
-            "//span[contains(text(), 'Grid') and contains(@data-ref, 'textEl')]",
-        )
-
-        # exportar btn
-        self.click_element(
-            driver,
-            "//span[contains(text(), 'Exportar') and contains(@class, 'item-indent-right-arrow')]",
-        )
-
-        # txt btn
-        self.click_element(
-            driver,
-            "//span[contains(text(), 'Exportar em TXT')]",
-        )
-        # exportando
-        self.wait_desappear(
-            driver,
-            "//*[contains(text(), 'Exportando')]",
-        )
+    def _wait_for_export_to_complete(self, driver) -> None:
+        self.wait_desappear(driver, "//*[contains(text(), 'Exportando')]")
 
     def _download_fiorilli_absences(self, driver) -> None:
-        # utilitarios btn
-        self.click_element(
-            driver,
-            "//span[contains(text(), '7 - Utilitários')]",
-        )
+        self._navigate_to_utilities_section(driver)
+        self._navigate_to_import_export_section(driver)
+        self._navigate_to_export_section(driver)
+        self._navigate_to_export_file_section(driver)
+        self._insert_date_for_input(driver, name="PontoFerias2")
+        self._insert_date_for_input(driver, name="PontoAfastamentos2")
 
-        # importar exportar btn
+    def _navigate_to_utilities_section(self, driver) -> None:
+        self.click_element(driver, "//span[contains(text(), '7 - Utilitários')]")
+
+    def _navigate_to_import_export_section(self, driver) -> None:
         self._retry_func(
             lambda: self.click_element(
                 driver,
@@ -237,7 +221,7 @@ class FileDownloader:
             2,
         )
 
-        # exportar btn
+    def _navigate_to_export_section(self, driver) -> None:
         self._retry_func(
             lambda: self.click_element(
                 driver,
@@ -246,224 +230,135 @@ class FileDownloader:
             2,
         )
 
-        # exportar arquivo btn
+    def _navigate_to_export_file_section(self, driver) -> None:
         self.click_element(
-            driver,
-            "//span[contains(text(), '7.14.2.2 - Exportar Arquivo')]",
+            driver, "//span[contains(text(), '7.14.2.2 - Exportar Arquivo')]"
         )
 
-        # PontoFerias2 li
-        self._insert_date_fiorilli_input(
-            driver,
-            name="PontoFerias2",
-        )
+    def _insert_date_for_input(self, driver, name: str) -> None:
+        self._insert_date_fiorilli_input(driver, name=name)
 
-        # PontoAfastamentos2 li
-        self._insert_date_fiorilli_input(
-            driver,
-            name="PontoAfastamentos2",
-        )
+    def _insert_date_fiorilli_input(self, driver, name: str) -> None:
+        self._select_input_field(driver, name)
+        self._fill_input_field(driver)
+        self._click_proceed_button(driver)
+        self._click_process_button(driver)
 
-    def _insert_date_fiorilli_input(self, driver, name: str):
-        first_day_str, today_str = self._get_today_date()
+    def _select_input_field(self, driver, name: str) -> None:
+        self.click_element(driver, f"//div[contains(text(), '{name}')]")
 
-        # inicio input
-        self.click_element(
-            driver,
-            f"//div[contains(text(), '{name}')]",
-        )
-        # inicio input
+    def _fill_input_field(self, driver) -> None:
+        today = datetime.today()
+        today_str = today.strftime("%d/%m/%Y")
         self.select_and_send_keys(
             driver,
-            f"//input[@value='{today_str}'][1]",
-            first_day_str,
-        )
-        # prosseguir btn
-        self.click_element(
-            driver,
-            "//span[contains(text(), 'Prosseguir')]",
-        )
-        # processar btn
-        self.click_element(
-            driver,
-            "//span[contains(text(), 'Processar')]",
+            f"//input[@value='{today_str}']",
+            [
+                date(today.year, 1, 1).strftime("%d/%m/%Y"),
+                date(today.year, 12, 31).strftime("%d/%m/%Y"),
+            ],
         )
 
-    def ahgora_downloads(self):
-        driver = self._get_web_driver("ahgora")
-        driver.get("https://app.ahgora.com.br/")
-        load_dotenv()
+    def _click_proceed_button(self, driver) -> None:
+        self.click_element(driver, "//span[contains(text(), 'Prosseguir')]")
 
+    def _click_process_button(self, driver) -> None:
+        self.click_element(driver, "//span[contains(text(), 'Processar')]")
+
+    def _login_to_ahgora(self, driver) -> None:
         user = os.getenv("AHGORA_USER")
         pwd = os.getenv("AHGORA_PASSWORD")
+
+        self._enter_username(driver, "email", user)
+        self._click_enter_button(driver)
+        self._enter_password(driver, "password", pwd)
+        self._click_enter_button(driver)
+
+    def _enter_username(self, driver, selector: str, email: str) -> None:
+        self.send_keys(driver, selector, email, selector_type=By.ID)
+
+    def _enter_password(self, driver, selector: str, password: str) -> None:
+        self.send_keys(driver, selector, password, selector_type=By.ID)
+
+    def _click_enter_button(self, driver) -> None:
+        self.click_element(driver, "//*[contains(text(), 'Entrar')]")
+
+    def _select_company(self, driver) -> None:
         company = os.getenv("AHGORA_COMPANY")
+        self.click_element(driver, f"//*[contains(text(), '{company}')]")
 
-        # email input
-        self.send_keys(
-            driver,
-            "email",
-            user,
-            selector_type=By.ID,
-        )
+    def _navigate_to_adjust_punch(self, driver) -> None:
+        self.click_element(driver, "buttonAdjustPunch", selector_type=By.ID)
 
-        # entrar btn
-        self.click_element(
-            driver,
-            "//*[contains(text(), 'Entrar')]",
-        )
-
-        # password input
-        self.send_keys(
-            driver,
-            "password",
-            pwd,
-            selector_type=By.ID,
-        )
-
-        self.click_element(
-            driver,
-            "//*[contains(text(), 'Entrar')]",
-        )
-
-        # company input
-        self.click_element(
-            driver,
-            f"//*[contains(text(), '{company}')]",
-        )
-
-        self.click_element(
-            driver,
-            "buttonAdjustPunch",
-            selector_type=By.ID,
-        )
+    def _download_ahgora_data(self, driver) -> None:
         self._download_ahgora_employees(driver)
-        self._download_ahgora_absences(driver)
+        # self._download_ahgora_absences(driver)
+        time.sleep(30)
 
-        time.sleep(1)
+    def _close_driver(self, driver) -> None:
         driver.quit()
 
-    def _download_ahgora_employees(self, driver):
+    def _download_ahgora_employees(self, driver) -> None:
         driver.get("https://app.ahgora.com.br/funcionarios")
+        self._show_dismissed_employees(driver)
+        self._click_plus_button(driver)
+        self._export_to_csv(driver)
 
-        # mostrar desligados btn
-        self.click_element(
-            driver,
-            "filtro_demitido",
-            selector_type=By.ID,
-        )
+    def _show_dismissed_employees(self, driver) -> None:
+        self.click_element(driver, "filtro_demitido", selector_type=By.ID)
 
-        # plus btn
-        self.click_element(
-            driver,
-            "mais",
-            selector_type=By.ID,
-        )
+    def _click_plus_button(self, driver) -> None:
+        self.click_element(driver, "mais", selector_type=By.ID)
 
-        # exportar csv
-        self.click_element(
-            driver,
-            "arquivo_csv",
-            selector_type=By.ID,
-        )
+    def _export_to_csv(self, driver) -> None:
+        self.click_element(driver, "arquivo_csv", selector_type=By.ID)
 
-    def _download_ahgora_absences(self, driver):
+    def _download_ahgora_absences(self, driver) -> None:
         driver.get("https://app.ahgora.com.br/relatorios")
+        self._generate_new_reports(driver)
+        self._select_absences_report(driver)
+        self._select_date_range(driver)
+        self._generate_report(driver)
+        self._download_report_as_csv(driver)
 
-        # gerar novos relatorios btn
-        self.click_element(
-            driver,
-            "//*[contains(text(), 'Gerar novos relatórios')]",
-        )
+    def _generate_new_reports(self, driver) -> None:
+        self.click_element(driver, "//*[contains(text(), 'Gerar novos relatórios')]")
 
-        # selecione btn
+    def _select_absences_report(self, driver) -> None:
         self.send_keys(
             driver,
             "id-autocomplete-multiple-Selecione um relatório (obrigatório)",
             "Afastamentos",
             selector_type=By.ID,
         )
+        self.click_element(driver, "//*[contains(text(), 'Afastamentos')]")
 
-        # afastamentos li
+    def _select_date_range(self, driver) -> None:
+        self.click_element(driver, "tabpanel-0", selector_type=By.ID)
         self.click_element(
-            driver,
-            "//*[contains(text(), 'Afastamentos')]",
+            driver, "_2t8pekO7_rn5BQDaNUsF79", selector_type=By.CLASS_NAME
         )
+        self.click_element(driver, "//*[contains(text(), 'janeiro')]")
 
-        # panel out
-        self.click_element(
-            driver,
-            "tabpanel-0",
-            selector_type=By.ID,
-        )
-
-        # date btn
-        self.click_element(
-            driver,
-            "_2t8pekO7_rn5BQDaNUsF79",
-            selector_type=By.CLASS_NAME,
-        )
-
-        # janeiro
-        self.click_element(
-            driver,
-            "//*[contains(text(), 'janeiro')]",
-        )
-
-        # gerar btn
-        self.click_element(
-            driver,
-            "//*[contains(text(), 'Gerar')]",
-        )
-
-        # gerando relatorio progress bar
+    def _generate_report(self, driver) -> None:
+        self.click_element(driver, "//*[contains(text(), 'Gerar')]")
         time.sleep(120)
         self.wait_desappear(
             driver,
             "//*[contains(text(), 'Estamos gerando seus relatórios...')]",
             delay=10,
         )
-        # relatorio btn
-        self.click_element(
-            driver,
-            "//a[contains(text(),'Afastamentos')]",
-        )
+        self.click_element(driver, "//a[contains(text(),'Afastamentos')]")
 
-        # formato do resultado btn
+    def _download_report_as_csv(self, driver) -> None:
         self.click_element(
-            driver,
-            "//div[contains(@comp-textselect, 'Formato do resultado')]",
+            driver, "//div[contains(@comp-textselect, 'Formato do resultado')]"
         )
-
-        # matricula option
-        self.click_element(
-            driver,
-            "//option[contains(@value, 'agrupadoM')]",
-        )
-
-        # date
-        self.send_keys(
-            driver,
-            "//input[contains(@id, 'filterByStartDate')]",
-            "01/01",
-        )
-
-        # gerar relatorio
-        self.click_element(
-            driver,
-            "//button[contains(@id, 'generateReport')]",
-        )
-
-        # download icon
-        self.click_element(
-            driver,
-            "//*[@data-testid='CloudDownloadIcon']",
-        )
-
-        # baixar em csv btn
-        self.click_element(
-            driver,
-            "//li[contains(text(), 'Baixar em .csv')]",
-        )
+        self.click_element(driver, "//option[contains(@value, 'agrupadoM')]")
+        self.send_keys(driver, "//input[contains(@id, 'filterByStartDate')]", "01/01")
+        self.click_element(driver, "//button[contains(@id, 'generateReport')]")
+        self.click_element(driver, "//*[@data-testid='CloudDownloadIcon']")
+        self.click_element(driver, "//li[contains(text(), 'Baixar em .csv')]")
 
     def click_element(
         self,
@@ -504,10 +399,13 @@ class FileDownloader:
         selector,
         selector_type=By.XPATH,
         delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
         self._retry_func(
-            lambda: self._right_click_button_helper(driver, selector, selector_type),
+            lambda: self._right_click_button_helper(
+                driver, selector, selector_type, delay, ignored_exceptions
+            ),
             max_tries,
         )
 
@@ -521,12 +419,27 @@ class FileDownloader:
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
-        self._retry_func(
-            lambda: self._select_and_send_keys_helper(
-                driver, selector, keys, selector_type, delay, ignored_exceptions
-            ),
-            max_tries,
-        )
+        if isinstance(keys, list):
+            for i, key in enumerate(keys):
+                element_selector = f"({selector})[{i + 1}]"
+                self._retry_func(
+                    lambda: self._select_and_send_keys_helper(
+                        driver,
+                        element_selector,
+                        key,
+                        selector_type,
+                        delay,
+                        ignored_exceptions,
+                    ),
+                    max_tries,
+                )
+        else:
+            self._retry_func(
+                lambda: self._select_and_send_keys_helper(
+                    driver, selector, keys, selector_type, delay, ignored_exceptions
+                ),
+                max_tries,
+            )
 
     def wait_desappear(
         self,
@@ -535,7 +448,7 @@ class FileDownloader:
         selector_type=By.XPATH,
         delay=30,
         ignored_exceptions=IGNORED_EXCEPTIONS,
-        max_tries=MAX_TRIES,
+        max_tries=10,
     ):
         return self._retry_func(
             lambda: self._wait_desappear_helper(
@@ -574,10 +487,18 @@ class FileDownloader:
         driver,
         selector,
         selector_type=By.XPATH,
+        delay=DELAY,
+        ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
         ActionChains(driver).context_click(
-            driver.find_element(selector_type, selector)
+            WebDriverWait(driver, delay, ignored_exceptions=ignored_exceptions).until(
+                EC.presence_of_element_located((selector_type, selector))
+            )
         ).perform()
+
+        # TODO: REMOVE
+        # element = driver.find_element(selector_type, selector)
+        # ActionChains(driver).context_click(element).perform()
 
     def _select_and_send_keys_helper(
         self,

@@ -1,8 +1,7 @@
 from pathlib import Path
 
 
-def verify_paths():
-    base_dir_path = Path.cwd()
+def verify_paths(base_dir_path: Path):
 
     needed_directories = [
         Path(base_dir_path / "downloads"),

@@ -11,9 +11,10 @@ from rich import print
 from rich.console import Console
 from rich.panel import Panel
 
-verify_paths()
 
-BASE_DIR = Path.cwd()
+BASE_DIR = Path(Path.cwd() / "src")
+
+verify_paths(BASE_DIR)
 
 console = Console()
 
@@ -25,8 +26,17 @@ OPTIONS = [
     "5. Sair",
 ]
 
+# TODO: action df na tela de action nao ta levando os ignore em conta
+# TODO: Exportar buton firoilli now work
+# TODO: adicionar opcao headless file downloader
 # TODO: check fiorilli downloads
 # TODO: check ahgora downloads
+# TODO: fix position action
+# TODO: create new abcenses action remove.py using txt
+# TODO: file downloader multithread e separado
+# TODO: file downloader segundo plano 
+# TODO: separate file_downloader into classes
+# TODO: make add employees download ahgora again
 # TODO: make last downloads and analyze appear on main screen
 # TODO: configure the panel to be central and prettier
 # TODO: refactor structure tree

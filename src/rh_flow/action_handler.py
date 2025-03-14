@@ -1,29 +1,32 @@
-import pandas as pd
+from rich.console import Console
+
 import time
+from pathlib import Path
 
 import inquirer
 import keyboard
-from rich import print
-from pyperclip import copy
-
+import pandas as pd
+import pyautogui
+from action import Action
 from config import Config
 from data_manager import DataManager
-from pathlib import Path
-from action import Action
+from pyperclip import copy
+from rich import print
 
 
 class Key:
-    def __init__(self, key: str):
-        self.key = key
+    def __init__(self, name: str, color: str):
+        self.name = name
+        self.color = color
+        self.key = str(name)
 
     def __str__(self):
-        return f"[bold cyan1]{self.key.upper()}[/bold cyan1]"
+        return f"[bold {self.color}]{self.name.upper()}[/bold {self.color}]"
 
 
-KEY_AUTO = Key("F4")
-KEY_CONTINUE = Key("F2")
-KEY_NEXT = Key("F3")
-KEY_STOP = Key("F5")
+KEY_CONTINUE = Key("F2", "green3")
+KEY_NEXT = Key("F3", "yellow1")
+KEY_STOP = Key("F4", "red3")
 
 
 class ActionHandler:
@@ -50,9 +53,8 @@ class ActionHandler:
             self.name_to_action("new"),
             self.name_to_action("dismissed"),
             self.name_to_action("position"),
-            self.name_to_action("absences"),
+            # self.name_to_action("absences"),
         ]
-
 
     def name_to_action(self, name: str) -> Action:
         action = Action(name, self._action_name_to_fun(name))
@@ -100,7 +102,7 @@ class ActionHandler:
             see_list: dict[str, bool] = see_list["yes"]
             if see_list:
                 time.sleep(0.5)
-                df = self.config.update_employees_to_ignore(action)
+                action.df = self.config.update_employees_to_ignore(action)
 
             ok_input = inquirer.prompt(
                 [inquirer.Confirm("yes", message="Começar?", default="yes")]
@@ -109,7 +111,7 @@ class ActionHandler:
             if not ok_input["yes"]:
                 return
 
-            action.fun(df)
+            action.fun(action.df)
 
     def _show_actions_menu(self, actions) -> dict[str, str]:
         options = []
@@ -120,7 +122,9 @@ class ActionHandler:
         choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]
         choices.append(f"{len(choices) + 1}. Voltar")
         questions = [
-            inquirer.List("option",  message="Selecione uma opção", choices=choices, carousel=True),
+            inquirer.List(
+                "option", message="Selecione uma opção", choices=choices, carousel=True
+            ),
         ]
         answers = inquirer.prompt(questions)
         return answers["option"]
@@ -132,47 +136,37 @@ class ActionHandler:
             )
             print(series)
             print(
-                f"\nPressione {KEY_AUTO} para o processo [bold white]semi automático[/bold white]."
+                f"\nPressione {KEY_CONTINUE} para [bold white]adicionar[/bold white] o funcionário."
             )
             print(
-                f"Pressione {KEY_CONTINUE} para o próximo [bold white]campo[/bold white]."
-            )
-            print(
-                f"Pressione {KEY_NEXT} para próximo [bold white]funcionário[/bold white]."
+                f"Pressione {KEY_NEXT} para o [bold white]próximo[/bold white] funcionário."
             )
             print(f"Pressione {KEY_STOP} para [bold white]sair...[/bold white]")
-            for index, field in series.items():
-                if index == "id":
-                    continue
-                copy(field)
-                print(f"({index} '{field}' copiado para a área de transferência!)")
-                while True:
-                    if keyboard.is_pressed(KEY_AUTO):
-                        time.sleep(0.5)
-                        self._auto_new(series)
-                        break
-                    if keyboard.is_pressed(KEY_CONTINUE):
-                        time.sleep(0.5)
-                        break
-                    if keyboard.is_pressed(KEY_NEXT):
-                        break
-                    if keyboard.is_pressed(KEY_STOP):
-                        time.sleep(0.5)
-                        print("Interrompido pelo usuário.")
-                        return
-                if keyboard.is_pressed(KEY_NEXT):
+            name = series.get("name")
+            copy(name)
+            print(f"Nome '{name}' copiado para a área de transferência!)")
+            while True:
+                if keyboard.is_pressed(KEY_CONTINUE.key):
+                    time.sleep(0.5)
+                    self._auto_new(series)
+                    break
+                if keyboard.is_pressed(KEY_NEXT.key):
                     time.sleep(0.5)
                     break
+                if keyboard.is_pressed(KEY_STOP.key):
+                    time.sleep(0.5)
+                    print("Interrompido pelo usuário.")
+                    return
 
     def _auto_new(self, row):
         print(
-            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]name[/] e Aperte {KEY_AUTO} para começar ou {KEY_STOP} para sair."
+            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/] e Aperte {KEY_CONTINUE} para começar ou {KEY_NEXT} para voltar."
         )
         while True:
-            if keyboard.is_pressed(KEY_AUTO):
+            if keyboard.is_pressed(KEY_CONTINUE.key):
                 time.sleep(0.5)
                 break
-            if keyboard.is_pressed(KEY_STOP):
+            if keyboard.is_pressed(KEY_STOP.key):
                 print("Interrompido pelo usuário.")
                 return
 
@@ -182,20 +176,13 @@ class ActionHandler:
         pyautogui.press("tab", presses=7, interval=0.005)
         time.sleep(0.2)
 
-        print(f"Confira o pis_pasep e Pressione {KEY_AUTO} para continuar")
-        print(str(row["pis_pasep"]))
-
         pyautogui.write(str(row["pis_pasep"]), interval=0.02)
         time.sleep(0.2)
 
         pyautogui.press("tab")
         time.sleep(0.2)
-        while True:
-            if keyboard.is_pressed(KEY_AUTO):
-                time.sleep(0.1)
-                break
 
-        time.sleep(0.2)
+        self._process_pis_pasep(3)
 
         pyautogui.press("tab")
         time.sleep(0.2)
@@ -266,7 +253,8 @@ class ActionHandler:
         )
 
         while True:
-            if keyboard.is_pressed(KEY_NEXT):
+            if keyboard.is_pressed(KEY_NEXT.key):
+                time.sleep(0.5)
                 return
 
     def _remove_employees(self, df):
@@ -292,19 +280,29 @@ class ActionHandler:
             print(f"(name '{name}' copiado para a área de transferência!)")
             copy(name)
             while True:
-                if keyboard.is_pressed(KEY_CONTINUE):
+                if keyboard.is_pressed(KEY_CONTINUE.key):
                     date = series["dismissal_date"]
                     print(f"(id '{date}' copiado para a área de transferência!)")
                     copy(date)
                     time.sleep(0.5)
                     continue
-                if keyboard.is_pressed(KEY_NEXT):
+                if keyboard.is_pressed(KEY_NEXT.key):
                     time.sleep(0.5)
                     break
-                if keyboard.is_pressed(KEY_STOP):
+                if keyboard.is_pressed(KEY_STOP.key):
                     time.sleep(0.5)
                     print("Interrompido pelo usuário.")
                     return
-            if keyboard.is_pressed(KEY_NEXT):
+            if keyboard.is_pressed(KEY_NEXT.key):
                 time.sleep(0.5)
                 continue
+
+    def _process_pis_pasep(self, time):
+        console = Console()
+        with console.status(
+            "[yellow1]Processando pis_pasep...[/yellow1]", spinner="dots"
+        ):
+            time.sleep(time)
+
+        console.print("[bold green3]Continuando![/bold green3]")
+        return
