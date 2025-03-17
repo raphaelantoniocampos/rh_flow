@@ -32,7 +32,7 @@ IGNORED_EXCEPTIONS = (
 )
 
 
-class CoreBrowser:
+class BaseBrowser:
     def __init__(self):
         self.web_driver = self._get_web_driver()
 
