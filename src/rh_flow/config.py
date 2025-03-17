@@ -4,7 +4,7 @@ from pathlib import Path
 
 import inquirer
 import pandas as pd
-from action import Action
+from task import Task
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
@@ -15,25 +15,14 @@ NO_IGNORED_STR = (
 
 
 class Config:
-    def __init__(self, base_dir_path: Path):
-        self.data_dir_path = Path(base_dir_path / "data")
-        self.path: Path = self.data_dir_path / "config.json"
+    BASE_DIR = Path(Path.cwd() / "src")
+    DATA_DIR = BASE_DIR / "data"
+    DOWNLOADS_DIR = BASE_DIR / "downloads"
+
+    def __init__(self):
+        self.json_path: Path = self.DATA_DIR / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
-
-    @staticmethod
-    def move_files_from_downloads_dir(downloads_dir_path: Path, data_dir_path: Path):
-        for file in downloads_dir_path.iterdir():
-            if "trabalhador" in file.name.lower():
-                file.replace(data_dir_path / "fiorilli" / "employees.txt")
-            if "funcionarios" in file.name.lower():
-                file.replace(data_dir_path / "ahgora" / "employees.csv")
-            if "tabledownloadcsv" in file.name.lower():
-                file.replace(data_dir_path / "ahgora" / "absences.csv")
-            if "pontoafastamentos" in file.name.lower():
-                file.replace(data_dir_path / "fiorilli" / "absences.txt")
-            if "pontoferias" in file.name.lower():
-                file.replace(data_dir_path / "fiorilli" / "vacations.txt")
 
     def config_panel(self, console: Console) -> None:
         # TODO: add all files downloads periods
@@ -77,19 +66,19 @@ class Config:
 
             questions = [
                 inquirer.List(
-                    "action",
+                    "task",
                     message="O que deseja fazer?",
                     choices=["Remover funcionários da lista de ignorados", "Voltar"],
                 ),
             ]
 
             answers = inquirer.prompt(questions)
-            action = answers["action"]
+            task = answers["task"]
 
-            if action == "Voltar":
+            if task == "Voltar":
                 return
 
-            if action == "Remover funcionários da lista de ignorados":
+            if task == "Remover funcionários da lista de ignorados":
                 if not ignored_list:
                     print(NO_IGNORED_STR)
                     continue
@@ -109,9 +98,9 @@ class Config:
                         f"[bold green]Funcionário com matrícula {employee[:6]} removido da lista de ignorados.[/bold green]"
                     )
 
-    def update_employees_to_ignore(self, action: Action) -> pd.DataFrame:
-        ignore_dict = action.get_ignore_dict()
-        ignore_list = action.get_ignore_list(ignore_dict)
+    def update_employees_to_ignore(self, task: Task) -> pd.DataFrame:
+        ignore_dict = task.get_ignore_dict()
+        ignore_list = task.get_ignore_list(ignore_dict)
         questions = [
             inquirer.Checkbox(
                 "ignore",
@@ -129,7 +118,7 @@ class Config:
 
         self._update("ignore", value=to_ignore_dict)
 
-        return action.df[~action.df["id"].isin(to_ignore_dict.keys())]
+        return task.df[~task.df["id"].isin(to_ignore_dict.keys())]
 
     def update_last_analisys(self):
         now = datetime.now()
@@ -137,8 +126,8 @@ class Config:
         self._update_analysis_time_since(last_analisys, now)
 
     def _load(self) -> dict:
-        if self.path.exists():
-            with open(self.path, "r") as f:
+        if self.json_path.exists():
+            with open(self.json_path, "r") as f:
                 return json.load(f)
         else:
             return self._create()
@@ -160,13 +149,13 @@ class Config:
         else:
             data[last_key] = value
 
-        with open(self.path, "w") as f:
+        with open(self.json_path, "w") as f:
             json.dump(self.data, f, indent=4)
 
         return self.data
 
     def _create(self) -> dict:
-        with open(self.path, "w") as f:
+        with open(self.json_path, "w") as f:
             init_config = {
                 "init_date": datetime.now().strftime("%d/%m/%Y, %H:%M"),
                 "ignore": {},
@@ -182,7 +171,7 @@ class Config:
     def _delete(self, field: str, key: str) -> str:
         if field in self.data and key in self.data[field]:
             del self.data[field][key]
-            with open(self.path, "w") as f:
+            with open(self.json_path, "w") as f:
                 json.dump(self.data, f, indent=4)
             return f"Item '{key}' removido do campo '{field}'."
         else:

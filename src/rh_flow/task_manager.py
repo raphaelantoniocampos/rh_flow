@@ -1,15 +1,12 @@
 from rich.console import Console
 
 import time
-from pathlib import Path
 
 import inquirer
 import keyboard
 import pandas as pd
 import pyautogui
-from action import Action
-from config import Config
-from data_manager import DataManager
+from task import Task
 from pyperclip import copy
 from rich import print
 
@@ -24,47 +21,42 @@ class Key:
         return f"[bold {self.color}]{self.name.upper()}[/bold {self.color}]"
 
 
-KEY_CONTINUE = Key("F2", "green3")
-KEY_NEXT = Key("F3", "yellow1")
+KEY_CONTINUE = Key("F2", "green")
+KEY_NEXT = Key("F3", "yellow")
 KEY_STOP = Key("F4", "red3")
 
 
-class ActionHandler:
-    def __init__(self, base_dir_path: Path, config: Config, data_manager: DataManager):
-        self.data_dir_path = Path(base_dir_path / "data")
-        self.config = config
-        self.data_manager = data_manager
-
-    def run(self, actions):
+class TaskManager:
+    def run(self, config, tasks):
         while True:
-            option: str = self._show_actions_menu(actions)[3:]
+            option: str = self._show_tasks_menu(tasks)[3:]
             if option == "Voltar":
                 return
-            for action in actions:
-                if option == action.option:
+            for task in tasks:
+                if option == task.option:
                     time.sleep(1)
-                    if action.len == 0:
-                        print(action.order)
+                    if task.len == 0:
+                        print(task.order)
                         return
-                    self._prepare_list_and_run(action)
+                    self._prepare_list_and_run(task)
 
-    def get_actions(self) -> list[Action]:
+    def get_tasks(self) -> list[Task]:
         return [
-            self.name_to_action("new"),
-            self.name_to_action("dismissed"),
-            self.name_to_action("position"),
-            # self.name_to_action("absences"),
+            self.name_to_task("new"),
+            self.name_to_task("dismissed"),
+            self.name_to_task("position"),
+            # self.name_to_task("absences"),
         ]
 
-    def name_to_action(self, name: str) -> Action:
-        action = Action(name, self._action_name_to_fun(name))
-        if name == "new" and not action.df.empty:
+    def name_to_task(self, name: str) -> Task:
+        task = Task(name, self._task_name_to_fun(name))
+        if name == "new" and not task.df.empty:
             ignore_ids = self.config.data.get("ignore", {}).keys()
-            filtered_df = action.df[~action.df["id"].isin(ignore_ids)]
-            action = action.update_df(filtered_df)
-        return action
+            filtered_df = task.df[~task.df["id"].isin(ignore_ids)]
+            task = task.update_df(filtered_df)
+        return task
 
-    def _action_name_to_fun(self, name: str):
+    def _task_name_to_fun(self, name: str):
         def fun(df):
             return
 
@@ -81,12 +73,12 @@ class ActionHandler:
 
     def _prepare_list_and_run(
         self,
-        action: Action,
+        task: Task,
     ):
         time.sleep(1)
-        print(action.order)
+        print(task.order)
         print("\n")
-        if action.df.size > 0:
+        if task.df.size > 0:
             see_list = inquirer.prompt(
                 [
                     inquirer.Confirm(
@@ -102,7 +94,7 @@ class ActionHandler:
             see_list: dict[str, bool] = see_list["yes"]
             if see_list:
                 time.sleep(0.5)
-                action.df = self.config.update_employees_to_ignore(action)
+                task.df = self.config.update_employees_to_ignore(task)
 
             ok_input = inquirer.prompt(
                 [inquirer.Confirm("yes", message="Começar?", default="yes")]
@@ -111,13 +103,13 @@ class ActionHandler:
             if not ok_input["yes"]:
                 return
 
-            action.fun(action.df)
+            task.fun(task.df)
 
-    def _show_actions_menu(self, actions) -> dict[str, str]:
+    def _show_tasks_menu(self, tasks) -> dict[str, str]:
         options = []
 
-        for action in actions:
-            options.append(action.option)
+        for task in tasks:
+            options.append(task.option)
 
         choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]
         choices.append(f"{len(choices) + 1}. Voltar")
@@ -300,9 +292,9 @@ class ActionHandler:
     def _process_pis_pasep(self, time):
         console = Console()
         with console.status(
-            "[yellow1]Processando pis_pasep...[/yellow1]", spinner="dots"
+            "[yellow]Processando pis_pasep...[/yellow]", spinner="dots"
         ):
             time.sleep(time)
 
-        console.print("[bold green3]Continuando![/bold green3]")
+        console.print("[bold green]Continuando![/bold green]")
         return

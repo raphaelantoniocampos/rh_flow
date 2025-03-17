@@ -1,9 +1,8 @@
-from pathlib import Path
+from file_manager import FileManager
 
 import inquirer
-from __init__ import verify_paths
-from action_handler import ActionHandler
-from action import Action
+from task_manager import TaskManager
+from task import Task
 from config import Config
 from data_manager import DataManager
 from file_downloader import FileDownloader
@@ -11,10 +10,6 @@ from rich import print
 from rich.console import Console
 from rich.panel import Panel
 
-
-BASE_DIR = Path(Path.cwd() / "src")
-
-verify_paths(BASE_DIR)
 
 console = Console()
 
@@ -26,15 +21,16 @@ OPTIONS = [
     "5. Sair",
 ]
 
-# TODO: action df na tela de action nao ta levando os ignore em conta
+# TODO: ask to create creds on start
+# TODO: task df na tela de task nao ta levando os ignore em conta
 # TODO: Exportar buton firoilli now work
 # TODO: adicionar opcao headless file downloader
 # TODO: check fiorilli downloads
 # TODO: check ahgora downloads
-# TODO: fix position action
-# TODO: create new abcenses action remove.py using txt
+# TODO: fix position task
+# TODO: create new abcenses task remove.py using txt
 # TODO: file downloader multithread e separado
-# TODO: file downloader segundo plano 
+# TODO: file downloader segundo plano
 # TODO: separate file_downloader into classes
 # TODO: make add employees download ahgora again
 # TODO: make last downloads and analyze appear on main screen
@@ -44,26 +40,23 @@ OPTIONS = [
 
 def main():
     try:
-        config = Config(BASE_DIR)
-        config.move_files_from_downloads_dir(
-            downloads_dir_path=Path(BASE_DIR / "downloads"),
-            data_dir_path=Path(BASE_DIR / "data"),
-        )
-        data_manager = DataManager(BASE_DIR, config)
-        action_handler = ActionHandler(BASE_DIR, config, data_manager)
+        config = Config()
+        FileManager.move_files_from_downloads_dir()
+        data_manager = DataManager()
+        task_manager = TaskManager()
         while True:
-            actions = action_handler.get_actions()
-            option = show_menu(actions)[3:]
+            tasks = task_manager.get_tasks()
+            option = show_menu(tasks)[3:]
             match option:
                 case "Baixar arquivos":
-                    file_downloader = FileDownloader(BASE_DIR, config)
+                    file_downloader = FileDownloader()
                     file_downloader.run()
 
                 case "Analisar dados":
                     data_manager.analyze()
 
                 case "Ações":
-                    action_handler.run(actions)
+                    task_manager.run(config, tasks)
 
                 case "Configurações":
                     config.config_panel(console)
@@ -75,7 +68,7 @@ def main():
         print("Saindo...")
 
 
-def show_menu(actions: list[Action]):
+def show_menu(tasks: list[Task]):
     console.print(
         Panel.fit(
             f"{'-' * 14}RH FLOW{'-' * 14}\nBem-vindo ao Sistema de. Automação",
@@ -84,8 +77,8 @@ def show_menu(actions: list[Action]):
     )
     console.print("\n")
 
-    actions_panel = get_actions_panel(actions)
-    console.print(actions_panel)
+    tasks_panel = get_tasks_panel(tasks)
+    console.print(tasks_panel)
 
     questions = [
         inquirer.List(
@@ -96,11 +89,11 @@ def show_menu(actions: list[Action]):
     return answers["option"]
 
 
-def get_actions_panel(actions: list[Action]) -> Panel:
+def get_tasks_panel(tasks: list[Task]) -> Panel:
     orders = []
-    for action in actions:
-        if action.get_len() > 0:
-            orders.append(action.order)
+    for task in tasks:
+        if task.get_len() > 0:
+            orders.append(task.order)
 
     if not orders:
         orders.append("[green]• Nenhuma ação pendente.[/green]")

@@ -1,11 +1,12 @@
+from config import Config
 from data_manager import read_csv
 from pathlib import Path
 from pandas import DataFrame
 
-BASE_DIR = Path(Path.cwd() / "src")
 
+class Task:
+    BASE_DIR = Config.BASE_DIR
 
-class Action:
     def __init__(self, name: str, fun):
         self.name = name
         self.path = self._get_path()
@@ -74,23 +75,23 @@ class Action:
 
     def _get_path(self):
         if self.name == "new":
-            path = Path(BASE_DIR / "data" / "actions" / "new.csv")
+            path = Path(BASE_DIR / "data" / "tasks" / "new.csv")
         if self.name == "dismissed":
-            path = Path(BASE_DIR / "data" / "actions" / "dismissed.csv")
+            path = Path(BASE_DIR / "data" / "tasks" / "dismissed.csv")
         if self.name == "position":
-            path = Path(BASE_DIR / "data" / "actions" / "position.csv")
+            path = Path(BASE_DIR / "data" / "tasks" / "position.csv")
         if self.name == "absences":
-            path = Path(BASE_DIR / "data" / "actions" / "absences.csv")
+            path = Path(BASE_DIR / "data" / "tasks" / "absences.csv")
 
         return path
 
     def _get_option(self):
         check = "➤" if not self.is_empty() else ""
         if self.name == "new":
-            return f"Adicionar no Ahgora {check}"
+            return f"Adicionar funcionário {check}"
 
         if self.name == "dismissed":
-            return f"Remover do Ahgora {check}"
+            return f"Remover funcionário {check}"
 
         if self.name == "position":
             return f"Alterar cargos {check}"

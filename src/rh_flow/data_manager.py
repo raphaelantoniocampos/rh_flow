@@ -99,13 +99,13 @@ class DataManager:
             ahgora_employees, fiorilli_employees = self._get_employees_data()
             fiorilli_absences = self._get_fiorilli_absences()
 
-            new_df, dismissed_df, position_df, absences_df = self._generate_actions_dfs(
+            new_df, dismissed_df, position_df, absences_df = self._generate_tasks_dfs(
                 fiorilli_employees,
                 ahgora_employees,
                 fiorilli_absences,
             )
 
-            save_dir = self.data_dir_path / "actions"
+            save_dir = self.data_dir_path / "tasks"
 
             if not new_df.empty:
                 new_df.to_csv(
@@ -175,7 +175,7 @@ class DataManager:
     #         ].drop(columns=["key"])
     #
     #         not_common_absences.to_csv(
-    #             Path(self.data_dir_path / "actions" / "absences.csv"),
+    #             Path(self.data_dir_path / "tasks" / "absences.csv"),
     #             index=False,
     #             header=False,
     #         )
@@ -337,7 +337,7 @@ class DataManager:
 
         return new_rows
 
-    def _generate_actions_dfs(
+    def _generate_tasks_dfs(
         self,
         fiorilli_employees: pd.DataFrame,
         ahgora_employees: pd.DataFrame,
