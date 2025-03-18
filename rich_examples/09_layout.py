@@ -174,4 +174,3 @@ with Live(layout, refresh_per_second=10, screen=True):
 
         completed = sum(task.completed for task in job_progress.tasks)
         overall_progress.update(overall_task, completed=completed)
-
