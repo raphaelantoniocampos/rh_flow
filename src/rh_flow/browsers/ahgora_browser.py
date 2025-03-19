@@ -1,18 +1,19 @@
 from dotenv import load_dotenv
 import os
-from core_browser import CoreBrowser
+from browsers.core_browser import CoreBrowser
+from rich import print
 
 from selenium.webdriver.common.by import By
 from time import sleep
 
 
 class AhgoraBrowser(CoreBrowser):
-    URL = "https://app.ahgora.com.br/"
+    URL = "https://login.ahgora.com.br/?state=4729a5c6da859a0d0cfd5aff43eb138d&response_type=code&approval_prompt=auto&redirect_uri=https%3A%2F%2Fapp.ahgora.com.br%2Flogin%2Foauth2&client_id=pontoweb"
 
     def __init__(self):
         super().__init__(self.URL)
 
-    def download_data(self) -> None:
+    def download_data(self, option) -> None:
         print("[bold yellow]--- Iniciando Downloads AHGORA ---[/bold yellow]")
         self._login()
         sleep(super().DELAY)
@@ -67,3 +68,6 @@ class AhgoraBrowser(CoreBrowser):
 
     def _export_to_csv(self) -> None:
         super().click_element("arquivo_csv", selector_type=By.ID)
+
+    def _click_enter_button(self) -> None:
+        super().click_element("//*[contains(text(), 'Entrar')]")

@@ -1,14 +1,13 @@
-from file_manager import FileManager
-
-import inquirer
-from task_manager import TaskManager
-from task import Task
-from config import Config
-from data_manager import DataManager
-from file_downloader import FileDownloader
+from InquirerPy import inquirer
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
+from tasks.download_task import DownloadTask
+from utils.config import Config
+from file_manager import FileManager
+from data_manager import DataManager
+from tasks.task_manager import TaskManager
+from tasks.task import Task
 
 
 console = Console()
@@ -46,11 +45,11 @@ def main():
         task_manager = TaskManager()
         while True:
             tasks = task_manager.get_tasks()
-            option = show_menu(tasks)[3:]
+            option = menu(tasks)[3:]
             match option:
                 case "Baixar arquivos":
-                    file_downloader = FileDownloader()
-                    file_downloader.run()
+                    download_task = DownloadTask()
+                    download_task.menu()
 
                 case "Analisar dados":
                     data_manager.analyze()
@@ -68,7 +67,7 @@ def main():
         print("Saindo...")
 
 
-def show_menu(tasks: list[Task]):
+def menu(tasks: list[Task]):
     console.print(
         Panel.fit(
             f"{'-' * 14}RH FLOW{'-' * 14}\nBem-vindo ao Sistema de. Automação",
@@ -114,4 +113,6 @@ def get_tasks_panel(tasks: list[Task]) -> Panel:
 
 
 if __name__ == "__main__":
-    main()
+    DownloadTask.menu()
+    
+# main()

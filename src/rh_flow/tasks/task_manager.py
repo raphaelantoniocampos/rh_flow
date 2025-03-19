@@ -2,11 +2,11 @@ from rich.console import Console
 
 import time
 
-import inquirer
+from InquirerPy import inquirer
 import keyboard
 import pandas as pd
 import pyautogui
-from task import Task
+from tasks.task import Task
 from pyperclip import copy
 from rich import print
 
@@ -27,7 +27,7 @@ KEY_STOP = Key("F4", "red3")
 
 
 class TaskManager:
-    def run(self, config, tasks):
+    def menu(self, config, tasks):
         while True:
             option: str = self._show_tasks_menu(tasks)[3:]
             if option == "Voltar":
@@ -70,6 +70,57 @@ class TaskManager:
             fun = fun
 
         return fun
+
+    def _generate_tasks_dfs(
+        self,
+        fiorilli_employees: pd.DataFrame,
+        ahgora_employees: pd.DataFrame,
+        fiorilli_absences: pd.DataFrame,
+    ):
+        fiorilli_dismissed_df = fiorilli_employees[
+            fiorilli_employees["dismissal_date"].notna()
+        ]
+        fiorilli_dismissed_ids = set(fiorilli_dismissed_df["id"])
+
+        ahgora_dismissed_df = ahgora_employees[
+            ahgora_employees["dismissal_date"].notna()
+        ]
+        ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
+
+        dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
+
+        fiorilli_active_df = fiorilli_employees[
+            ~fiorilli_employees["id"].isin(dismissed_ids)
+        ]
+
+        ahgora_ids = set(ahgora_employees["id"])
+
+        new_df = fiorilli_active_df[~fiorilli_active_df["id"].isin(ahgora_ids)]
+
+        dismissed_df = ahgora_employees[
+            ahgora_employees["id"].isin(fiorilli_dismissed_ids)
+            & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
+        ]
+
+        dismissed_df = dismissed_df.drop(columns=["dismissal_date"])
+        dismissed_df = dismissed_df.merge(
+            fiorilli_dismissed_df[["id", "dismissal_date"]],
+            on="id",
+            how="left",
+        )
+
+        merged_employees = fiorilli_employees.merge(
+            ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
+        )
+
+        # TODO: verify characters on positions
+        position_df = merged_employees[
+            merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
+        ]
+
+        absences_df = fiorilli_absences
+
+        return new_df, dismissed_df, position_df, absences_df
 
     def _prepare_list_and_run(
         self,
@@ -115,11 +166,11 @@ class TaskManager:
         choices.append(f"{len(choices) + 1}. Voltar")
         questions = [
             inquirer.List(
-                "option", message="Selecione uma opção", choices=choices, carousel=True
+                "options", message="Selecione uma opção", choices=choices, carousel=True
             ),
         ]
         answers = inquirer.prompt(questions)
-        return answers["option"]
+        return answers["options"]
 
     def _add_employees(self, df: pd.DataFrame) -> None:
         for i, series in df.iterrows():

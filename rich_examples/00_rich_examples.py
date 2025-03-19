@@ -56,7 +56,7 @@ def clear_screen():
     os.system("clear" if os.name == "posix" else "cls")
 
 
-def show_menu():
+def menu():
     """Displays the main menu."""
     clear_screen()
 
@@ -116,7 +116,7 @@ def run_example(choice):
 def main():
     """Main function to run the menu loop."""
     while True:
-        show_menu()
+        menu()
         choice = (
             Prompt.ask("[bold cyan]Enter your choice[/bold cyan]", default="q")
             .strip()

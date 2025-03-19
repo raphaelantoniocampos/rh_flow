@@ -1,12 +1,10 @@
-from config import Config
-from data_manager import read_csv
+from utils.constants import BASE_DIR
+from data_manager import DataManager
 from pathlib import Path
 from pandas import DataFrame
 
 
 class Task:
-    BASE_DIR = Config.BASE_DIR
-
     def __init__(self, name: str, fun):
         self.name = name
         self.path = self._get_path()
@@ -71,7 +69,7 @@ class Task:
         if not self.path_exists():
             return DataFrame()
 
-        return read_csv(self.path)
+        return DataManager.read_csv(self.path)
 
     def _get_path(self):
         if self.name == "new":

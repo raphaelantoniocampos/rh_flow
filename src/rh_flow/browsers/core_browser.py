@@ -1,6 +1,10 @@
 from abc import ABC
 
-# import os
+
+from dotenv import load_dotenv
+from utils.constants import DOWNLOADS_DIR
+
+import os
 # import threading
 import time
 # from datetime import date, datetime
@@ -34,12 +38,13 @@ class CoreBrowser(ABC):
         StaleElementReferenceException,
     )
 
-    def __init__(self, url):
-        self.driver = self._get_web_driver()
-        self.driver.get(url)
+    DEV_MODE_BOOL = {"dev": True, "prod": False}
 
-    def download_data(self) -> None:
-        """Downloads data from the website"""
+    def __init__(self, url):
+        load_dotenv()
+        mode = self.DEV_MODE_BOOL[os.getenv("MODE")]
+        self.driver = self._get_web_driver(not mode)
+        self.driver.get(url)
 
     def _login(self) -> None:
         """Performs login into the system"""
@@ -56,7 +61,7 @@ class CoreBrowser(ABC):
         if headless_mode:
             options.add_argument("-headless")
         options.set_preference("browser.download.folderList", 2)
-        options.set_preference("browser.download.dir", str(self.downloads_dir_path))
+        options.set_preference("browser.download.dir", str(DOWNLOADS_DIR))
 
         driver = webdriver.Firefox(options=options)
         driver.implicitly_wait(self.DELAY)
@@ -78,7 +83,7 @@ class CoreBrowser(ABC):
         """Clicks on an element on the page"""
         self._retry_func(
             lambda: self._click_element_helper(
-                self.driver, selector, selector_type, delay, ignored_exceptions
+                selector, selector_type, delay, ignored_exceptions
             ),
             max_tries,
         )
@@ -107,7 +112,7 @@ class CoreBrowser(ABC):
         """Sends keys to an element on the page"""
         self._retry_func(
             lambda: self._send_keys_helper(
-                self.driver, selector, keys, selector_type, delay, ignored_exceptions
+                selector, keys, selector_type, delay, ignored_exceptions
             ),
             max_tries,
         )
@@ -136,7 +141,7 @@ class CoreBrowser(ABC):
         """Right-clicks on an element on the page"""
         self._retry_func(
             lambda: self._right_click_element_helper(
-                self.driver, selector, selector_type, delay, ignored_exceptions
+                selector, selector_type, delay, ignored_exceptions
             ),
             max_tries,
         )
@@ -170,7 +175,6 @@ class CoreBrowser(ABC):
                 element_selector = f"({selector})[{i + 1}]"
                 self._retry_func(
                     lambda: self._select_and_send_keys_helper(
-                        self.driver,
                         element_selector,
                         key,
                         selector_type,
@@ -182,7 +186,6 @@ class CoreBrowser(ABC):
         else:
             self._retry_func(
                 lambda: self._select_and_send_keys_helper(
-                    self.driver,
                     selector,
                     keys,
                     selector_type,
@@ -220,7 +223,7 @@ class CoreBrowser(ABC):
         """Waits until an element disappears from the page"""
         return self._retry_func(
             lambda: self._wait_desappear_helper(
-                self.driver, selector, selector_type, delay, ignored_exceptions
+                selector, selector_type, delay, ignored_exceptions
             ),
             max_tries,
         )
@@ -248,7 +251,7 @@ class CoreBrowser(ABC):
         """Moves the mouse cursor to an element on the page"""
         self._retry_func(
             lambda: self._move_to_element_helper(
-                self.driver, selector, selector_type, delay, ignored_exceptions
+                selector, selector_type, delay, ignored_exceptions
             ),
             max_tries,
         )
@@ -277,4 +280,6 @@ class CoreBrowser(ABC):
                 time.sleep(self.DELAY)
                 if i >= max_tries - 1:
                     print(e)
+                    #TODO: remove raise
+                    raise(e)
                     return

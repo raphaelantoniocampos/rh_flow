@@ -1,9 +1,10 @@
 from dotenv import load_dotenv
 from selenium.webdriver.common.by import By
 from time import sleep
-from datetime import today, date
+from datetime import datetime, date
 import os
-from core_browser import CoreBrowser
+from browsers.core_browser import CoreBrowser
+from rich import print
 
 
 class FiorilliBrowser(CoreBrowser):
@@ -11,16 +12,17 @@ class FiorilliBrowser(CoreBrowser):
 
     def __init__(self):
         super().__init__(self.URL)
+        self.OPTIONS = {
+            "employees": self.download_employees_data,
+            "absences": self.download_absences_data,
+        }
 
-    def download_data(self) -> None:
+    def download_data(self, option: str) -> None:
         print("[bold yellow]--- Iniciando Downloads FIORILLI ---[/bold yellow]")
         self._login()
         sleep(super().DELAY)
 
-        self._download_fiorilli_absences()
-        sleep(super().DELAY)
-
-        self._download_fiorilli_employees()
+        self.OPTIONS[option]()
         sleep(super().DELAY)
 
         super().close_driver()
@@ -49,7 +51,7 @@ class FiorilliBrowser(CoreBrowser):
     def _wait_for_login_to_complete(self) -> None:
         super().wait_desappear("//*[contains(text(), 'Acessando SIP 7.5')]")
 
-    def _download_fiorilli_employees(self) -> None:
+    def download_employees_data(self) -> None:
         print("Baixando dados de [yellow]funcionários[/] do FIORILLI")
         self._navigate_to_maintenance_section()
         self._navigate_to_worker_registration()
@@ -123,7 +125,7 @@ class FiorilliBrowser(CoreBrowser):
     def _wait_for_export_to_complete(self) -> None:
         super().wait_desappear("//*[contains(text(), 'Exportando')]")
 
-    def _download_fiorilli_absences(self) -> None:
+    def download_absences_data(self) -> None:
         print("Baixando dados de [yellow]afastamentos[/] do FIORILLI")
         self._navigate_to_utilities_section()
         self._navigate_to_import_export_section()
@@ -169,13 +171,13 @@ class FiorilliBrowser(CoreBrowser):
         super().click_element(f"//div[contains(text(), '{name}')]")
 
     def _fill_input_field(self) -> None:
-        today_datetime = today()
-        today_str = today_datetime.strftime("%d/%m/%Y")
+        today = datetime.today()
+        today_str = today.strftime("%d/%m/%Y")
         super().select_and_send_keys(
             f"//input[@value='{today_str}']",
             [
-                date(today_datetime.year, 1, 1).strftime("%d/%m/%Y"),
-                date(today_datetime.year, 12, 31).strftime("%d/%m/%Y"),
+                date(today.year, 1, 1).strftime("%d/%m/%Y"),
+                date(today.year, 12, 31).strftime("%d/%m/%Y"),
             ],
         )
 

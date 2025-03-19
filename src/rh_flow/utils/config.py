@@ -1,10 +1,11 @@
+from utils.constants import DATA_DIR
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import inquirer
+from InquirerPy import inquirer
 import pandas as pd
-from task import Task
+from tasks.task import Task
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
@@ -15,10 +16,6 @@ NO_IGNORED_STR = (
 
 
 class Config:
-    BASE_DIR = Path(Path.cwd() / "src")
-    DATA_DIR = BASE_DIR / "data"
-    DOWNLOADS_DIR = BASE_DIR / "downloads"
-
     def __init__(self):
         self.json_path: Path = self.DATA_DIR / "config.json"
         self.data: dict = self._load()
@@ -84,7 +81,7 @@ class Config:
                     continue
 
                 questions = [
-                    inquirer.Checkbox(
+                    inquirer.checkbox(
                         "remove_ignore",
                         message="Escolha os funcionários para remover da lista de ignorados.",
                         choices=ignored_list,
@@ -102,10 +99,11 @@ class Config:
         ignore_dict = task.get_ignore_dict()
         ignore_list = task.get_ignore_list(ignore_dict)
         questions = [
-            inquirer.Checkbox(
+            inquirer.checkbox(
                 "ignore",
                 message="Selecione os funcionários para ignorar",
                 choices=ignore_list,
+                carousel=True,
             )
         ]
 
@@ -227,7 +225,7 @@ class Config:
 
     def _get_last_download(self, app_name: str) -> str:
         file_path = Path(
-            self.data_dir_path
+            DATA_DIR
             / app_name
             / f"employees.{'csv' if app_name == 'ahgora' else 'txt'}"
         )
