@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 # import os
 # import threading
@@ -23,7 +23,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 
-class BaseBrowser(ABC):
+class CoreBrowser(ABC):
     MAX_TRIES = 30
     DELAY = 0.5
     IGNORED_EXCEPTIONS = (
@@ -38,24 +38,20 @@ class BaseBrowser(ABC):
         self.driver = self._get_web_driver()
         self.driver.get(url)
 
+    def download_data(self) -> None:
+        """Downloads data from the website"""
 
-    @abstractmethod
-    def download_data(self):
-        pass
+    def _login(self) -> None:
+        """Performs login into the system"""
 
-    @abstractmethod
-    def _login(self):
-        pass
+    def _enter_username(self) -> None:
+        """Enters the username into the login form"""
 
-    @abstractmethod
-    def _enter_username(self):
-        pass
-
-    @abstractmethod
-    def _enter_password(self):
-        pass
+    def _enter_password(self) -> None:
+        """Enters the password into the login form"""
 
     def _get_web_driver(self, headless_mode: bool = True) -> webdriver.Firefox:
+        """Configures and returns an instance of the Firefox WebDriver"""
         options = webdriver.FirefoxOptions()
         if headless_mode:
             options.add_argument("-headless")
@@ -68,6 +64,7 @@ class BaseBrowser(ABC):
         return driver
 
     def close_driver(self):
+        """Closes the web driver"""
         self.driver.quit()
 
     def click_element(
@@ -78,6 +75,7 @@ class BaseBrowser(ABC):
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
+        """Clicks on an element on the page"""
         self._retry_func(
             lambda: self._click_element_helper(
                 self.driver, selector, selector_type, delay, ignored_exceptions
@@ -92,6 +90,7 @@ class BaseBrowser(ABC):
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
+        """Helper method to click on an element, waiting for its presence"""
         WebDriverWait(self.driver, delay, ignored_exceptions=ignored_exceptions).until(
             EC.presence_of_element_located((selector_type, selector))
         ).click()
@@ -105,6 +104,7 @@ class BaseBrowser(ABC):
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
+        """Sends keys to an element on the page"""
         self._retry_func(
             lambda: self._send_keys_helper(
                 self.driver, selector, keys, selector_type, delay, ignored_exceptions
@@ -120,6 +120,7 @@ class BaseBrowser(ABC):
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
+        """Helper method to send keys to an element, waiting for its presence"""
         WebDriverWait(self.driver, delay, ignored_exceptions=ignored_exceptions).until(
             EC.presence_of_element_located((selector_type, selector))
         ).send_keys(keys)
@@ -132,6 +133,7 @@ class BaseBrowser(ABC):
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
+        """Right-clicks on an element on the page"""
         self._retry_func(
             lambda: self._right_click_element_helper(
                 self.driver, selector, selector_type, delay, ignored_exceptions
@@ -146,6 +148,7 @@ class BaseBrowser(ABC):
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
+        """Helper method to right-click on an element, waiting for its presence"""
         ActionChains(self.driver).context_click(
             WebDriverWait(
                 self.driver, delay, ignored_exceptions=ignored_exceptions
@@ -161,6 +164,7 @@ class BaseBrowser(ABC):
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
+        """Selects and sends keys to an element on the page"""
         if isinstance(keys, list):
             for i, key in enumerate(keys):
                 element_selector = f"({selector})[{i + 1}]"
@@ -196,6 +200,7 @@ class BaseBrowser(ABC):
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
+        """Helper method to select and send keys to an element, waiting for its presence"""
         ActionChains(self.driver).context_click(
             WebDriverWait(
                 self.driver, delay, ignored_exceptions=ignored_exceptions
@@ -212,6 +217,7 @@ class BaseBrowser(ABC):
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=10,
     ):
+        """Waits until an element disappears from the page"""
         return self._retry_func(
             lambda: self._wait_desappear_helper(
                 self.driver, selector, selector_type, delay, ignored_exceptions
@@ -226,6 +232,7 @@ class BaseBrowser(ABC):
         delay=30,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
+        """Helper method to wait until an element disappears from the page"""
         WebDriverWait(self.driver, delay).until(
             EC.invisibility_of_element_located((selector_type, selector))
         )
@@ -238,6 +245,7 @@ class BaseBrowser(ABC):
         ignored_exceptions=IGNORED_EXCEPTIONS,
         max_tries=MAX_TRIES,
     ):
+        """Moves the mouse cursor to an element on the page"""
         self._retry_func(
             lambda: self._move_to_element_helper(
                 self.driver, selector, selector_type, delay, ignored_exceptions
@@ -252,6 +260,7 @@ class BaseBrowser(ABC):
         delay=DELAY,
         ignored_exceptions=IGNORED_EXCEPTIONS,
     ):
+        """Helper method to move the mouse cursor to an element, waiting for its presence"""
         ActionChains(self.driver).move_to_element(
             WebDriverWait(
                 self.driver, delay, ignored_exceptions=ignored_exceptions
@@ -259,6 +268,7 @@ class BaseBrowser(ABC):
         ).perform()
 
     def _retry_func(self, func, max_tries=MAX_TRIES):
+        """Retries a function until it succeeds or reaches the maximum number of attempts"""
         for i in range(max_tries):
             try:
                 time.sleep(self.DELAY)
@@ -268,4 +278,3 @@ class BaseBrowser(ABC):
                 if i >= max_tries - 1:
                     print(e)
                     return
-                    # raise e
