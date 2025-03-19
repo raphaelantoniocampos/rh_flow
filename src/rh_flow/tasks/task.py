@@ -1,5 +1,5 @@
 from utils.constants import BASE_DIR
-from data_manager import DataManager
+from managers.data_manager import DataManager
 from pathlib import Path
 from pandas import DataFrame
 
@@ -9,9 +9,9 @@ class Task:
         self.name = name
         self.path = self._get_path()
         self.df = self._get_df()
-        self.len = self.get_len()
+        self.len = self.__len__()
         self.option = self._get_option()
-        self.order = self._get_order()
+        self.print_string = self._get_print_string()
         self.fun = fun
 
     def path_exists(self):
@@ -23,10 +23,8 @@ class Task:
         except AttributeError:
             return True
 
-    def get_len(self):
-        if self.is_empty():
-            return 0
-        return len(self._get_df())
+    def __len__(self):
+        return len(self.df)
 
     def get_ignore_dict(self):
         ignore_dict = {}
@@ -60,9 +58,8 @@ class Task:
 
     def update_df(self, df: DataFrame):
         self.df = df
-        self.len = self.get_len()
         self.option = self._get_option()
-        self.order = self._get_order()
+        self.print_string = self._get_print_string()
         return self
 
     def _get_df(self) -> DataFrame | None:
@@ -85,39 +82,39 @@ class Task:
 
     def _get_option(self):
         check = "➤" if not self.is_empty() else ""
-        if self.name == "new":
+        if self.name == "add_employees":
             return f"Adicionar funcionário {check}"
 
-        if self.name == "dismissed":
+        if self.name == "dismissed_employees":
             return f"Remover funcionário {check}"
 
-        if self.name == "position":
+        if self.name == "change_positions":
             return f"Alterar cargos {check}"
 
-        if self.name == "absences":
+        if self.name == "add_absences":
             return f"Adicionar afastamentos {check}"
 
-    def _get_order(self):
-        if self.name == "new":
+    def _get_print_string(self):
+        if self.name == "add_employees":
             if self.is_empty():
                 return "[bold yellow]Nenhum novo funcionário para adicionar no momento.[/bold yellow]"
             return (
                 f"[bold cyan]•[/] Adicionar [cyan]{self.len}[/] funcionários no Ahgora"
             )
 
-        if self.name == "dismissed":
+        if self.name == "dismissed_employees":
             if self.is_empty():
                 return "[bold yellow]Nenhum novo funcionário para remover no momento.[/bold yellow]"
             return f"[bold cyan]•[/] Remover [cyan]{self.len}[/] funcionários do Ahgora"
 
-        if self.name == "position":
+        if self.name == "change_positions":
             if self.is_empty():
                 return (
                     "[bold yellow]Nenhum cargo para alterar no momento.[/bold yellow]"
                 )
             return f"[bold cyan]•[/] Alterar [cyan]{self.len}[/] cargos no Ahgora"
 
-        if self.name == "absences":
+        if self.name == "add_absences":
             if self.is_empty():
                 return "[bold yellow]Nenhum novo afastamento para adicionar no momento.[/bold yellow]"
             return (
@@ -131,6 +128,6 @@ class Task:
 -df: {self.df}
 -len: {self.len}
 -option: {self.option}
--order: {self.order}
+-print_string: {self.print_string}
 -fun: {self.fun}
 -"""

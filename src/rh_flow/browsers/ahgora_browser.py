@@ -1,28 +1,35 @@
-from dotenv import load_dotenv
 import os
-from browsers.core_browser import CoreBrowser
-from rich import print
-
-from selenium.webdriver.common.by import By
 from time import sleep
+
+from dotenv import load_dotenv
+from rich import print
+from selenium.webdriver.common.by import By
+
+from browsers.core_browser import CoreBrowser
 
 
 class AhgoraBrowser(CoreBrowser):
-    URL = "https://login.ahgora.com.br/?state=4729a5c6da859a0d0cfd5aff43eb138d&response_type=code&approval_prompt=auto&redirect_uri=https%3A%2F%2Fapp.ahgora.com.br%2Flogin%2Foauth2&client_id=pontoweb"
+    URL = "https://login.ahgora.com.br/"
+
+    @staticmethod
+    def download_employees_data() -> None:
+        ahgora_browser = AhgoraBrowser()
+        ahgora_browser._start_employees_download()
 
     def __init__(self):
         super().__init__(self.URL)
 
-    def download_data(self, option) -> None:
-        print("[bold yellow]--- Iniciando Downloads AHGORA ---[/bold yellow]")
+    def _start_employees_download(self) -> None:
+        print("Baixando dados de [yellow]funcionários[/] do AHGORA")
+        super().__init__(self.URL)
         self._login()
-        sleep(super().DELAY)
-
-        self._download_ahgora_employees()
-        sleep(super().DELAY)
-
+        self.driver.get("https://app.ahgora.com.br/funcionarios")
+        self._show_dismissed_employees()
+        self._click_plus_button()
+        self._export_to_csv()
+        sleep(30)
         super().close_driver()
-        print("[bold green]--- Downloads AHGORA Concluídos ---[/bold green]")
+        print("[green]Download de dados de funcionários do AHGORA concluído[/]")
 
     def _login(self) -> None:
         print("Fazendo [yellow]login[/] no AHGORA")
@@ -36,6 +43,7 @@ class AhgoraBrowser(CoreBrowser):
         self._click_enter_button()
         self._select_company()
         self._close_banner()
+        sleep(super().DELAY)
 
     def _enter_username(self, selector: str, user: str) -> None:
         super().send_keys(selector, user, selector_type=By.ID)
@@ -49,16 +57,6 @@ class AhgoraBrowser(CoreBrowser):
 
     def _close_banner(self) -> None:
         super().click_element("buttonAdjustPunch", selector_type=By.ID)
-
-    def _download_ahgora_employees(self) -> None:
-        print("Baixando dados de [yellow]funcionários[/] do AHGORA")
-        self.driver.get("https://app.ahgora.com.br/funcionarios")
-        self._show_dismissed_employees()
-        self._click_plus_button()
-        self._export_to_csv()
-        sleep(super().DELAY)
-
-        print("[green]Download de dados de funcionários do AHGORA concluído[/]")
 
     def _show_dismissed_employees(self) -> None:
         super().click_element("filtro_demitido", selector_type=By.ID)

@@ -4,9 +4,9 @@ from rich.console import Console
 from rich.panel import Panel
 from tasks.download_task import DownloadTask
 from utils.config import Config
-from file_manager import FileManager
-from data_manager import DataManager
-from tasks.task_manager import TaskManager
+from managers.file_manager import FileManager
+from managers.data_manager import DataManager
+from managers.task_manager import TaskManager
 from tasks.task import Task
 
 
@@ -40,7 +40,7 @@ OPTIONS = [
 def main():
     try:
         config = Config()
-        FileManager.move_files_from_downloads_dir()
+        FileManager.move_downloads_to_data_dir()
         data_manager = DataManager()
         task_manager = TaskManager()
         while True:
@@ -55,7 +55,7 @@ def main():
                     data_manager.analyze()
 
                 case "Ações":
-                    task_manager.run(config, tasks)
+                    task_runner.run(config, tasks)
 
                 case "Configurações":
                     config.config_panel(console)
@@ -91,7 +91,7 @@ def menu(tasks: list[Task]):
 def get_tasks_panel(tasks: list[Task]) -> Panel:
     orders = []
     for task in tasks:
-        if task.get_len() > 0:
+        if task.__len__() > 0:
             orders.append(task.order)
 
     if not orders:
@@ -113,6 +113,7 @@ def get_tasks_panel(tasks: list[Task]) -> Panel:
 
 
 if __name__ == "__main__":
-    DownloadTask.menu()
-    
-# main()
+
+    data_manager = DataManager()
+    data_manager.analyze()
+#    main()

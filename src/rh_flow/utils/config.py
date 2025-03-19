@@ -17,7 +17,7 @@ NO_IGNORED_STR = (
 
 class Config:
     def __init__(self):
-        self.json_path: Path = self.DATA_DIR / "config.json"
+        self.json_path: Path = DATA_DIR / "config.json"
         self.data: dict = self._load()
         self._update_time_since()
 

@@ -1,26 +1,26 @@
 import threading
 from rich.panel import Panel
 from rich.console import Console
-from utils.constants import DOWNLOADS_DIR, KEYBINDINGS
-from file_manager import FileManager
+from utils.constants import KEYBINDINGS
+from managers.file_manager import FileManager
 from browsers.ahgora_browser import AhgoraBrowser
 from browsers.fiorilli_browser import FiorilliBrowser
-import time
+from tasks.task_runner import TaskRunner
 from InquirerPy import inquirer
 
 
-class DownloadTask:
+class DownloadTask(TaskRunner):
     DOWNLOAD_OPTIONS = {
-        "Funcionários Ahgora": {"browser": AhgoraBrowser, "data":"employees"},
-        "Funcionários Fiorilli": {"browser":FiorilliBrowser, "data": "employees"},
-        "Afastamentos Fiorilli": {"browser":FiorilliBrowser, "data": "absences"},
+        "Funcionários Ahgora": AhgoraBrowser.download_employees_data,
+        "Funcionários Fiorilli": FiorilliBrowser.download_employees_data,
+        "Afastamentos Fiorilli": FiorilliBrowser.download_absences_data,
     }
 
     def menu():
         console = Console()
         console.print(
             Panel.fit(
-                "DOWNLOADS",
+                "BAIXAR DADOS",
                 style="bold cyan",
             )
         )
@@ -47,13 +47,10 @@ class DownloadTask:
         download_task.run(selected_options)
 
     def run(self, selected_options):
-        downloaded_files = []
-
         threads = []
         for option in selected_options:
-            browser = self.DOWNLOAD_OPTIONS[option]["browser"]()
-            data = self.DOWNLOAD_OPTIONS[option]["data"]
-            thread = threading.Thread(target=browser.download_data(data))
+            fun = self.DOWNLOAD_OPTIONS[option]
+            thread = threading.Thread(target=fun)
             threads.append(thread)
 
         for thread in threads:
@@ -62,19 +59,7 @@ class DownloadTask:
         for thread in threads:
             thread.join()
 
-        self._wait_for_downloads_to_complete(downloaded_files)
         self._move_files_to_data_dir()
 
-    def _wait_for_downloads_to_complete(self, downloaded_files):
-        while len(downloaded_files) < 4:
-            for file in DOWNLOADS_DIR.iterdir():
-                if any(
-                    keyword in file.name.lower()
-                    for keyword in ["grid", "pontoferias", "pontoafast", "funcionarios"]
-                ):
-                    if file.name not in downloaded_files:
-                        downloaded_files.append(file.name)
-            time.sleep(30)
-
     def _move_files_to_data_dir(self):
-        FileManager.move_files_from_downloads_dir()
+        FileManager.move_downloads_to_data_dir()

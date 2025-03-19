@@ -10,49 +10,22 @@ from rich import print
 class FiorilliBrowser(CoreBrowser):
     URL = "https://pompeu-pm-sip.sigmix.net/sip/"
 
+    @staticmethod
+    def download_employees_data() -> None:
+        fiorilli_browser = FiorilliBrowser()
+        fiorilli_browser._start_employees_download()
+
+    @staticmethod
+    def download_absences_data() -> None:
+        fiorilli_browser = FiorilliBrowser()
+        fiorilli_browser._start_absences_download()
+
     def __init__(self):
         super().__init__(self.URL)
-        self.OPTIONS = {
-            "employees": self.download_employees_data,
-            "absences": self.download_absences_data,
-        }
 
-    def download_data(self, option: str) -> None:
-        print("[bold yellow]--- Iniciando Downloads FIORILLI ---[/bold yellow]")
-        self._login()
-        sleep(super().DELAY)
-
-        self.OPTIONS[option]()
-        sleep(super().DELAY)
-
-        super().close_driver()
-        print("[bold green]--- Downloads FIORILLI Concluídos ---[/bold green]")
-
-    def _login(self) -> None:
-        print("Fazendo [yellow]login[/] no FIORILLI")
-        load_dotenv()
-        user = os.getenv("FIORILLI_USER")
-        pwd = os.getenv("FIORILLI_PASSWORD")
-
-        self._enter_username("O30_id-inputEl", user)
-        self._enter_password("O34_id-inputEl", pwd)
-        self._click_login_button()
-        self._wait_for_login_to_complete()
-
-    def _enter_username(self, selector: str, user: str) -> None:
-        super().send_keys(selector, user, selector_type=By.ID)
-
-    def _enter_password(self, selector: str, password: str) -> None:
-        super().send_keys(selector, password, selector_type=By.ID)
-
-    def _click_login_button(self) -> None:
-        super().click_element("O40_id-btnEl", selector_type=By.ID)
-
-    def _wait_for_login_to_complete(self) -> None:
-        super().wait_desappear("//*[contains(text(), 'Acessando SIP 7.5')]")
-
-    def download_employees_data(self) -> None:
+    def _start_employees_download(self) -> None:
         print("Baixando dados de [yellow]funcionários[/] do FIORILLI")
+        self._login()
         self._navigate_to_maintenance_section()
         self._navigate_to_worker_registration()
         self._wait_for_screen_to_load()
@@ -67,7 +40,45 @@ class FiorilliBrowser(CoreBrowser):
         self._click_export_option()
         self._click_export_txt_option()
         self._wait_for_export_to_complete()
+        super().close_driver()
         print("[green]Download de dados de funcionários do FIORILLI concluído[/]")
+
+    def _start_absences_download(self) -> None:
+        print("Baixando dados de [yellow]afastamentos[/] do FIORILLI")
+        self._login()
+        self._navigate_to_utilities_section()
+        self._navigate_to_import_export_section()
+        self._navigate_to_export_section()
+        self._navigate_to_export_file_section()
+        self._insert_date_for_input(name="PontoFerias2")
+        self._insert_date_for_input(name="PontoAfastamentos2")
+        self._close_tab()
+        super().close_driver()
+        print("[green]Download de dados de afastamentos do FIORILLI concluído[/]")
+
+    def _login(self) -> None:
+        print("Fazendo [yellow]login[/] no FIORILLI")
+        load_dotenv()
+        user = os.getenv("FIORILLI_USER")
+        pwd = os.getenv("FIORILLI_PASSWORD")
+
+        self._enter_username("O30_id-inputEl", user)
+        self._enter_password("O34_id-inputEl", pwd)
+        self._click_login_button()
+        self._wait_for_login_to_complete()
+        sleep(super().DELAY)
+
+    def _enter_username(self, selector: str, user: str) -> None:
+        super().send_keys(selector, user, selector_type=By.ID)
+
+    def _enter_password(self, selector: str, password: str) -> None:
+        super().send_keys(selector, password, selector_type=By.ID)
+
+    def _click_login_button(self) -> None:
+        super().click_element("O40_id-btnEl", selector_type=By.ID)
+
+    def _wait_for_login_to_complete(self) -> None:
+        super().wait_desappear("//*[contains(text(), 'Acessando SIP 7.5')]")
 
     def _navigate_to_maintenance_section(self) -> None:
         super().click_element("//*[contains(text(), '2 - Manutenção')]")
@@ -125,35 +136,20 @@ class FiorilliBrowser(CoreBrowser):
     def _wait_for_export_to_complete(self) -> None:
         super().wait_desappear("//*[contains(text(), 'Exportando')]")
 
-    def download_absences_data(self) -> None:
-        print("Baixando dados de [yellow]afastamentos[/] do FIORILLI")
-        self._navigate_to_utilities_section()
-        self._navigate_to_import_export_section()
-        self._navigate_to_export_section()
-        self._navigate_to_export_file_section()
-        self._insert_date_for_input(name="PontoFerias2")
-        self._insert_date_for_input(name="PontoAfastamentos2")
-        self._close_tab()
-        print("[green]Download de dados de afastamentos do FIORILLI concluído[/]")
-
     def _navigate_to_utilities_section(self) -> None:
         super().click_element("//span[contains(text(), '7 - Utilitários')]")
 
     def _navigate_to_import_export_section(self) -> None:
-        super()._retry_func(
-            lambda: super().click_element(
+        for i in range(2):
+            super().click_element(
                 "//span[contains(text(), '7.14 - Importar/Exportar')]",
-            ),
-            2,
-        )
+            )
 
     def _navigate_to_export_section(self) -> None:
-        super()._retry_func(
-            lambda: super().click_element(
+        for i in range(2):
+            super().click_element(
                 "//span[contains(text(), '7.14.2 - Exportar')]",
-            ),
-            2,
-        )
+            )
 
     def _navigate_to_export_file_section(self) -> None:
         super().click_element("//span[contains(text(), '7.14.2.2 - Exportar Arquivo')]")

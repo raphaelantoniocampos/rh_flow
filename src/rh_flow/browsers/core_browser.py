@@ -81,7 +81,7 @@ class CoreBrowser(ABC):
         max_tries=MAX_TRIES,
     ):
         """Clicks on an element on the page"""
-        self._retry_func(
+        self.retry_func(
             lambda: self._click_element_helper(
                 selector, selector_type, delay, ignored_exceptions
             ),
@@ -110,7 +110,7 @@ class CoreBrowser(ABC):
         max_tries=MAX_TRIES,
     ):
         """Sends keys to an element on the page"""
-        self._retry_func(
+        self.retry_func(
             lambda: self._send_keys_helper(
                 selector, keys, selector_type, delay, ignored_exceptions
             ),
@@ -139,7 +139,7 @@ class CoreBrowser(ABC):
         max_tries=MAX_TRIES,
     ):
         """Right-clicks on an element on the page"""
-        self._retry_func(
+        self.retry_func(
             lambda: self._right_click_element_helper(
                 selector, selector_type, delay, ignored_exceptions
             ),
@@ -173,7 +173,7 @@ class CoreBrowser(ABC):
         if isinstance(keys, list):
             for i, key in enumerate(keys):
                 element_selector = f"({selector})[{i + 1}]"
-                self._retry_func(
+                self.retry_func(
                     lambda: self._select_and_send_keys_helper(
                         element_selector,
                         key,
@@ -184,7 +184,7 @@ class CoreBrowser(ABC):
                     max_tries,
                 )
         else:
-            self._retry_func(
+            self.retry_func(
                 lambda: self._select_and_send_keys_helper(
                     selector,
                     keys,
@@ -221,7 +221,7 @@ class CoreBrowser(ABC):
         max_tries=10,
     ):
         """Waits until an element disappears from the page"""
-        return self._retry_func(
+        return self.retry_func(
             lambda: self._wait_desappear_helper(
                 selector, selector_type, delay, ignored_exceptions
             ),
@@ -249,7 +249,7 @@ class CoreBrowser(ABC):
         max_tries=MAX_TRIES,
     ):
         """Moves the mouse cursor to an element on the page"""
-        self._retry_func(
+        self.retry_func(
             lambda: self._move_to_element_helper(
                 selector, selector_type, delay, ignored_exceptions
             ),
@@ -270,7 +270,7 @@ class CoreBrowser(ABC):
             ).until(EC.presence_of_element_located((selector_type, selector)))
         ).perform()
 
-    def _retry_func(self, func, max_tries=MAX_TRIES):
+    def retry_func(self, func, max_tries=MAX_TRIES):
         """Retries a function until it succeeds or reaches the maximum number of attempts"""
         for i in range(max_tries):
             try:

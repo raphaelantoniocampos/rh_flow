@@ -1,13 +1,1 @@
 config.json
-
-tasks/absences.txt
-tasks/dismissed.csv
-tasks/new.csv
-tasks/position.csv
-
-ahgora/absences.csv
-ahgora/employees.csv
-
-fiorilli/absences.txt
-fiorilli/employees.txt
-fiorilli/vacations.txt
