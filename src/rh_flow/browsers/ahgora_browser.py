@@ -21,7 +21,6 @@ class AhgoraBrowser(CoreBrowser):
 
     def _start_employees_download(self) -> None:
         print("Baixando dados de [yellow]funcionários[/] do AHGORA")
-        super().__init__(self.URL)
         self._login()
         self.driver.get("https://app.ahgora.com.br/funcionarios")
         self._show_dismissed_employees()

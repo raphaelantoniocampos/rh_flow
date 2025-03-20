@@ -5,112 +5,48 @@ from pandas.errors import EmptyDataError
 from rich import print
 from utils.constants import DATA_DIR
 from managers.file_manager import FileManager
+from rich.console import Console
 
 
 class DataManager:
-    def analyze(self) -> (pd.DataFrame, pd.DataFrame):
+    @staticmethod
+    def analyze() -> (pd.DataFrame, pd.DataFrame):
         try:
-            print("--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n")
-            ahgora_employees, fiorilli_employees = self._get_employees_raw_data()
-            fiorilli_absences = self._get_absences_raw_data()
+            console = Console()
+            with console.status(
+                "[bold green]Analisando dados...[/bold green]", spinner="dots"
+            ):
+                print(
+                    "--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n"
+                )
+                dm = DataManager()
+                ahgora_employees, fiorilli_employees = dm.get_employees_data()
+                fiorilli_absences = dm.get_absences_data()
 
-            FileManager.save_df(
-                df=ahgora_employees,
-                path=DATA_DIR / "ahgora" / "employees.csv",
-            )
-            FileManager.save_df(
-                df=fiorilli_employees,
-                path=DATA_DIR / "fiorilli" / "employees.csv",
-            )
-            FileManager.save_df(
-                df=fiorilli_absences,
-                path=DATA_DIR / "fiorilli" / "absences.csv",
-            )
+                FileManager.save_df(
+                    df=ahgora_employees,
+                    path=DATA_DIR / "ahgora" / "employees.csv",
+                )
+                FileManager.save_df(
+                    df=fiorilli_employees,
+                    path=DATA_DIR / "fiorilli" / "employees.csv",
+                )
+                FileManager.save_df(
+                    df=fiorilli_absences,
+                    path=DATA_DIR / "fiorilli" / "absences.csv",
+                )
 
-            self.save_tasks_dfs(fiorilli_employees, ahgora_employees, fiorilli_absences)
+                dm.generate_tasks_dfs(
+                    fiorilli_employees=fiorilli_employees,
+                    ahgora_employees=ahgora_employees,
+                    fiorilli_absences=fiorilli_absences,
+                )
 
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
             sleep(1)
         except KeyboardInterrupt as e:
             print(f"[bold red]Erro ao sincronizar dados: {e}[/bold red]\n")
             sleep(1)
-
-    def save_tasks_dfs(self, fiorilli_employees, ahgora_employees, fiorilli_absences):
-        new_df, dismissed_df, position_df, absences_df = self._generate_tasks_dfs(
-            fiorilli_employees,
-            ahgora_employees,
-            fiorilli_absences,
-        )
-
-        save_dir = DATA_DIR / "tasks"
-
-        FileManager.save_df(
-            df=new_df,
-            path=save_dir / "add_employees.csv",
-        )
-        FileManager.save_df(
-            df=dismissed_df,
-            path=save_dir / "dismissed_employees.csv",
-        )
-        FileManager.save_df(
-            df=position_df,
-            path=save_dir / "change_positions.csv",
-        )
-        FileManager.save_df(
-            df=absences_df,
-            path=save_dir / "add_absences.csv",
-        )
-
-    def _generate_tasks_dfs(
-        self,
-        fiorilli_employees: pd.DataFrame,
-        ahgora_employees: pd.DataFrame,
-        fiorilli_absences: pd.DataFrame,
-    ):
-        fiorilli_dismissed_df = fiorilli_employees[
-            fiorilli_employees["dismissal_date"].notna()
-        ]
-        fiorilli_dismissed_ids = set(fiorilli_dismissed_df["id"])
-
-        ahgora_dismissed_df = ahgora_employees[
-            ahgora_employees["dismissal_date"].notna()
-        ]
-        ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
-
-        dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
-
-        fiorilli_active_df = fiorilli_employees[
-            ~fiorilli_employees["id"].isin(dismissed_ids)
-        ]
-
-        ahgora_ids = set(ahgora_employees["id"])
-
-        new_df = fiorilli_active_df[~fiorilli_active_df["id"].isin(ahgora_ids)]
-
-        dismissed_df = ahgora_employees[
-            ahgora_employees["id"].isin(fiorilli_dismissed_ids)
-            & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
-        ]
-
-        dismissed_df = dismissed_df.drop(columns=["dismissal_date"])
-        dismissed_df = dismissed_df.merge(
-            fiorilli_dismissed_df[["id", "dismissal_date"]],
-            on="id",
-            how="left",
-        )
-
-        merged_employees = fiorilli_employees.merge(
-            ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
-        )
-
-        # TODO: verify characters on positions
-        position_df = merged_employees[
-            merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
-        ]
-
-        absences_df = fiorilli_absences
-
-        return new_df, dismissed_df, position_df, absences_df
 
     @staticmethod
     def read_csv(
@@ -197,7 +133,91 @@ class DataManager:
                 except ValueError:
                     return pd.to_datetime(date_str, format="ISO8601", errors="coerce")
 
-    def _get_employees_raw_data(self) -> (pd.DataFrame, pd.DataFrame):
+    def generate_tasks_dfs(
+        self,
+        fiorilli_employees: pd.DataFrame,
+        ahgora_employees: pd.DataFrame,
+        fiorilli_absences: pd.DataFrame,
+    ) -> None:
+        fiorilli_dismissed_df = fiorilli_employees[
+            fiorilli_employees["dismissal_date"].notna()
+        ]
+        fiorilli_dismissed_ids = set(fiorilli_dismissed_df["id"])
+
+        ahgora_dismissed_df = ahgora_employees[
+            ahgora_employees["dismissal_date"].notna()
+        ]
+        ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
+
+        dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
+
+        fiorilli_active_df = fiorilli_employees[
+            ~fiorilli_employees["id"].isin(dismissed_ids)
+        ]
+
+        ahgora_ids = set(ahgora_employees["id"])
+
+        new_employees_df = fiorilli_active_df[
+            ~fiorilli_active_df["id"].isin(ahgora_ids)
+        ]
+
+        dismissed_employees_df = ahgora_employees[
+            ahgora_employees["id"].isin(fiorilli_dismissed_ids)
+            & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
+        ]
+
+        dismissed_employees_df = dismissed_employees_df.drop(columns=["dismissal_date"])
+        dismissed_employees_df = dismissed_employees_df.merge(
+            fiorilli_dismissed_df[["id", "dismissal_date"]],
+            on="id",
+            how="left",
+        )
+
+        merged_employees = fiorilli_employees.merge(
+            ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
+        )
+
+        # TODO: verify characters on positions
+        changed_positions_df = merged_employees[
+            merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
+        ]
+
+        new_absences_df = fiorilli_absences
+
+        self.save_tasks_dfs(
+            new_employees_df=new_employees_df,
+            dismissed_employees_df=dismissed_employees_df,
+            changed_positions_df=changed_positions_df,
+            new_absences_df=new_absences_df,
+        )
+
+    def save_tasks_dfs(
+        self,
+        new_employees_df,
+        dismissed_employees_df,
+        changed_positions_df,
+        new_absences_df,
+    ):
+        save_dir = DATA_DIR / "tasks"
+
+        FileManager.save_df(
+            df=new_employees_df,
+            path=save_dir / "new_employees.csv",
+        )
+        FileManager.save_df(
+            df=dismissed_employees_df,
+            path=save_dir / "dismissed_employees.csv",
+        )
+        FileManager.save_df(
+            df=changed_positions_df,
+            path=save_dir / "changed_positions.csv",
+        )
+        FileManager.save_df(
+            df=new_absences_df,
+            path=save_dir / "new_absences.csv",
+        )
+
+    def get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
         raw_fiorilli_employees = DATA_DIR / "fiorilli" / "raw_employees.txt"
         raw_ahgora_employees = DATA_DIR / "ahgora" / "raw_employees.csv"
 
@@ -238,7 +258,7 @@ class DataManager:
         )
         return ahgora_employees, fiorilli_employees
 
-    def _get_absences_raw_data(self) -> pd.DataFrame:
+    def get_absences_data(self) -> pd.DataFrame:
         raw_fiorilli_absences = DATA_DIR / "fiorilli" / "raw_absences.txt"
         raw_fiorilli_vacations = DATA_DIR / "fiorilli" / "raw_vacations.txt"
 

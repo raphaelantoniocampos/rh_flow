@@ -22,6 +22,7 @@ class TaskRunner(ABC):
     KEY_NEXT = Key("F3", "yellow")
     KEY_STOP = Key("F4", "red3")
 
+    @staticmethod
     def menu() -> None:
         """Displays the task menu"""
 
@@ -84,7 +85,7 @@ class TaskRunner(ABC):
         choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]
         choices.append(f"{len(choices) + 1}. Voltar")
         questions = [
-            inquirer.List(
+            inquirer.rawlist(
                 "options", message="Selecione uma opção", choices=choices, carousel=True
             ),
         ]

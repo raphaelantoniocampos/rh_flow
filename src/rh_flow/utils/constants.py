@@ -4,7 +4,7 @@ BASE_DIR = Path(Path.cwd() / "src")
 DATA_DIR = BASE_DIR / "data"
 DOWNLOADS_DIR = BASE_DIR / "downloads"
 
-KEYBINDINGS = {
+INQUIRER_KEYBINDINGS = {
     "answer": [
         {"key": "enter"},
     ],
@@ -26,16 +26,19 @@ KEYBINDINGS = {
     "toggle": [
         {"key": "space"},
     ],
-    # "toggle-down": [
-    #     {"key": "c-space"},
-    # ],
-    # "toggle-up": [
-    #     {"key": "s-space"},
-    # ],
     "toggle-all-true": [
         {"key": "a"},
     ],
-    # "toggle-all-false": [
-    #     {"key": "s-a"},
-    # ],
+}
+
+
+JSON_INIT_CONFIG = {
+    "init_date": "",
+    "last_analisys": {"datetime": "", "time_since": ""},
+    "last_download": {
+        "ahgora_employees": {"datetime": "", "time_since": ""},
+        "fiorilli_employees": {"datetime": "", "time_since": ""},
+        "fiorilli_absences": {"datetime": "", "time_since": ""},
+        "fiorilli_vacations": {"datetime": "", "time_since": ""},
+    },
 }

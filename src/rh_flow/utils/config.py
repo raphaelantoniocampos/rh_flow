@@ -1,4 +1,4 @@
-from utils.constants import DATA_DIR
+from utils.constants import DATA_DIR, JSON_INIT_CONFIG
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -9,6 +9,7 @@ from tasks.task import Task
 from rich import print
 from rich.console import Console
 from rich.panel import Panel
+from managers.file_manager import FileManager
 
 NO_IGNORED_STR = (
     "\n    [yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"
@@ -62,7 +63,7 @@ class Config:
             )
 
             questions = [
-                inquirer.List(
+                inquirer.rawlist(
                     "task",
                     message="O que deseja fazer?",
                     choices=["Remover funcionários da lista de ignorados", "Voltar"],
@@ -80,13 +81,12 @@ class Config:
                     print(NO_IGNORED_STR)
                     continue
 
-                questions = [
-                    inquirer.checkbox(
-                        "remove_ignore",
-                        message="Escolha os funcionários para remover da lista de ignorados.",
-                        choices=ignored_list,
-                    ),
-                ]
+                answers = inquirer.rawlist(
+                    message="Escolha os funcionários para remover da lista de ignorados.",
+                    choices=ignored_list,
+                    multiselect=True,
+                ).execute()
+
                 remove_ignore = inquirer.prompt(questions).get("remove_ignore")
 
                 for employee in remove_ignore:
@@ -99,7 +99,7 @@ class Config:
         ignore_dict = task.get_ignore_dict()
         ignore_list = task.get_ignore_list(ignore_dict)
         questions = [
-            inquirer.checkbox(
+            inquirer.rawlist(
                 "ignore",
                 message="Selecione os funcionários para ignorar",
                 choices=ignore_list,
@@ -128,7 +128,10 @@ class Config:
             with open(self.json_path, "r") as f:
                 return json.load(f)
         else:
-            return self._create()
+            self.data = self._create()
+            return self._update(
+                "init_date", value=datetime.now().strftime("%d/%m/%Y, %H:%M")
+            )
 
     def _read(self) -> dict:
         return self.data
@@ -154,17 +157,8 @@ class Config:
 
     def _create(self) -> dict:
         with open(self.json_path, "w") as f:
-            init_config = {
-                "init_date": datetime.now().strftime("%d/%m/%Y, %H:%M"),
-                "ignore": {},
-                "last_analisys": {"datetime": "", "time_since": ""},
-                "last_download": {
-                    "ahgora": {"datetime": "", "time_since": ""},
-                    "fiorilli": {"datetime": "", "time_since": ""},
-                },
-            }
-            json.dump(init_config, f, indent=4)
-        return init_config
+            json.dump(JSON_INIT_CONFIG, f, indent=4)
+        return JSON_INIT_CONFIG
 
     def _delete(self, field: str, key: str) -> str:
         if field in self.data and key in self.data[field]:
@@ -188,8 +182,9 @@ class Config:
             self._update_analysis_time_since(last_analisys, now)
 
             last_download = self.data.get("last_download")
-            self._update_downloads_time_since(last_download, "ahgora", now)
-            self._update_downloads_time_since(last_download, "fiorilli", now)
+            self._update_downloads_time_since(last_download, "ahgora_employees", now)
+            self._update_downloads_time_since(last_download, "fiorilli_employees", now)
+            self._update_downloads_time_since(last_download, "fiorilli_absences", now)
         except FileNotFoundError as error:
             raise Exception(
                 f"{error}\nBaixe o arquivo e o coloque na pasta solicitada."
@@ -207,28 +202,25 @@ class Config:
             self._update("last_analisys", value=last_analisys)
 
     def _update_downloads_time_since(
-        self, last_download: dict, app_name: str, now: timedelta
+        self, last_download: dict, file_name: str, now: timedelta
     ) -> None:
-        app_last_download = last_download.get(app_name)
+        file_last_download = last_download.get(file_name)
 
-        app_last_download["datetime"] = self._get_last_download(app_name)
+        file_last_download["datetime"] = self._get_last_download(file_name)
 
         last_download_dt = datetime.strptime(
-            app_last_download["datetime"], "%d/%m/%Y, %H:%M"
+            file_last_download["datetime"], "%d/%m/%Y, %H:%M"
         )
         time_since_last_download = now - last_download_dt
-        app_last_download["time_since"] = self._format_timedelta(
+        file_last_download["time_since"] = self._format_timedelta(
             time_since_last_download
         )
 
-        self._update("last_download", app_name, value=app_last_download)
+        self._update("last_download", file_name, value=file_last_download)
 
-    def _get_last_download(self, app_name: str) -> str:
-        file_path = Path(
-            DATA_DIR
-            / app_name
-            / f"employees.{'csv' if app_name == 'ahgora' else 'txt'}"
-        )
+    def _get_last_download(self, file_name: str) -> str:
+        file_path = FileManager.file_name_to_file_path(file_name)
+
         return datetime.strftime(
             datetime.fromtimestamp(file_path.stat().st_mtime),
             "%d/%m/%Y, %H:%M",

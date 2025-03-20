@@ -1,3 +1,4 @@
+from utils.constants import INQUIRER_KEYBINDINGS
 from InquirerPy import inquirer
 from rich import print
 from rich.console import Console
@@ -9,15 +10,14 @@ from managers.data_manager import DataManager
 from managers.task_manager import TaskManager
 from tasks.task import Task
 
-
 console = Console()
 
 OPTIONS = [
-    "1. Baixar arquivos",
-    "2. Analisar dados",
-    "3. Ações",
-    "4. Configurações",
-    "5. Sair",
+    "Baixar arquivos",
+    "Analisar dados",
+    "Tarefas",
+    "Configurações",
+    "Sair",
 ]
 
 # TODO: ask to create creds on start
@@ -41,21 +41,21 @@ def main():
     try:
         config = Config()
         FileManager.move_downloads_to_data_dir()
-        data_manager = DataManager()
-        task_manager = TaskManager()
+        dm = DataManager()
+        tm = TaskManager()
         while True:
-            tasks = task_manager.get_tasks()
-            option = menu(tasks)[3:]
+            tasks = tm.get_tasks()
+            option = menu(tasks)
             match option:
                 case "Baixar arquivos":
-                    download_task = DownloadTask()
-                    download_task.menu()
+                    dt = DownloadTask()
+                    dt.menu()
 
                 case "Analisar dados":
-                    data_manager.analyze()
+                    dm.analyze()
 
-                case "Ações":
-                    task_runner.run(config, tasks)
+                case "Tarefas":
+                    tm.menu(tasks)
 
                 case "Configurações":
                     config.config_panel(console)
@@ -79,13 +79,12 @@ def menu(tasks: list[Task]):
     tasks_panel = get_tasks_panel(tasks)
     console.print(tasks_panel)
 
-    questions = [
-        inquirer.List(
-            "option", message="Selecione uma opção", choices=OPTIONS, carousel=True
-        ),
-    ]
-    answers = inquirer.prompt(questions)
-    return answers["option"]
+    answers = inquirer.rawlist(
+        message="Selecione uma opção",
+        choices=OPTIONS,
+        keybindings=INQUIRER_KEYBINDINGS,
+    ).execute()
+    return answers
 
 
 def get_tasks_panel(tasks: list[Task]) -> Panel:
@@ -99,21 +98,18 @@ def get_tasks_panel(tasks: list[Task]) -> Panel:
 
         return Panel.fit(
             "[green]• Nenhuma ação pendente.[/green]",
-            title="[bold]Ações Pendentes[/bold]",
+            title="[bold]Tarefas Pendentes[/bold]",
             border_style="green",
             padding=(1, 2),
         )
 
     return Panel.fit(
         "\n".join(orders),
-        title="[bold]Ações Pendentes[/bold]",
+        title="[bold]Tarefas Pendentes[/bold]",
         border_style="yellow",
         padding=(1, 2),
     )
 
 
 if __name__ == "__main__":
-
-    data_manager = DataManager()
-    data_manager.analyze()
-#    main()
+    main()

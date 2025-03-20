@@ -1,47 +1,31 @@
+import time
 import pyautogui
 import pandas as pd
 from rich.panel import Panel
 from rich.console import Console
-from utils.constants import KEYBINDINGS
 from InquirerPy import inquirer
+import keyboard
+from pyperclip import copy
+
 
 class AddEmployeesTask:
-    DOWNLOAD_OPTIONS = {
-        # "Funcionários Ahgora": {"browser": AhgoraBrowser, "data": "employees"},
-        # "Funcionários Fiorilli": {"browser": FiorilliBrowser, "data": "employees"},
-        # "Afastamentos Fiorilli": {"browser": FiorilliBrowser, "data": "absences"},
-    }
-
+    @staticmethod
     def menu():
         console = Console()
         console.print(
             Panel.fit(
-                "ADICIONAR FUNCIONÁRIOS",
+                "Adicionar Funcionários",
                 style="bold cyan",
             )
         )
-        choices = [
-            f"{index}. {option}"
-            for index, option in enumerate(DownloadTask.DOWNLOAD_OPTIONS, start=1)
-        ]
-        choices.append(f"{len(choices) + 1}. Voltar")
 
-        answers = inquirer.checkbox(
-            message="Selecione as opções de download",
-            choices=choices,
-            keybindings=KEYBINDINGS,
-        ).execute()
-
-        selected_options = []
-        if choices[-1] in answers:
-            return
-
-        for answer in answers:
-            selected_options.append(answer[3:])
-
-        download_task = DownloadTask()
-        download_task.run(selected_options)
-
+        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
+        if proceed:
+            aet = AddEmployeesTask()
+            aet.run()
+        with console.status("[bold green]Voltando...[/bold green]", spinner="dots"):
+            time.sleep(0.5)
+        return
 
     def run(self, df: pd.DataFrame) -> None:
         for i, series in df.iterrows():
@@ -50,37 +34,37 @@ class AddEmployeesTask:
             )
             print(series)
             print(
-                f"\nPressione {KEY_CONTINUE} para [bold white]adicionar[/bold white] o funcionário."
+                f"\nPressione {super().KEY_CONTINUE} para [bold white]adicionar[/bold white] o funcionário."
             )
             print(
-                f"Pressione {KEY_NEXT} para o [bold white]próximo[/bold white] funcionário."
+                f"Pressione {super().KEY_NEXT} para o [bold white]próximo[/bold white] funcionário."
             )
-            print(f"Pressione {KEY_STOP} para [bold white]sair...[/bold white]")
+            print(f"Pressione {super().KEY_STOP} para [bold white]sair...[/bold white]")
             name = series.get("name")
             copy(name)
             print(f"Nome '{name}' copiado para a área de transferência!)")
             while True:
-                if keyboard.is_pressed(KEY_CONTINUE.key):
+                if keyboard.is_pressed(super().KEY_CONTINUE.key):
                     time.sleep(0.5)
                     self._auto_new(series)
                     break
-                if keyboard.is_pressed(KEY_NEXT.key):
+                if keyboard.is_pressed(super().KEY_NEXT.key):
                     time.sleep(0.5)
                     break
-                if keyboard.is_pressed(KEY_STOP.key):
+                if keyboard.is_pressed(super().KEY_STOP.key):
                     time.sleep(0.5)
                     print("Interrompido pelo usuário.")
                     return
 
     def _auto_new(self, row):
         print(
-            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/] e Aperte {KEY_CONTINUE} para começar ou {KEY_NEXT} para voltar."
+            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/] e Aperte {super().KEY_CONTINUE} para começar ou {super().KEY_NEXT} para voltar."
         )
         while True:
-            if keyboard.is_pressed(KEY_CONTINUE.key):
+            if keyboard.is_pressed(super().KEY_CONTINUE.key):
                 time.sleep(0.5)
                 break
-            if keyboard.is_pressed(KEY_STOP.key):
+            if keyboard.is_pressed(super().KEY_STOP.key):
                 print("Interrompido pelo usuário.")
                 return
 
@@ -163,15 +147,13 @@ class AddEmployeesTask:
         time.sleep(0.2)
 
         print(
-            f"Insira a Localização\n[yellow]{row['location']}\n[/]Pressione {KEY_NEXT} para o próximo funcionário..."
+            f"Insira a Localização\n[yellow]{row['location']}\n[/]Pressione {super().KEY_NEXT} para o próximo funcionário..."
         )
 
         while True:
-            if keyboard.is_pressed(KEY_NEXT.key):
+            if keyboard.is_pressed(super().KEY_NEXT.key):
                 time.sleep(0.5)
                 return
-
-
 
     def _process_pis_pasep(self, time):
         console = Console()

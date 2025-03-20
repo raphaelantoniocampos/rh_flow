@@ -1,7 +1,8 @@
+import time
 import threading
 from rich.panel import Panel
 from rich.console import Console
-from utils.constants import KEYBINDINGS
+from utils.constants import INQUIRER_KEYBINDINGS
 from managers.file_manager import FileManager
 from browsers.ahgora_browser import AhgoraBrowser
 from browsers.fiorilli_browser import FiorilliBrowser
@@ -16,6 +17,7 @@ class DownloadTask(TaskRunner):
         "Afastamentos Fiorilli": FiorilliBrowser.download_absences_data,
     }
 
+    @staticmethod
     def menu():
         console = Console()
         console.print(
@@ -24,27 +26,29 @@ class DownloadTask(TaskRunner):
                 style="bold cyan",
             )
         )
-        choices = [
-            f"{index}. {option}"
-            for index, option in enumerate(DownloadTask.DOWNLOAD_OPTIONS, start=1)
-        ]
-        choices.append(f"{len(choices) + 1}. Voltar")
+        choices = [option for option in DownloadTask.DOWNLOAD_OPTIONS]
+        choices.append("Voltar")
 
-        answers = inquirer.checkbox(
+        answers = inquirer.rawlist(
             message="Selecione as opções de download",
             choices=choices,
-            keybindings=KEYBINDINGS,
+            keybindings=INQUIRER_KEYBINDINGS,
+            multiselect=True,
         ).execute()
 
         selected_options = []
         if choices[-1] in answers:
+            with console.status("[bold green]Voltando...[/bold green]", spinner="dots"):
+                time.sleep(0.5)
             return
 
         for answer in answers:
-            selected_options.append(answer[3:])
+            selected_options.append(answer)
 
-        download_task = DownloadTask()
-        download_task.run(selected_options)
+        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
+        if proceed:
+            dt = DownloadTask()
+            dt.run(selected_options)
 
     def run(self, selected_options):
         threads = []
