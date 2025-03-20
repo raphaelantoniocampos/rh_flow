@@ -1,16 +1,14 @@
-import time
 import threading
 from rich.panel import Panel
 from rich.console import Console
-from utils.constants import INQUIRER_KEYBINDINGS
-from managers.file_manager import FileManager
+from utils.constants import INQUIRER_KEYBINDINGS, spinner
+from managers.file_manager import FileManager as file_manager
 from browsers.ahgora_browser import AhgoraBrowser
 from browsers.fiorilli_browser import FiorilliBrowser
-from tasks.task_runner import TaskRunner
 from InquirerPy import inquirer
 
 
-class DownloadTask(TaskRunner):
+class DownloadManager():
     DOWNLOAD_OPTIONS = {
         "Funcionários Ahgora": AhgoraBrowser.download_employees_data,
         "Funcionários Fiorilli": FiorilliBrowser.download_employees_data,
@@ -18,7 +16,7 @@ class DownloadTask(TaskRunner):
     }
 
     @staticmethod
-    def menu():
+    def menu(self):
         console = Console()
         console.print(
             Panel.fit(
@@ -26,7 +24,7 @@ class DownloadTask(TaskRunner):
                 style="bold cyan",
             )
         )
-        choices = [option for option in DownloadTask.DOWNLOAD_OPTIONS]
+        choices = [option for option in self.DOWNLOAD_OPTIONS]
         choices.append("Voltar")
 
         answers = inquirer.rawlist(
@@ -38,8 +36,7 @@ class DownloadTask(TaskRunner):
 
         selected_options = []
         if choices[-1] in answers:
-            with console.status("[bold green]Voltando...[/bold green]", spinner="dots"):
-                time.sleep(0.5)
+            spinner()
             return
 
         for answer in answers:
@@ -47,8 +44,7 @@ class DownloadTask(TaskRunner):
 
         proceed = inquirer.confirm(message="Continuar?", default=True).execute()
         if proceed:
-            dt = DownloadTask()
-            dt.run(selected_options)
+            self.run(selected_options)
 
     def run(self, selected_options):
         threads = []
@@ -66,4 +62,4 @@ class DownloadTask(TaskRunner):
         self._move_files_to_data_dir()
 
     def _move_files_to_data_dir(self):
-        FileManager.move_downloads_to_data_dir()
+        file_manager.move_downloads_to_data_dir()

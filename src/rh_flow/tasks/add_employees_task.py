@@ -1,33 +1,20 @@
+from utils.constants import spinner
 import time
 import pyautogui
-import pandas as pd
-from rich.panel import Panel
 from rich.console import Console
-from InquirerPy import inquirer
 import keyboard
 from pyperclip import copy
+from tasks.task_runner import TaskRunner
+from tasks.task import Task
+from rich import print
 
 
-class AddEmployeesTask:
-    @staticmethod
-    def menu():
-        console = Console()
-        console.print(
-            Panel.fit(
-                "Adicionar Funcionários",
-                style="bold cyan",
-            )
-        )
+class AddEmployeesTask(TaskRunner):
+    def __init__(self, task: Task):
+        super().__init__(task)
 
-        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
-        if proceed:
-            aet = AddEmployeesTask()
-            aet.run()
-        with console.status("[bold green]Voltando...[/bold green]", spinner="dots"):
-            time.sleep(0.5)
-        return
-
-    def run(self, df: pd.DataFrame) -> None:
+    def run(self) -> None:
+        df = self.task.df
         for i, series in df.iterrows():
             print(
                 f"\n[bold yellow]{'-' * 15} NOVO FUNCIONÁRIO! {'-' * 15}[/bold yellow]"
@@ -53,7 +40,7 @@ class AddEmployeesTask:
                     break
                 if keyboard.is_pressed(super().KEY_STOP.key):
                     time.sleep(0.5)
-                    print("Interrompido pelo usuário.")
+                    spinner()
                     return
 
     def _auto_new(self, row):
@@ -65,7 +52,7 @@ class AddEmployeesTask:
                 time.sleep(0.5)
                 break
             if keyboard.is_pressed(super().KEY_STOP.key):
-                print("Interrompido pelo usuário.")
+                spinner()
                 return
 
         pyautogui.write(row["name"], interval=0.02)
@@ -157,10 +144,6 @@ class AddEmployeesTask:
 
     def _process_pis_pasep(self, time):
         console = Console()
-        with console.status(
-            "[yellow]Processando pis_pasep...[/yellow]", spinner="dots"
-        ):
-            time.sleep(time)
-
+        spinner(wait_string="[yellow]Processando pis_pasep...[/yellow]", wait_time=time, console=console)
         console.print("[bold green]Continuando![/bold green]")
         return

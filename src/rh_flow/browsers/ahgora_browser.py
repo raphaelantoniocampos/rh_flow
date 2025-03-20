@@ -31,7 +31,6 @@ class AhgoraBrowser(CoreBrowser):
         print("[green]Download de dados de funcionários do AHGORA concluído[/]")
 
     def _login(self) -> None:
-        print("Fazendo [yellow]login[/] no AHGORA")
         load_dotenv()
         user = os.getenv("AHGORA_USER")
         pwd = os.getenv("AHGORA_PASSWORD")

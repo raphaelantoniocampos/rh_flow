@@ -1,3 +1,5 @@
+
+from tasks.task import Task
 from rich.panel import Panel
 from rich.console import Console
 from tasks.task_runner import TaskRunner
@@ -21,5 +23,5 @@ class ChangePositionsTask(TaskRunner):
             cpt.run()
         return
 
-    def run(self):
+    def run(self, task:Task):
         return

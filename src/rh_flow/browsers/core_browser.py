@@ -4,7 +4,6 @@ from abc import ABC
 from dotenv import load_dotenv
 from utils.constants import DOWNLOADS_DIR
 
-import os
 # import threading
 import time
 # from datetime import date, datetime
@@ -38,12 +37,9 @@ class CoreBrowser(ABC):
         StaleElementReferenceException,
     )
 
-    DEV_MODE_BOOL = {"dev": True, "prod": False}
-
     def __init__(self, url):
         load_dotenv()
-        mode = self.DEV_MODE_BOOL[os.getenv("MODE")]
-        self.driver = self._get_web_driver(not mode)
+        self.driver = self._get_web_driver()
         self.driver.get(url)
 
     def _login(self) -> None:

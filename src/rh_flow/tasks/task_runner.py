@@ -1,10 +1,13 @@
+from utils.constants import spinner
 import time
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from InquirerPy import inquirer
 from rich import print
 
 from tasks.task import Task
+from rich.console import Console
+from rich.panel import Panel
 
 
 class Key:
@@ -22,9 +25,26 @@ class TaskRunner(ABC):
     KEY_NEXT = Key("F3", "yellow")
     KEY_STOP = Key("F4", "red3")
 
-    @staticmethod
-    def menu() -> None:
+    def __init__(self, task: Task):
+        self.task = task
+        return self.menu()
+
+    def menu(self) -> None:
         """Displays the task menu"""
+        console = Console()
+        console.print(
+            Panel.fit(
+                self.task.option,
+                style="bold cyan",
+            )
+        )
+
+
+        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
+        if proceed:
+            self.run()
+
+        spinner()
 
     # def menu(self, config, tasks):
     #     while True:
@@ -39,6 +59,7 @@ class TaskRunner(ABC):
     #                     return
     #                 self._prepare_list_and_run(task)
 
+    @abstractmethod
     def run() -> None:
         """Runs the task"""
 
@@ -75,19 +96,3 @@ class TaskRunner(ABC):
                 return
 
             task.fun(task.df)
-
-    def _show_tasks_menu(self, tasks) -> dict[str, str]:
-        options = []
-
-        for task in tasks:
-            options.append(task.option)
-
-        choices = [f"{index}. {order}" for index, order in enumerate(options, start=1)]
-        choices.append(f"{len(choices) + 1}. Voltar")
-        questions = [
-            inquirer.rawlist(
-                "options", message="Selecione uma opção", choices=choices, carousel=True
-            ),
-        ]
-        answers = inquirer.prompt(questions)
-        return answers["options"]

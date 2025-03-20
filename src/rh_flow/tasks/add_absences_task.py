@@ -1,25 +1,32 @@
-from tasks.task_runner import TaskRunner
-from rich.console import Console
-from rich.panel import Panel
-from InquirerPy import inquirer
+try:
+    from tasks.task_runner import TaskRunner
+    from tasks.task import Task
+except ModuleNotFoundError:
+    pass
 
 
 class AddAbsencesTask(TaskRunner):
-    @staticmethod
-    def menu():
-        console = Console()
-        console.print(
-            Panel.fit(
-                "Adicionar Afastamentos",
-                style="bold cyan",
-            )
-        )
+    def __init__(self, task: Task):
+        super().__init__(task)
 
-        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
-        if proceed:
-            aat = AddAbsencesTask()
-            aat.run()
-        return
+    # @staticmethod
+    # def menu():
+    #     console = Console()
+    #     console.print(
+    #         Panel.fit(
+    #             "Adicionar Afastamentos",
+    #             style="bold cyan",
+    #         )
+    #     )
+    #
+    #
+    #     proceed = inquirer.confirm(message="Continuar?", default=True).execute()
+    #     if proceed:
+    #         aat = AddAbsencesTask()
+    #         aat.run()
+    #
+    #     with console.status("[bold green]Voltando...[/bold green]", spinner="dots"):
+    #         time.sleep(0.25)
 
     def run(self):
         # Caminho para os arquivos
@@ -60,3 +67,6 @@ class AddAbsencesTask(TaskRunner):
                 # Verifica se o índice da linha não está na lista de números de registro
                 if index not in registry_numbers:
                     outfile.write(line)
+
+if __name__ == "__main__":
+    AddAbsencesTask.run()

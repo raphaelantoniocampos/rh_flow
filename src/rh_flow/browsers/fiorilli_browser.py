@@ -57,7 +57,6 @@ class FiorilliBrowser(CoreBrowser):
         print("[green]Download de dados de afastamentos do FIORILLI concluído[/]")
 
     def _login(self) -> None:
-        print("Fazendo [yellow]login[/] no FIORILLI")
         load_dotenv()
         user = os.getenv("FIORILLI_USER")
         pwd = os.getenv("FIORILLI_PASSWORD")

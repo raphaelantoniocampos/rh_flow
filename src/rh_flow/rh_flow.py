@@ -1,70 +1,51 @@
-from utils.constants import INQUIRER_KEYBINDINGS
+from utils.constants import INQUIRER_KEYBINDINGS, MAIN_MENU_OPTIONS, spinner
 from InquirerPy import inquirer
-from rich import print
 from rich.console import Console
 from rich.panel import Panel
-from tasks.download_task import DownloadTask
-from utils.config import Config
 from managers.file_manager import FileManager
 from managers.data_manager import DataManager
 from managers.task_manager import TaskManager
+from managers.download_manager import DownloadManager as download_manager
 from tasks.task import Task
 
 console = Console()
 
-OPTIONS = [
-    "Baixar arquivos",
-    "Analisar dados",
-    "Tarefas",
-    "Configurações",
-    "Sair",
-]
-
 # TODO: ask to create creds on start
 # TODO: task df na tela de task nao ta levando os ignore em conta
-# TODO: Exportar buton firoilli now work
-# TODO: adicionar opcao headless file downloader
-# TODO: check fiorilli downloads
-# TODO: check ahgora downloads
 # TODO: fix position task
 # TODO: create new abcenses task remove.py using txt
-# TODO: file downloader multithread e separado
 # TODO: file downloader segundo plano
-# TODO: separate file_downloader into classes
 # TODO: make add employees download ahgora again
 # TODO: make last downloads and analyze appear on main screen
 # TODO: configure the panel to be central and prettier
-# TODO: refactor structure tree
 
 
 def main():
-    try:
-        config = Config()
-        FileManager.move_downloads_to_data_dir()
-        dm = DataManager()
-        tm = TaskManager()
-        while True:
-            tasks = tm.get_tasks()
-            option = menu(tasks)
-            match option:
-                case "Baixar arquivos":
-                    dt = DownloadTask()
-                    dt.menu()
+    # config = Config()
+    file_manager = FileManager()
+    task_manager = TaskManager()
+    data_manager = DataManager()
 
-                case "Analisar dados":
-                    dm.analyze()
+    file_manager.move_downloads_to_data_dir()
+    while True:
+        tasks = task_manager.get_tasks()
+        option = menu(tasks)
+        match option.lower():
+            case "baixar dados":
+                download_manager.menu(console)
 
-                case "Tarefas":
-                    tm.menu(tasks)
+            case "analisar dados":
+                data_manager.analyze()
 
-                case "Configurações":
-                    config.config_panel(console)
+            case "tarefas":
+                task_manager.menu(tasks)
 
-                case "Sair":
-                    raise KeyboardInterrupt
+            case "configurações":
+                pass
+                # config.menu(console)
 
-    except KeyboardInterrupt:
-        print("Saindo...")
+            case "sair":
+                raise KeyboardInterrupt
 
 
 def menu(tasks: list[Task]):
@@ -81,30 +62,30 @@ def menu(tasks: list[Task]):
 
     answers = inquirer.rawlist(
         message="Selecione uma opção",
-        choices=OPTIONS,
+        choices=MAIN_MENU_OPTIONS,
         keybindings=INQUIRER_KEYBINDINGS,
     ).execute()
     return answers
 
 
 def get_tasks_panel(tasks: list[Task]) -> Panel:
-    orders = []
+    task_options = []
     for task in tasks:
-        if task.__len__() > 0:
-            orders.append(task.order)
+        if len(task.df) > 0:
+            task_options.append(task.option)
 
-    if not orders:
-        orders.append("[green]• Nenhuma ação pendente.[/green]")
+    if not task_options:
+        task_options.append("[green]• Nenhuma tarefa pendente.[/green]")
 
         return Panel.fit(
-            "[green]• Nenhuma ação pendente.[/green]",
+            "[green]• Nenhuma tarefa pendente.[/green]",
             title="[bold]Tarefas Pendentes[/bold]",
             border_style="green",
             padding=(1, 2),
         )
 
     return Panel.fit(
-        "\n".join(orders),
+        "\n".join(task_options),
         title="[bold]Tarefas Pendentes[/bold]",
         border_style="yellow",
         padding=(1, 2),
@@ -112,4 +93,7 @@ def get_tasks_panel(tasks: list[Task]) -> Panel:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        spinner("Saindo")

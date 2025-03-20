@@ -22,7 +22,7 @@ class Config:
         self.data: dict = self._load()
         self._update_time_since()
 
-    def config_panel(self, console: Console) -> None:
+    def menu(self) -> None:
         # TODO: add all files downloads periods
         while True:
             config_data = self._read()

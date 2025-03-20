@@ -4,13 +4,12 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 from rich import print
 from utils.constants import DATA_DIR
-from managers.file_manager import FileManager
+from managers.file_manager import FileManager as file_manager
 from rich.console import Console
 
 
 class DataManager:
-    @staticmethod
-    def analyze() -> (pd.DataFrame, pd.DataFrame):
+    def analyze(self) -> (pd.DataFrame, pd.DataFrame):
         try:
             console = Console()
             with console.status(
@@ -19,24 +18,23 @@ class DataManager:
                 print(
                     "--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n"
                 )
-                dm = DataManager()
-                ahgora_employees, fiorilli_employees = dm.get_employees_data()
-                fiorilli_absences = dm.get_absences_data()
+                ahgora_employees, fiorilli_employees = self.get_employees_data()
+                fiorilli_absences = self.get_absences_data()
 
-                FileManager.save_df(
+                file_manager.save_df(
                     df=ahgora_employees,
                     path=DATA_DIR / "ahgora" / "employees.csv",
                 )
-                FileManager.save_df(
+                file_manager.save_df(
                     df=fiorilli_employees,
                     path=DATA_DIR / "fiorilli" / "employees.csv",
                 )
-                FileManager.save_df(
+                file_manager.save_df(
                     df=fiorilli_absences,
                     path=DATA_DIR / "fiorilli" / "absences.csv",
                 )
 
-                dm.generate_tasks_dfs(
+                self.generate_tasks_dfs(
                     fiorilli_employees=fiorilli_employees,
                     ahgora_employees=ahgora_employees,
                     fiorilli_absences=fiorilli_absences,
@@ -48,8 +46,8 @@ class DataManager:
             print(f"[bold red]Erro ao sincronizar dados: {e}[/bold red]\n")
             sleep(1)
 
-    @staticmethod
     def read_csv(
+        self,
         path: str,
         sep: str = ",",
         encoding: str = "utf-8",
@@ -63,10 +61,13 @@ class DataManager:
             index_col=False,
             header=header,
         )
-        return DataManager.prepare_dataframe(df=df, columns=columns)
+        return self.prepare_dataframe(df=df, columns=columns)
 
-    @staticmethod
-    def prepare_dataframe(df, columns: list[str] = []):
+    def prepare_dataframe(
+        self,
+        df,
+        columns: list[str] = [],
+    ):
         if columns:
             df.columns = columns
         else:
@@ -74,7 +75,7 @@ class DataManager:
 
         for col in df.columns:
             if "date" in col:
-                df[col] = df[col].apply(DataManager.convert_date)
+                df[col] = df[col].apply(self.convert_date)
                 df[col] = pd.to_datetime(df[col], dayfirst=True, errors="coerce")
                 df[col] = df[col].dt.strftime("%d/%m/%Y")
 
@@ -92,8 +93,7 @@ class DataManager:
 
         return df
 
-    @staticmethod
-    def convert_date(date_str):
+    def convert_date(self, date_str: str):
         meses = {
             "Jan": "Jan",
             "Fev": "Feb",
@@ -200,19 +200,19 @@ class DataManager:
     ):
         save_dir = DATA_DIR / "tasks"
 
-        FileManager.save_df(
+        file_manager.save_df(
             df=new_employees_df,
             path=save_dir / "new_employees.csv",
         )
-        FileManager.save_df(
+        file_manager.save_df(
             df=dismissed_employees_df,
             path=save_dir / "dismissed_employees.csv",
         )
-        FileManager.save_df(
+        file_manager.save_df(
             df=changed_positions_df,
             path=save_dir / "changed_positions.csv",
         )
-        FileManager.save_df(
+        file_manager.save_df(
             df=new_absences_df,
             path=save_dir / "new_absences.csv",
         )

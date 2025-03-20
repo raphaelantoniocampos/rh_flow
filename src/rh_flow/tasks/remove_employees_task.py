@@ -1,3 +1,4 @@
+from utils.constants import spinner
 import time
 from tasks.task_runner import TaskRunner
 import keyboard
@@ -58,7 +59,7 @@ class RemoveEmployeesTask(TaskRunner):
                     break
                 if keyboard.is_pressed(super().KEY_STOP.key):
                     time.sleep(0.5)
-                    print("Interrompido pelo usuário.")
+                    spinner()
                     return
             if keyboard.is_pressed(super().KEY_NEXT.key):
                 time.sleep(0.5)

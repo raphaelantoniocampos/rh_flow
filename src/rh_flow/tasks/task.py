@@ -2,12 +2,10 @@ from pandas import DataFrame
 
 
 class Task:
-    def __init__(self, name: str, df: DataFrame, option: str, print_string: str, menu):
+    def __init__(self, name: str, df: DataFrame, option: str):
         self.name = name
         self.df = df
         self.option = option
-        self.print_string = print_string
-        self.menu = menu
 
     def is_empty(self):
         try:
@@ -51,16 +49,11 @@ class Task:
     def update_df(self, df: DataFrame):
         self.df = df
         self.option = self._get_option()
-        self.print_string = self._get_print_string()
         return self
-
 
     def __str__(self):
         return f"""
 -name: {self.name}
 -df: {self.df}
--len: {self.len}
 -option: {self.option}
--print_string: {self.print_string}
--fun: {self.fun}
 -"""

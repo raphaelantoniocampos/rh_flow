@@ -5,27 +5,25 @@ from pathlib import Path
 
 
 class FileManager:
-    @staticmethod
-    def move_downloads_to_data_dir():
-        fm = FileManager()
+    def move_downloads_to_data_dir(self):
         for file in DOWNLOADS_DIR.iterdir():
             if "trabalhador" in file.name.lower():
-                fm.move_file(
+                self.move_file(
                     source=file,
                     destination=DATA_DIR / "fiorilli" / "raw_employees.txt",
                 )
             elif "funcionarios" in file.name.lower():
-                fm.move_file(
+                self.move_file(
                     source=file,
                     destination=DATA_DIR / "ahgora" / "raw_employees.csv",
                 )
             elif "pontoafastamentos" in file.name.lower():
-                fm.move_file(
+                self.move_file(
                     source=file,
                     destination=DATA_DIR / "fiorilli" / "raw_absences.txt",
                 )
             elif "pontoferias" in file.name.lower():
-                fm.move_file(
+                self.move_file(
                     source=file,
                     destination=DATA_DIR / "fiorilli" / "raw_vacations.txt",
                 )
