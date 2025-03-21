@@ -17,6 +17,7 @@ INQUIRER_KEYBINDINGS = {
     ],
     "skip": [
         {"key": "c-z"},
+        {"key": "escape"},
     ],
     "down": [
         {"key": "down"},

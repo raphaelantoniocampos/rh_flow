@@ -10,10 +10,10 @@ from tasks.task_runner import TaskRunner
 
 
 class UpdateEmployeesTask(TaskRunner):
-    KEY_POSITION = Key("F1", "spring_green4")
-    KEY_DEPARTMENT = Key("F2", "magenta3")
+    KEY_POSITION = Key("F1", "cyan")
+    KEY_DEPARTMENT = Key("F2", "purple")
     KEY_NEXT = Key("F3", "yellow")
-    KEY_STOP = Key("F4", "red3")
+    KEY_STOP = Key("F4", "red")
 
     def __init__(self, task: Task):
         super().__init__(task)
@@ -48,14 +48,14 @@ class UpdateEmployeesTask(TaskRunner):
             )
             print(f"{name} - {id}")
             print(f"Alterar {' e '.join(changes)}")
+            print(f"Antigo Cargo (Ahgora): {position_ahgora}")
             print(
-                f"Cargo Ahgora: {'[yellow]' if 'CARGO' in changes else '[green]'}{position_ahgora}[/]"
+                f"Novo Cargo (Fiorilli): {f'[green]{position_fiorilli}[/]' if 'CARGO' in changes else f'{position_fiorilli}'}"
             )
-            print(f"Cargo Fiorilli: [green]{position_fiorilli}[/]")
+            print(f"Antigo Departamento (Ahgora): [bold]{department_ahgora}[/bold]")
             print(
-                f"Departamento Ahgora: {'[yellow]' if 'DEPARTAMENTO' in changes else '[green]'}{department_ahgora}[/]"
+                f"Novo Departamento (Fiorilli): {f'[green]{department_fiorilli}[/]' if 'DEPARTAMENTO' in changes else f'{department_fiorilli}'}"
             )
-            print(f"Departamento Fiorilli: [green]{department_fiorilli}[/]")
             print("\n")
 
             if "CARGO" in changes:

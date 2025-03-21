@@ -47,6 +47,10 @@ class DataManager:
             print(f"[bold red]Erro ao sincronizar dados: {e}[/bold red]\n")
             sleep(1)
 
+    @staticmethod
+    def filter_df(df: pd.DataFrame, ids: list[str]) -> pd.DataFrame:
+        return df[df["id"].isin(ids)]
+
     def read_csv(
         self,
         path: str,
@@ -149,7 +153,6 @@ class DataManager:
         ]
         ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
         dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
-
 
         fiorilli_active_employees = fiorilli_employees[
             ~fiorilli_employees["id"].isin(dismissed_ids)
@@ -358,6 +361,6 @@ class DataManager:
             return pd.DataFrame
 
     def verify_typos(self, text: str) -> str:
-        if text == 'VIGILACIA EM SAUDE':
-            return 'VIGILANCIA EM SAUDE'
+        if text == "VIGILACIA EM SAUDE":
+            return "VIGILANCIA EM SAUDE"
         return text

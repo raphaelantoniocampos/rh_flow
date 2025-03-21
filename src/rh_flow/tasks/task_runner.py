@@ -27,9 +27,9 @@ class TaskRunner(ABC):
             )
         )
 
-        see_list = inquirer.confirm(message="Ver lista?", default=True).execute()
-        if see_list:
-            self._see_list()
+        choose_itens = inquirer.confirm(message="Ver e escolher itens da lista?", default=False).execute()
+        if choose_itens:
+            self._choose_itens()
 
         proceed = inquirer.confirm(message="Continuar?", default=True).execute()
         if proceed:
@@ -42,21 +42,45 @@ class TaskRunner(ABC):
         """Runs the task"""
 
     def exit_task(self):
-        download_manager = DownloadManager()
-        data_manager = DataManager()
-        download_manager.run(["Funcionários Ahgora"])
-        data_manager.analyze()
+        update_list = inquirer.confirm(message="Atualizar dados", default=False).execute()
+        if update_list:
+            download_manager = DownloadManager()
+            data_manager = DataManager()
+            download_manager.run(["Funcionários Ahgora"])
+            data_manager.analyze()
 
-    def _see_list(
+    def _choose_itens(
         self,
     ):
-        inquirer.fuzzy(
+        itens = inquirer.fuzzy(
             message="Select actions:",
             choices=self.task.df.values.tolist(),
             keybindings={
-                "skip": [
+                "answer": [
                     {"key": "enter"},
+                ],
+                "interrupt": [
+                    {"key": "c-c"},
+                    {"key": "c-e"},
+                ],
+                "skip": [
+                    {"key": "c-z"},
+                    {"key": "escape"},
+                ],
+                "down": [
+                    {"key": "down"},
+                ],
+                "up": [
+                    {"key": "up"},
+                ],
+                "toggle": [
+                    {"key": "space"},
                 ],
             },
             mandatory=False,
+            multiselect=True,
+            border=True,
         ).execute()
+        if itens:
+            ids = [item[0] for item in itens]
+            self.task.df = DataManager.filter_df(self.task.df, ids)
