@@ -1,6 +1,6 @@
 try:
-    from tasks.task_runner import TaskRunner
     from tasks.task import Task
+    from tasks.task_runner import TaskRunner
 except ModuleNotFoundError:
     pass
 

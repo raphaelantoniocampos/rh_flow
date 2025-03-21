@@ -1,31 +1,20 @@
-from utils.constants import spinner
 import time
-from tasks.task_runner import TaskRunner
+
 import keyboard
 from pyperclip import copy
-from rich.console import Console
-from rich.panel import Panel
-from InquirerPy import inquirer
+from rich import print
+from utils.constants import spinner
+
+from tasks.task import Task
+from tasks.task_runner import TaskRunner
 
 
 class RemoveEmployeesTask(TaskRunner):
-    @staticmethod
-    def menu():
-        console = Console()
-        console.print(
-            Panel.fit(
-                "Remover Funcionários",
-                style="bold cyan",
-            )
-        )
+    def __init__(self, task: Task):
+        super().__init__(task)
 
-        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
-        if proceed:
-            ret = RemoveEmployeesTask()
-            ret.run()
-        return
-
-    def run(self, df):
+    def run(self):
+        df = self.task.df
         for i, series in df.iterrows():
             if df.empty:
                 print(

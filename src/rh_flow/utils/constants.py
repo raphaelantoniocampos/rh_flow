@@ -1,6 +1,6 @@
+import time
 from pathlib import Path
 
-import time
 from rich.console import Console
 
 BASE_DIR = Path(Path.cwd() / "src")

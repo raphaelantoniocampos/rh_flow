@@ -1,12 +1,14 @@
-from utils.constants import spinner
 import time
-import pyautogui
-from rich.console import Console
+
 import keyboard
+import pyautogui
 from pyperclip import copy
-from tasks.task_runner import TaskRunner
-from tasks.task import Task
 from rich import print
+from rich.console import Console
+from utils.constants import spinner
+
+from tasks.task import Task
+from tasks.task_runner import TaskRunner
 
 
 class AddEmployeesTask(TaskRunner):

@@ -1,10 +1,12 @@
-from dotenv import load_dotenv
-from selenium.webdriver.common.by import By
-from time import sleep
-from datetime import datetime, date
 import os
-from browsers.core_browser import CoreBrowser
+from datetime import date, datetime
+from time import sleep
+
+from dotenv import load_dotenv
 from rich import print
+from selenium.webdriver.common.by import By
+
+from browsers.core_browser import CoreBrowser
 
 
 class FiorilliBrowser(CoreBrowser):

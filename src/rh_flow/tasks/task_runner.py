@@ -1,13 +1,11 @@
-from utils.constants import spinner
-import time
 from abc import ABC, abstractmethod
 
 from InquirerPy import inquirer
-from rich import print
-
-from tasks.task import Task
 from rich.console import Console
 from rich.panel import Panel
+from utils.constants import spinner
+
+from tasks.task import Task
 
 
 class Key:
@@ -27,6 +25,8 @@ class TaskRunner(ABC):
 
     def __init__(self, task: Task):
         self.task = task
+        if self.task.df.empty:
+            return
         return self.menu()
 
     def menu(self) -> None:
@@ -39,6 +39,9 @@ class TaskRunner(ABC):
             )
         )
 
+        see_list = inquirer.confirm(message="Ver lista?", default=True).execute()
+        if see_list:
+            self._see_list()
 
         proceed = inquirer.confirm(message="Continuar?", default=True).execute()
         if proceed:
@@ -63,36 +66,16 @@ class TaskRunner(ABC):
     def run() -> None:
         """Runs the task"""
 
-    def _prepare_list_and_run(
+    def _see_list(
         self,
-        task: Task,
     ):
-        time.sleep(1)
-        print(task.order)
-        print("\n")
-        if task.df.size > 0:
-            see_list = inquirer.prompt(
-                [
-                    inquirer.Confirm(
-                        "yes",
-                        message="Ver lista de funcionários",
-                    )
-                ]
-            )
-
-            if see_list["yes"] is None:
-                return
-
-            see_list: dict[str, bool] = see_list["yes"]
-            if see_list:
-                time.sleep(0.5)
-                task.df = self.config.update_employees_to_ignore(task)
-
-            ok_input = inquirer.prompt(
-                [inquirer.Confirm("yes", message="Começar?", default="yes")]
-            )
-            time.sleep(0.5)
-            if not ok_input["yes"]:
-                return
-
-            task.fun(task.df)
+        inquirer.fuzzy(
+            message="Select actions:",
+            choices=self.task.df.values.tolist(),
+            keybindings={
+                "skip": [
+                    {"key": "enter"},
+                ],
+            },
+            mandatory=False,
+        ).execute()

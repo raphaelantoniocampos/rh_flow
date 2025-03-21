@@ -5,16 +5,14 @@ from rich.panel import Panel
 from managers.file_manager import FileManager
 from managers.data_manager import DataManager
 from managers.task_manager import TaskManager
-from managers.download_manager import DownloadManager as download_manager
+from managers.download_manager import DownloadManager
 from tasks.task import Task
 
 console = Console()
 
 # TODO: ask to create creds on start
-# TODO: task df na tela de task nao ta levando os ignore em conta
-# TODO: fix position task
+# TODO: add ignore employees
 # TODO: create new abcenses task remove.py using txt
-# TODO: file downloader segundo plano
 # TODO: make add employees download ahgora again
 # TODO: make last downloads and analyze appear on main screen
 # TODO: configure the panel to be central and prettier
@@ -25,6 +23,7 @@ def main():
     file_manager = FileManager()
     task_manager = TaskManager()
     data_manager = DataManager()
+    download_manager = DownloadManager()
 
     file_manager.move_downloads_to_data_dir()
     while True:
@@ -32,7 +31,7 @@ def main():
         option = menu(tasks)
         match option.lower():
             case "baixar dados":
-                download_manager.menu(console)
+                download_manager.menu()
 
             case "analisar dados":
                 data_manager.analyze()
@@ -69,10 +68,7 @@ def menu(tasks: list[Task]):
 
 
 def get_tasks_panel(tasks: list[Task]) -> Panel:
-    task_options = []
-    for task in tasks:
-        if len(task.df) > 0:
-            task_options.append(task.option)
+    task_options = [f"[bold cyan]•[/] {task.option}" for task in tasks]
 
     if not task_options:
         task_options.append("[green]• Nenhuma tarefa pendente.[/green]")

@@ -1,15 +1,16 @@
-from managers.data_manager import DataManager
-from tasks.add_employees_task import AddEmployeesTask
-from tasks.add_absences_task import AddAbsencesTask
-from tasks.remove_employees_task import RemoveEmployeesTask
-from tasks.change_positions_task import ChangePositionsTask
-from pandas import DataFrame
 from pathlib import Path
-from tasks.task import Task
-from rich.panel import Panel
-from rich.console import Console
-from utils.constants import INQUIRER_KEYBINDINGS, DATA_DIR, spinner
+
 from InquirerPy import inquirer
+from managers.data_manager import DataManager
+from pandas import DataFrame
+from rich.console import Console
+from rich.panel import Panel
+from tasks.add_absences_task import AddAbsencesTask
+from tasks.add_employees_task import AddEmployeesTask
+from tasks.change_positions_task import ChangePositionsTask
+from tasks.remove_employees_task import RemoveEmployeesTask
+from tasks.task import Task
+from utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner
 
 
 class TaskManager:
@@ -94,13 +95,13 @@ class TaskManager:
 
         match name:
             case "add_employees":
-                return f"[bold cyan]•[/] Adicionar [cyan]{len(df)}[/] funcionários"
+                return f"Adicionar {len(df)} funcionários"
 
             case "remove_employees":
-                return f"[bold cyan]•[/] Remover [cyan]{len(df)}[/] funcionários"
+                return f"Remover {len(df)} funcionários"
 
             case "change_positions":
-                return f"[bold cyan]•[/] Alterar [cyan]{len(df)}[/] cargos"
+                return f"Alterar {len(df)} cargos"
 
             case "add_absences":
-                return f"[bold cyan]•[/] Adicionar [cyan]{len(df)}[/] afastamentos"
+                return f"Adicionar {len(df)} afastamentos"

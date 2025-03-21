@@ -1,15 +1,7 @@
+import time
 from abc import ABC
 
-
 from dotenv import load_dotenv
-from utils.constants import DOWNLOADS_DIR
-
-# import threading
-import time
-# from datetime import date, datetime
-# from pathlib import Path
-
-# from config import Config
 from rich import print
 from selenium import webdriver
 from selenium.common.exceptions import (
@@ -24,6 +16,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from utils.constants import DOWNLOADS_DIR
 
 
 class CoreBrowser(ABC):

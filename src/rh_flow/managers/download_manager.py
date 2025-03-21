@@ -1,21 +1,21 @@
 import threading
-from rich.panel import Panel
-from rich.console import Console
-from utils.constants import INQUIRER_KEYBINDINGS, spinner
-from managers.file_manager import FileManager as file_manager
+
 from browsers.ahgora_browser import AhgoraBrowser
 from browsers.fiorilli_browser import FiorilliBrowser
 from InquirerPy import inquirer
+from managers.file_manager import FileManager
+from rich.console import Console
+from rich.panel import Panel
+from utils.constants import INQUIRER_KEYBINDINGS, spinner
 
 
-class DownloadManager():
+class DownloadManager:
     DOWNLOAD_OPTIONS = {
         "Funcionários Ahgora": AhgoraBrowser.download_employees_data,
         "Funcionários Fiorilli": FiorilliBrowser.download_employees_data,
         "Afastamentos Fiorilli": FiorilliBrowser.download_absences_data,
     }
 
-    @staticmethod
     def menu(self):
         console = Console()
         console.print(
@@ -44,7 +44,11 @@ class DownloadManager():
 
         proceed = inquirer.confirm(message="Continuar?", default=True).execute()
         if proceed:
-            self.run(selected_options)
+            download_thread = threading.Thread(
+                target=self.run,
+                args=(selected_options,),
+            )
+            download_thread.start()
 
     def run(self, selected_options):
         threads = []
@@ -62,4 +66,5 @@ class DownloadManager():
         self._move_files_to_data_dir()
 
     def _move_files_to_data_dir(self):
+        file_manager = FileManager()
         file_manager.move_downloads_to_data_dir()

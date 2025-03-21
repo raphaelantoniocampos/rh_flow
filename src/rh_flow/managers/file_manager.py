@@ -1,7 +1,8 @@
-from rich import print
-from pandas import DataFrame
-from utils.constants import DATA_DIR, DOWNLOADS_DIR
 from pathlib import Path
+
+from pandas import DataFrame
+from rich import print
+from utils.constants import DATA_DIR, DOWNLOADS_DIR
 
 
 class FileManager:

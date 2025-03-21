@@ -1,11 +1,12 @@
+import unicodedata
 from time import sleep
 
 import pandas as pd
+from managers.file_manager import FileManager as file_manager
 from pandas.errors import EmptyDataError
 from rich import print
-from utils.constants import DATA_DIR
-from managers.file_manager import FileManager as file_manager
 from rich.console import Console
+from utils.constants import DATA_DIR
 
 
 class DataManager:
@@ -143,14 +144,40 @@ class DataManager:
             fiorilli_employees["dismissal_date"].notna()
         ]
         fiorilli_dismissed_ids = set(fiorilli_dismissed_df["id"])
-
         ahgora_dismissed_df = ahgora_employees[
             ahgora_employees["dismissal_date"].notna()
         ]
         ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
-
         dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
+        dismissed_employees_df = self._get_dismissed_employees_df(
+            ahgora_employees=ahgora_employees,
+            fiorilli_dismissed_df=fiorilli_dismissed_df,
+            fiorilli_dismissed_ids=fiorilli_dismissed_ids,
+            ahgora_dismissed_ids=ahgora_dismissed_ids,
+        )
+        new_employees_df = self._get_new_employees_df(
+            fiorilli_employees=fiorilli_employees,
+            ahgora_employees=ahgora_employees,
+            dismissed_ids=dismissed_ids,
+        )
+        changed_positions_df = self._get_changed_positions_df(
+            fiorilli_employees=fiorilli_employees,
+            ahgora_employees=ahgora_employees,
+        )
+        new_absences_df = fiorilli_absences
+        self.save_tasks_dfs(
+            new_employees_df=new_employees_df,
+            dismissed_employees_df=dismissed_employees_df,
+            changed_positions_df=changed_positions_df,
+            new_absences_df=new_absences_df,
+        )
 
+    def _get_new_employees_df(
+        self,
+        fiorilli_employees: pd.DataFrame,
+        ahgora_employees: pd.DataFrame,
+        dismissed_ids: set[int],
+    ) -> pd.DataFrame:
         fiorilli_active_df = fiorilli_employees[
             ~fiorilli_employees["id"].isin(dismissed_ids)
         ]
@@ -160,7 +187,15 @@ class DataManager:
         new_employees_df = fiorilli_active_df[
             ~fiorilli_active_df["id"].isin(ahgora_ids)
         ]
+        return new_employees_df
 
+    def _get_dismissed_employees_df(
+        self,
+        ahgora_employees: pd.DataFrame,
+        fiorilli_dismissed_df: pd.DataFrame,
+        fiorilli_dismissed_ids: set[int],
+        ahgora_dismissed_ids: set[int],
+    ) -> pd.DataFrame:
         dismissed_employees_df = ahgora_employees[
             ahgora_employees["id"].isin(fiorilli_dismissed_ids)
             & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
@@ -172,7 +207,13 @@ class DataManager:
             on="id",
             how="left",
         )
+        return dismissed_employees_df
 
+    def _get_changed_positions_df(
+        self,
+        fiorilli_employees: pd.DataFrame,
+        ahgora_employees: pd.DataFrame,
+    ) -> pd.DataFrame:
         merged_employees = fiorilli_employees.merge(
             ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
         )
@@ -181,15 +222,18 @@ class DataManager:
         changed_positions_df = merged_employees[
             merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
         ]
+        return changed_positions_df
 
-        new_absences_df = fiorilli_absences
-
-        self.save_tasks_dfs(
-            new_employees_df=new_employees_df,
-            dismissed_employees_df=dismissed_employees_df,
-            changed_positions_df=changed_positions_df,
-            new_absences_df=new_absences_df,
+    def normalize_text(self, text):
+        if pd.isna(text):
+            return ""
+        text = str(text)
+        normalized = (
+            unicodedata.normalize("NFKD", text)
+            .encode("ASCII", "ignore")
+            .decode("ASCII")
         )
+        return normalized.lower().strip()
 
     def save_tasks_dfs(
         self,
