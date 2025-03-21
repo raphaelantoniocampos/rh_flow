@@ -13,9 +13,9 @@ console = Console()
 # TODO: ask to create creds on start
 # TODO: add ignore employees
 # TODO: create new abcenses task remove.py using txt
-# TODO: make add employees download ahgora again
 # TODO: make last downloads and analyze appear on main screen
 # TODO: configure the panel to be central and prettier
+# TODO: key and task model?
 
 
 def main():
