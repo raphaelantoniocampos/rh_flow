@@ -149,44 +149,52 @@ class DataManager:
         ]
         ahgora_dismissed_ids = set(ahgora_dismissed_df["id"])
         dismissed_ids = ahgora_dismissed_ids | fiorilli_dismissed_ids
+
+
+        fiorilli_active_employees = fiorilli_employees[
+            ~fiorilli_employees["id"].isin(dismissed_ids)
+        ]
+
+        new_employees_df = self._get_new_employees_df(
+            fiorilli_active_employees=fiorilli_active_employees,
+            ahgora_employees=ahgora_employees,
+            dismissed_ids=dismissed_ids,
+        )
+
         dismissed_employees_df = self._get_dismissed_employees_df(
             ahgora_employees=ahgora_employees,
             fiorilli_dismissed_df=fiorilli_dismissed_df,
             fiorilli_dismissed_ids=fiorilli_dismissed_ids,
             ahgora_dismissed_ids=ahgora_dismissed_ids,
         )
-        new_employees_df = self._get_new_employees_df(
-            fiorilli_employees=fiorilli_employees,
-            ahgora_employees=ahgora_employees,
-            dismissed_ids=dismissed_ids,
-        )
-        changed_positions_df = self._get_changed_positions_df(
-            fiorilli_employees=fiorilli_employees,
+        changed_employees_df = self._get_changed_employees_df(
+            fiorilli_active_employees=fiorilli_active_employees,
             ahgora_employees=ahgora_employees,
         )
         new_absences_df = fiorilli_absences
         self.save_tasks_dfs(
             new_employees_df=new_employees_df,
             dismissed_employees_df=dismissed_employees_df,
-            changed_positions_df=changed_positions_df,
+            changed_employees_df=changed_employees_df,
             new_absences_df=new_absences_df,
         )
 
     def _get_new_employees_df(
         self,
-        fiorilli_employees: pd.DataFrame,
+        fiorilli_active_employees: pd.DataFrame,
         ahgora_employees: pd.DataFrame,
         dismissed_ids: set[int],
     ) -> pd.DataFrame:
-        fiorilli_active_df = fiorilli_employees[
-            ~fiorilli_employees["id"].isin(dismissed_ids)
-        ]
-
         ahgora_ids = set(ahgora_employees["id"])
 
-        new_employees_df = fiorilli_active_df[
-            ~fiorilli_active_df["id"].isin(ahgora_ids)
+        new_employees_df = fiorilli_active_employees[
+            ~fiorilli_active_employees["id"].isin(ahgora_ids)
         ]
+
+        new_employees_df = new_employees_df[
+            new_employees_df["binding"] != "AUXILIO RECLUSAO"
+        ]
+
         return new_employees_df
 
     def _get_dismissed_employees_df(
@@ -209,20 +217,35 @@ class DataManager:
         )
         return dismissed_employees_df
 
-    def _get_changed_positions_df(
+    def _get_changed_employees_df(
         self,
-        fiorilli_employees: pd.DataFrame,
+        fiorilli_active_employees: pd.DataFrame,
         ahgora_employees: pd.DataFrame,
     ) -> pd.DataFrame:
-        merged_employees = fiorilli_employees.merge(
+        merged_employees = fiorilli_active_employees.merge(
             ahgora_employees, on="id", suffixes=("_fiorilli", "_ahgora"), how="inner"
         )
 
-        # TODO: verify characters on positions
-        changed_positions_df = merged_employees[
-            merged_employees["position_fiorilli"] != merged_employees["position_ahgora"]
-        ]
-        return changed_positions_df
+        columns_to_check = ["position", "department"]
+        for col in columns_to_check:
+            merged_employees[f"{col}_fiorilli_norm"] = merged_employees[
+                f"{col}_fiorilli"
+            ].apply(self.normalize_text)
+            merged_employees[f"{col}_ahgora_norm"] = merged_employees[
+                f"{col}_ahgora"
+            ].apply(self.normalize_text)
+
+        position_changed = (
+            merged_employees["position_fiorilli_norm"]
+            != merged_employees["position_ahgora_norm"]
+        )
+        location_changed = (
+            merged_employees["department_fiorilli_norm"]
+            != merged_employees["department_ahgora_norm"]
+        )
+        changed_employees_df = merged_employees[position_changed | location_changed]
+
+        return changed_employees_df
 
     def normalize_text(self, text):
         if pd.isna(text):
@@ -233,13 +256,14 @@ class DataManager:
             .encode("ASCII", "ignore")
             .decode("ASCII")
         )
+        normalized = self.verify_typos(normalized)
         return normalized.lower().strip()
 
     def save_tasks_dfs(
         self,
         new_employees_df,
         dismissed_employees_df,
-        changed_positions_df,
+        changed_employees_df,
         new_absences_df,
     ):
         save_dir = DATA_DIR / "tasks"
@@ -253,8 +277,8 @@ class DataManager:
             path=save_dir / "dismissed_employees.csv",
         )
         file_manager.save_df(
-            df=changed_positions_df,
-            path=save_dir / "changed_positions.csv",
+            df=changed_employees_df,
+            path=save_dir / "changed_employees.csv",
         )
         file_manager.save_df(
             df=new_absences_df,
@@ -278,8 +302,8 @@ class DataManager:
                 "birth_date",
                 "pis_pasep",
                 "position",
-                "location",
                 "department",
+                "cost_center",
                 "binding",
                 "admission_date",
                 "dismissal_date",
@@ -332,3 +356,8 @@ class DataManager:
             )
         except EmptyDataError:
             return pd.DataFrame
+
+    def verify_typos(self, text: str) -> str:
+        if text == 'VIGILACIA EM SAUDE':
+            return 'VIGILANCIA EM SAUDE'
+        return text

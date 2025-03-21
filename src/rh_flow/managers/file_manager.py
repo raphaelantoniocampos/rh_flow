@@ -31,12 +31,11 @@ class FileManager:
 
     @staticmethod
     def save_df(df: DataFrame, path: Path):
-        if not df.empty:
-            df.to_csv(
-                path,
-                index=False,
-                encoding="utf-8",
-            )
+        df.to_csv(
+            path,
+            index=False,
+            encoding="utf-8",
+        )
 
     @staticmethod
     def file_name_to_file_path(file_name: str, raw: bool = True) -> Path:

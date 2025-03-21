@@ -11,43 +11,59 @@ console = Console()
 examples = {
     "1": (
         "Basic Colours",
-        "01_basic_colors.py",
+        "rich_examples\\01_basic_colors.py",
         "Demonstrates how to print coloured and styled text.",
     ),
     "2": (
         "Emojis and Markdown",
-        "02_emojis_markdown.py",
+        "rich_examples\\02_emojis_markdown.py",
         "Shows emoji support and Markdown rendering.",
     ),
     "3": (
         "Syntax Highlighting",
-        "03_syntax_highlight.py",
+        "rich_examples\\03_syntax_highlight.py",
         "Highlights JSON code with a colour theme.",
     ),
-    "4": ("Tables", "04_tables.py", "Creates a formatted table with multiple columns."),
+    "4": (
+        "Tables",
+        "rich_examples\\04_tables.py",
+        "Creates a formatted table with multiple columns.",
+    ),
     "5": (
         "Progress Bar",
-        "05_progress_bar.py",
+        "rich_examples\\05_progress_bar.py",
         "Displays an interactive progress bar.",
     ),
     "6a": (
         "Live Updates (console print)",
-        "06a_live_updates_console_print.py",
+        "rich_examples\\06a_live_updates_console_print.py",
         "Updates terminal output live using console print.",
     ),
     "6b": (
         "Live Updates (Text object)",
-        "06b_live_updates_text_object.py",
+        "rich_examples\\06b_live_updates_text_object.py",
         "Updates terminal output live using a Text object.",
     ),
     "7": (
         "Rich Logging",
-        "07_logging.py",
+        "rich_examples\\07_logging.py",
         "Demonstrates colour-coded logging with Rich.",
     ),
-    "8": ("Rich Tree", "08_tree.py", "do tree"),
-    "9": ("Rich Layout", "09_layout.py", "do layout"),
-    "10": ("Rich Spinner", "10_spinner.py", "do spinner"),
+    "8": (
+        "Rich Tree",
+        "rich_examples\\08_tree.py",
+        "do tree",
+    ),
+    "9": (
+        "Rich Layout",
+        "rich_examples\\09_layout.py",
+        "do layout",
+    ),
+    "10": (
+        "Rich Spinner",
+        "rich_examples\\10_spinner.py",
+        "do spinner",
+    ),
 }
 
 

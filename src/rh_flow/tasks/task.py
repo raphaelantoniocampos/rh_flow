@@ -54,6 +54,6 @@ class Task:
     def __str__(self):
         return f"""
 -name: {self.name}
--df: {self.df}
+-df: {self.df.head(5)}
 -option: {self.option}
 -"""

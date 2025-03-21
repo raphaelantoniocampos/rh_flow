@@ -44,11 +44,7 @@ class DownloadManager:
 
         proceed = inquirer.confirm(message="Continuar?", default=True).execute()
         if proceed:
-            download_thread = threading.Thread(
-                target=self.run,
-                args=(selected_options,),
-            )
-            download_thread.start()
+            self.run(selected_options)
 
     def run(self, selected_options):
         threads = []

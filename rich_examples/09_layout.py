@@ -134,8 +134,8 @@ job_progress = Progress(
     TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
 )
 job_progress.add_task("[green]Cooking")
-job_progress.add_task("[magenta]Baking", total=200)
-job_progress.add_task("[cyan]Mixing", total=400)
+job_progress.add_task("[magenta]Baking", total=150)
+job_progress.add_task("[cyan]Mixing", total=200)
 
 total = sum(task.total for task in job_progress.tasks)
 overall_progress = Progress()

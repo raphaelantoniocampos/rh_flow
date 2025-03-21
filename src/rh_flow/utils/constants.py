@@ -62,3 +62,15 @@ def spinner(
 ):
     with console.status(f"[bold green]{wait_string}...[/bold green]", spinner="dots"):
         time.sleep(wait_time)
+
+
+class Key:
+    def __init__(self, name: str, color: str):
+        self.name = name
+        self.color = color
+        self.key = str(name)
+
+    def __str__(self):
+        return f"[bold {self.color}]{self.name.upper()}[/bold {self.color}]"
+
+

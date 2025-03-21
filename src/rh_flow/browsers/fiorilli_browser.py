@@ -4,6 +4,7 @@ from time import sleep
 
 from dotenv import load_dotenv
 from rich import print
+from rich.console import Console
 from selenium.webdriver.common.by import By
 
 from browsers.core_browser import CoreBrowser
@@ -23,40 +24,44 @@ class FiorilliBrowser(CoreBrowser):
         fiorilli_browser._start_absences_download()
 
     def __init__(self):
-        super().__init__(self.URL)
+        console = Console()
+        with console.status("[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"):
+            super().__init__(self.URL)
 
     def _start_employees_download(self) -> None:
-        print("Baixando dados de [yellow]funcionários[/] do FIORILLI")
-        self._login()
-        self._navigate_to_maintenance_section()
-        self._navigate_to_worker_registration()
-        self._wait_for_screen_to_load()
-        self._select_situation()
-        self._input_content()
-        self._click_add_button()
-        self._click_filter_button()
-        self._wait_for_processing()
-        self._right_click_grid()
-        self._move_to_grid_option()
-        self._click_grid_option()
-        self._click_export_option()
-        self._click_export_txt_option()
-        self._wait_for_export_to_complete()
-        super().close_driver()
-        print("[green]Download de dados de funcionários do FIORILLI concluído[/]")
+        console = Console()
+        with console.status("Baixando [yellow]funcionários[/] do FIORILLI", spinner="dots"):
+            self._login()
+            self._navigate_to_maintenance_section()
+            self._navigate_to_worker_registration()
+            self._wait_for_screen_to_load()
+            self._select_situation()
+            self._input_content()
+            self._click_add_button()
+            self._click_filter_button()
+            self._wait_for_processing()
+            self._right_click_grid()
+            self._move_to_grid_option()
+            self._click_grid_option()
+            self._click_export_option()
+            self._click_export_txt_option()
+            self._wait_for_export_to_complete()
+            super().close_driver()
+        print("[bold green]Download de funcionários do FIORILLI concluído[/bold green]")
 
     def _start_absences_download(self) -> None:
-        print("Baixando dados de [yellow]afastamentos[/] do FIORILLI")
-        self._login()
-        self._navigate_to_utilities_section()
-        self._navigate_to_import_export_section()
-        self._navigate_to_export_section()
-        self._navigate_to_export_file_section()
-        self._insert_date_for_input(name="PontoFerias2")
-        self._insert_date_for_input(name="PontoAfastamentos2")
-        self._close_tab()
-        super().close_driver()
-        print("[green]Download de dados de afastamentos do FIORILLI concluído[/]")
+        console = Console()
+        with console.status("Baixando [yellow]afastamentos[/] do FIORILLI", spinner="dots"):
+            self._login()
+            self._navigate_to_utilities_section()
+            self._navigate_to_import_export_section()
+            self._navigate_to_export_section()
+            self._navigate_to_export_file_section()
+            self._insert_date_for_input(name="PontoFerias2")
+            self._insert_date_for_input(name="PontoAfastamentos2")
+            self._close_tab()
+            super().close_driver()
+        print("[bold green]Download de afastamentos do FIORILLI concluído[/bold green]")
 
     def _login(self) -> None:
         load_dotenv()

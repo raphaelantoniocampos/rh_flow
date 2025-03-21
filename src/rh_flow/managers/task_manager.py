@@ -7,7 +7,7 @@ from rich.console import Console
 from rich.panel import Panel
 from tasks.add_absences_task import AddAbsencesTask
 from tasks.add_employees_task import AddEmployeesTask
-from tasks.change_positions_task import ChangePositionsTask
+from tasks.update_employees_task import UpdateEmployeesTask
 from tasks.remove_employees_task import RemoveEmployeesTask
 from tasks.task import Task
 from utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner
@@ -25,7 +25,7 @@ class TaskManager:
         choice = {task.option: task for task in tasks if not task.df.empty}
         choice["Voltar"] = ""
 
-        option = inquirer.rawlist(
+        option = inquirer.rawlist(      
             message="Selecione uma tarefa",
             choices=choice.keys(),
             keybindings=INQUIRER_KEYBINDINGS,
@@ -35,18 +35,18 @@ class TaskManager:
             spinner()
             return
 
-        self.get_task_runner(choice[option])
+        self.run_task(choice[option])
 
-    def get_task_runner(self, task: Task):
+    def run_task(self, task: Task):
         match task.name:
             case "add_employees":
-                return AddEmployeesTask(task)
+                AddEmployeesTask(task)
             case "remove_employees":
-                return RemoveEmployeesTask(task)
-            case "change_positions":
-                return ChangePositionsTask(task)
+                RemoveEmployeesTask(task)
+            case "update_employees":
+                UpdateEmployeesTask(task)
             case "add_absences":
-                return AddAbsencesTask(task)
+                AddAbsencesTask(task)
 
     @staticmethod
     def get_tasks() -> list[Task]:
@@ -54,7 +54,7 @@ class TaskManager:
         return [
             tm.name_to_task("add_employees"),
             tm.name_to_task("remove_employees"),
-            tm.name_to_task("change_positions"),
+            tm.name_to_task("update_employees"),
             tm.name_to_task("add_absences"),
         ]
 
@@ -84,8 +84,8 @@ class TaskManager:
                 return DATA_DIR / "tasks" / "new_employees.csv"
             case "remove_employees":
                 return DATA_DIR / "tasks" / "dismissed_employees.csv"
-            case "change_positions":
-                return DATA_DIR / "tasks" / "changed_positions.csv"
+            case "update_employees":
+                return DATA_DIR / "tasks" / "changed_employees.csv"
             case "add_absences":
                 return DATA_DIR / "tasks" / "new_absences.csv"
 
@@ -100,8 +100,8 @@ class TaskManager:
             case "remove_employees":
                 return f"Remover {len(df)} funcionários"
 
-            case "change_positions":
-                return f"Alterar {len(df)} cargos"
+            case "update_employees":
+                return f"Atualizar {len(df)} funcionários"
 
             case "add_absences":
                 return f"Adicionar {len(df)} afastamentos"
