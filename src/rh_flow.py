@@ -22,11 +22,8 @@ from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, MAIN_MENU_OPTIONS, spi
 console = Console()
 
 # TODO: ask to create creds on start
-# TODO: add ignore employees
-# TODO: create new abcenses task remove.py using txt
 # TODO: make last downloads and analyze appear on main screen
 # TODO: configure the panel to be central and prettier
-# TODO: key and task model?
 
 def live_display():
     def make_layout() -> Layout:
