@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
 from InquirerPy import inquirer
-from managers.data_manager import DataManager
-from managers.download_manager import DownloadManager
 from rich.console import Console
 from rich.panel import Panel
-from utils.constants import spinner
 
-from tasks.task import Task
+from rh_flow.managers.data_manager import DataManager
+from rh_flow.managers.download_manager import DownloadManager
+from rh_flow.tasks.task import Task
+from rh_flow.utils.constants import spinner
 
 
 class TaskRunner(ABC):
@@ -41,12 +41,12 @@ class TaskRunner(ABC):
     def run() -> None:
         """Runs the task"""
 
-    def exit_task(self):
+    def exit_task(self, download = ["Funcionários Ahgora"]):
         update_list = inquirer.confirm(message="Atualizar dados", default=False).execute()
         if update_list:
             download_manager = DownloadManager()
             data_manager = DataManager()
-            download_manager.run(["Funcionários Ahgora"])
+            download_manager.run(download)
             data_manager.analyze()
 
     def _choose_itens(

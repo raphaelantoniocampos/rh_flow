@@ -3,10 +3,10 @@ import time
 import keyboard
 from pyperclip import copy
 from rich import print
-from utils.constants import spinner, Key
 
-from tasks.task import Task
-from tasks.task_runner import TaskRunner
+from rh_flow.tasks.task import Task
+from rh_flow.tasks.task_runner import TaskRunner
+from rh_flow.utils.constants import Key, spinner
 
 
 class RemoveEmployeesTask(TaskRunner):

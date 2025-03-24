@@ -7,9 +7,9 @@ from InquirerPy import inquirer
 from managers.file_manager import FileManager
 from rich import print
 from rich.panel import Panel
-from tasks.task import Task
 
-from utils.constants import DATA_DIR, JSON_INIT_CONFIG
+from rh_flow.tasks.task import Task
+from rh_flow.utils.constants import DATA_DIR, JSON_INIT_CONFIG
 
 NO_IGNORED_STR = (
     "\n    [yellow]• Nenhum funcionário está sendo ignorado no momento.[/]\n"

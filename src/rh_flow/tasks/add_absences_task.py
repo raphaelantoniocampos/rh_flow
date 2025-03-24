@@ -1,72 +1,102 @@
-try:
-    from tasks.task import Task
-    from tasks.task_runner import TaskRunner
-except ModuleNotFoundError:
-    pass
+from rich import print
+
+import time
+import keyboard
+from pyperclip import copy
+
+from rh_flow.tasks.task import Task
+from rh_flow.tasks.task_runner import TaskRunner
+
+import os
+from rh_flow.utils.constants import DATA_DIR, Key, spinner
 
 
 class AddAbsencesTask(TaskRunner):
+    KEY_CONTINUE = Key("F2", "green")
+    KEY_STOP = Key("F4", "red3")
+
     def __init__(self, task: Task):
         super().__init__(task)
 
-    # @staticmethod
-    # def menu():
-    #     console = Console()
-    #     console.print(
-    #         Panel.fit(
-    #             "Adicionar Afastamentos",
-    #             style="bold cyan",
-    #         )
-    #     )
-    #
-    #
-    #     proceed = inquirer.confirm(message="Continuar?", default=True).execute()
-    #     if proceed:
-    #         aat = AddAbsencesTask()
-    #         aat.run()
-    #
-    #     with console.status("[bold green]Voltando...[/bold green]", spinner="dots"):
-    #         time.sleep(0.25)
-
     def run(self):
-        # Caminho para os arquivos
-        registry_file = "registros.txt"  # Arquivo com as linhas de registro
-        input_file = "dados.txt"  # Arquivo com as linhas a serem filtradas
-        output_file = "fixed_lines.txt"  # Arquivo de saída com as linhas filtradas
+        print(f"\n[bold yellow]{'-' * 15} AFASTAMENTOS! {'-' * 15}[/bold yellow]")
 
-        # Lê os números dos registros que devem ser removidos
-        registry_numbers = self.read_registry_numbers(registry_file)
+        absences_file = DATA_DIR / "fiorilli" / "absences.csv"
+        filter_file = DATA_DIR / "tasks" / "filter.txt"
+        new_absences_file = DATA_DIR / "tasks" / "new_absences.txt"
 
-        # Filtra as linhas e escreve no arquivo de saída
-        self.filter_lines(input_file, output_file, registry_numbers)
+        print(
+            "Insira o arquivo [bold green]absences.csv[/bold green] na importação de afastamentos AHGORA."
+        )
+        print("Selecione [bold white]pw_afimport_01[/bold white].")
+        copy(str(absences_file.parent))
+        print(
+            f"Caminho '{str(absences_file.parent)}' copiado para a área de transferência!)"
+        )
 
-        print(f"Arquivo '{output_file}' gerado com sucesso!")
+        if self.wait_continue_key() == "exit":
+            return
 
-    def read_registry_numbers(self, file_path):
+        print(
+            "Insira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [magenta]filter.txt[/]"
+        )
+        time.sleep(2)
+        os.startfile(filter_file)
+
+        if self.wait_continue_key() == "exit":
+            return
+
+        filter_numbers_file = self.read_filter_numbers(filter_file)
+
+        self.filter_lines(absences_file, new_absences_file, filter_numbers_file)
+
+        print("\nArquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!")
+        print(
+            "Insira o arquivo [bold green]new_absences.txt[/bold green] na importação de afastamentos AHGORA."
+        )
+        copy(str(new_absences_file.parent))
+        print(
+            f"Caminho '{str(new_absences_file.parent)}' copiado para a área de transferência!)"
+        )
+
+        self.wait_continue_key()
+        super().exit_task()
+        spinner()
+        return
+
+    def read_filter_numbers(self, file_path):
         """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
-        registry_numbers = []
+        filter_numbers = []
         with open(file_path, "r", encoding="utf-8") as file:
             for line in file:
                 if "Erro ao obter registros:" in line:
                     continue
-                # Extrai o número do registro entre colchetes
                 if "registro" in line:
                     start = line.find("[") + 1
                     end = line.find("]")
-                    registry_number = int(line[start:end])
-                    registry_numbers.append(registry_number)
-        return registry_numbers
+                    filter_number = int(line[start:end])
+                    filter_numbers.append(filter_number)
+        return filter_numbers
 
-    def filter_lines(self, input_file, output_file, registry_numbers):
+    def filter_lines(self, absences_file, new_absences_file, filter_numbers_file):
         """Filtra as linhas do arquivo de entrada e escreve no arquivo de saída."""
         with (
-            open(input_file, "r", encoding="utf-8") as infile,
-            open(output_file, "w", encoding="utf-8") as outfile,
+            open(absences_file, "r", encoding="utf-8") as infile,
+            open(new_absences_file, "w", encoding="utf-8") as outfile,
         ):
             for index, line in enumerate(infile, start=1):
-                # Verifica se o índice da linha não está na lista de números de registro
-                if index not in registry_numbers:
+                if index not in filter_numbers_file:
                     outfile.write(line)
 
-if __name__ == "__main__":
-    AddAbsencesTask.run()
+    def wait_continue_key(self):
+        print(
+            f"\nPressione {self.KEY_CONTINUE} para [bold white]continuar[/bold white] ."
+        )
+        print(f"Pressione {self.KEY_STOP} para [bold white]sair...[/bold white]")
+        while True:
+            if keyboard.is_pressed(self.KEY_CONTINUE.key):
+                time.sleep(0.5)
+                return "continue"
+            if keyboard.is_pressed(self.KEY_STOP.key):
+                time.sleep(0.5)
+                return "exit"

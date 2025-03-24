@@ -1,19 +1,20 @@
 import threading
 
-from browsers.ahgora_browser import AhgoraBrowser
-from browsers.fiorilli_browser import FiorilliBrowser
 from InquirerPy import inquirer
-from managers.file_manager import FileManager
 from rich.console import Console
 from rich.panel import Panel
-from utils.constants import INQUIRER_KEYBINDINGS, spinner
+
+from rh_flow.browsers.ahgora_browser import AhgoraBrowser
+from rh_flow.browsers.fiorilli_browser import FiorilliBrowser
+from rh_flow.managers.file_manager import FileManager
+from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, spinner
 
 
 class DownloadManager:
     DOWNLOAD_OPTIONS = {
         "Funcionários Ahgora": AhgoraBrowser.download_employees_data,
         "Funcionários Fiorilli": FiorilliBrowser.download_employees_data,
-        "Afastamentos Fiorilli": FiorilliBrowser.download_absences_data,
+        "Afastamentos": FiorilliBrowser.download_absences_data,
     }
 
     def menu(self):

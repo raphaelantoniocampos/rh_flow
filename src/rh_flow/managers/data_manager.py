@@ -2,11 +2,12 @@ import unicodedata
 from time import sleep
 
 import pandas as pd
-from managers.file_manager import FileManager as file_manager
 from pandas.errors import EmptyDataError
 from rich import print
 from rich.console import Console
-from utils.constants import DATA_DIR
+
+from rh_flow.managers.file_manager import FileManager as file_manager
+from rh_flow.utils.constants import DATA_DIR
 
 
 class DataManager:
@@ -20,7 +21,7 @@ class DataManager:
                     "--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n"
                 )
                 ahgora_employees, fiorilli_employees = self.get_employees_data()
-                fiorilli_absences = self.get_absences_data()
+                all_absences = self.get_absences_data()
 
                 file_manager.save_df(
                     df=ahgora_employees,
@@ -31,14 +32,15 @@ class DataManager:
                     path=DATA_DIR / "fiorilli" / "employees.csv",
                 )
                 file_manager.save_df(
-                    df=fiorilli_absences,
+                    df=all_absences,
                     path=DATA_DIR / "fiorilli" / "absences.csv",
+                    header=False,
                 )
 
                 self.generate_tasks_dfs(
                     fiorilli_employees=fiorilli_employees,
                     ahgora_employees=ahgora_employees,
-                    fiorilli_absences=fiorilli_absences,
+                    all_absences=all_absences,
                 )
 
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
@@ -142,7 +144,7 @@ class DataManager:
         self,
         fiorilli_employees: pd.DataFrame,
         ahgora_employees: pd.DataFrame,
-        fiorilli_absences: pd.DataFrame,
+        all_absences: pd.DataFrame,
     ) -> None:
         fiorilli_dismissed_df = fiorilli_employees[
             fiorilli_employees["dismissal_date"].notna()
@@ -174,7 +176,10 @@ class DataManager:
             fiorilli_active_employees=fiorilli_active_employees,
             ahgora_employees=ahgora_employees,
         )
-        new_absences_df = fiorilli_absences
+        new_absences_df = self._get_new_absences_df(
+            all_absences=all_absences,
+        )
+
         self.save_tasks_dfs(
             new_employees_df=new_employees_df,
             dismissed_employees_df=dismissed_employees_df,
@@ -249,6 +254,13 @@ class DataManager:
         changed_employees_df = merged_employees[position_changed | location_changed]
 
         return changed_employees_df
+
+    def _get_new_absences_df(
+        self,
+        all_absences: pd.DataFrame,
+    ) -> pd.DataFrame:
+        new_absences = all_absences
+        return new_absences
 
     def normalize_text(self, text):
         if pd.isna(text):

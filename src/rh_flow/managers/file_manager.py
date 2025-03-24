@@ -2,7 +2,8 @@ from pathlib import Path
 
 from pandas import DataFrame
 from rich import print
-from utils.constants import DATA_DIR, DOWNLOADS_DIR
+
+from rh_flow.utils.constants import DATA_DIR, DOWNLOADS_DIR
 
 
 class FileManager:
@@ -30,10 +31,15 @@ class FileManager:
                 )
 
     @staticmethod
-    def save_df(df: DataFrame, path: Path):
+    def save_df(
+        df: DataFrame,
+        path: Path,
+        header=True,
+    ):
         df.to_csv(
             path,
             index=False,
+            header=header,
             encoding="utf-8",
         )
 

@@ -52,6 +52,7 @@ MAIN_MENU_OPTIONS = [
     "Analisar dados",
     "Tarefas",
     "Configurações",
+    "Live Display",
     "Sair",
 ]
 

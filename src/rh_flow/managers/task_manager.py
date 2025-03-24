@@ -1,16 +1,17 @@
 from pathlib import Path
 
 from InquirerPy import inquirer
-from managers.data_manager import DataManager
 from pandas import DataFrame
 from rich.console import Console
 from rich.panel import Panel
-from tasks.add_absences_task import AddAbsencesTask
-from tasks.add_employees_task import AddEmployeesTask
-from tasks.update_employees_task import UpdateEmployeesTask
-from tasks.remove_employees_task import RemoveEmployeesTask
-from tasks.task import Task
-from utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner
+
+from rh_flow.managers.data_manager import DataManager
+from rh_flow.tasks.add_absences_task import AddAbsencesTask
+from rh_flow.tasks.add_employees_task import AddEmployeesTask
+from rh_flow.tasks.remove_employees_task import RemoveEmployeesTask
+from rh_flow.tasks.task import Task
+from rh_flow.tasks.update_employees_task import UpdateEmployeesTask
+from rh_flow.utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner
 
 
 class TaskManager:

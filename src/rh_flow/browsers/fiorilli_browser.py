@@ -7,7 +7,7 @@ from rich import print
 from rich.console import Console
 from selenium.webdriver.common.by import By
 
-from browsers.core_browser import CoreBrowser
+from rh_flow.browsers.core_browser import CoreBrowser
 
 
 class FiorilliBrowser(CoreBrowser):

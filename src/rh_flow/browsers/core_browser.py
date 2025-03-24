@@ -16,7 +16,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from utils.constants import DOWNLOADS_DIR
+
+from rh_flow.utils.constants import DOWNLOADS_DIR
 
 
 class CoreBrowser(ABC):
