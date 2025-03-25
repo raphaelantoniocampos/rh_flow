@@ -74,6 +74,11 @@ examples = {
         "rich_examples\\12_lite_sim.py",
         "lite sim",
     ),
+    "13": (
+        "prompt",
+        "rich_examples\\13_prompt.py",
+        "prompt",
+    ),
 }
 
 
