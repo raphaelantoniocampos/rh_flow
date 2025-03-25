@@ -64,6 +64,16 @@ examples = {
         "rich_examples\\10_spinner.py",
         "do spinner",
     ),
+    "11": (
+        "movies",
+        "rich_examples\\11_movies.py",
+        "star wars",
+    ),
+    "12": (
+        "lite sim",
+        "rich_examples\\12_lite_sim.py",
+        "lite sim",
+    ),
 }
 
 

@@ -7,7 +7,7 @@ from rich import print
 from rich.console import Console
 
 from rh_flow.managers.file_manager import FileManager as file_manager
-from rh_flow.utils.constants import DATA_DIR
+from rh_flow.utils.constants import DATA_DIR, PT_MONTHS
 
 
 class DataManager:
@@ -101,20 +101,6 @@ class DataManager:
         return df
 
     def convert_date(self, date_str: str):
-        meses = {
-            "Jan": "Jan",
-            "Fev": "Feb",
-            "Mar": "Mar",
-            "Abr": "Apr",
-            "Mai": "May",
-            "Jun": "Jun",
-            "Jul": "Jul",
-            "Ago": "Aug",
-            "Set": "Sep",
-            "Out": "Oct",
-            "Nov": "Nov",
-            "Dez": "Dec",
-        }
         not_a_date = (
             pd.isna(date_str) or not isinstance(date_str, str) or date_str == " "
         )
@@ -125,7 +111,7 @@ class DataManager:
         partes = date_str.split(", ")
         if len(partes) > 1:
             date_str = partes[1]
-        for pt, en in meses.items():
+        for pt, en in PT_MONTHS.items():
             date_str = date_str.replace(f"{pt}/", f"{en}/")
         try:
             return pd.to_datetime(date_str, format="%d/%b/%Y", errors="raise")

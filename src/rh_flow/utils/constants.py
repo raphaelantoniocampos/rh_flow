@@ -56,6 +56,31 @@ MAIN_MENU_OPTIONS = [
     "Sair",
 ]
 
+PT_MONTHS = {
+    "Jan": "Jan",
+    "Fev": "Feb",
+    "Mar": "Mar",
+    "Abr": "Apr",
+    "Mai": "May",
+    "Jun": "Jun",
+    "Jul": "Jul",
+    "Ago": "Aug",
+    "Set": "Sep",
+    "Out": "Oct",
+    "Nov": "Nov",
+    "Dez": "Dec",
+}
+
+PT_WEEKDAYS = {
+    "Mon": "Seg",
+    "Tue": "Ter",
+    "Wed": "Qua",
+    "Thu": "Qui",
+    "Fri": "Sex",
+    "Sat": "Sáb",
+    "Sun": "Dom"
+}
+
 
 def spinner(
     wait_string: str = "Voltando",
@@ -74,5 +99,3 @@ class Key:
 
     def __str__(self):
         return f"[bold {self.color}]{self.name.upper()}[/bold {self.color}]"
-
-

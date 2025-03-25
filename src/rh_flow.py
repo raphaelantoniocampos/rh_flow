@@ -17,7 +17,13 @@ from rh_flow.managers.download_manager import DownloadManager
 from rh_flow.managers.file_manager import FileManager
 from rh_flow.managers.task_manager import TaskManager
 from rh_flow.tasks.task import Task
-from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, MAIN_MENU_OPTIONS, spinner
+from rh_flow.utils.constants import (
+    INQUIRER_KEYBINDINGS,
+    MAIN_MENU_OPTIONS,
+    PT_WEEKDAYS,
+    PT_MONTHS,
+    spinner,
+)
 
 console = Console()
 
@@ -25,7 +31,8 @@ console = Console()
 # TODO: make last downloads and analyze appear on main screen
 # TODO: configure the panel to be central and prettier
 
-def live_display():
+
+def live_display(tasks):
     def make_layout() -> Layout:
         """Define the layout."""
         layout = Layout(name="root")
@@ -36,8 +43,8 @@ def live_display():
             Layout(name="footer", size=7),
         )
         layout["main"].split_row(
-            Layout(name="side"),
             Layout(name="body", ratio=2, minimum_size=60),
+            Layout(name="side"),
         )
         layout["side"].split(Layout(name="box1"), Layout(name="box2"))
         return layout
@@ -46,44 +53,95 @@ def live_display():
         """Display header with clock."""
 
         def __rich__(self) -> Panel:
+            now = datetime.now()
+
+            en_weekday = now.strftime("%a")
+            en_month = now.strftime("%b")
+            day = now.strftime("%d")
+            year = now.strftime("%Y")
+
+            pt_weekday = PT_WEEKDAYS.get(en_weekday, en_weekday)
+            pt_month = PT_MONTHS.get(en_month, en_month)
+
+            time_str = now.strftime("%H[blink]:[/]%M[blink]:[/]%S")
+
             grid = Table.grid(expand=True)
+            grid.add_column(justify="left")
             grid.add_column(justify="center", ratio=1)
             grid.add_column(justify="right")
             grid.add_row(
+                time_str,
                 "[b]Integração[/b] Fiorilli/Ahgora",
-                datetime.now().ctime().replace(":", "[blink]:[/]"),
+                f"{pt_weekday} {day} {pt_month} {year}",
             )
             return Panel(
                 grid,
                 style="cyan",
             )
 
-    def make_sponsor_message() -> Panel:
+    def main_menu(tasks) -> Panel:
         """Some example content."""
-        sponsor_message = Table.grid(padding=1)
-        sponsor_message.add_column(style="green", justify="right")
-        sponsor_message.add_column(no_wrap=True)
-        sponsor_message.add_row(
-            "Twitter",
-            "[u blue link=https://twitter.com/textualize]https://twitter.com/textualize",
+
+        menu_table = Table.grid(padding=(0, 2))
+        menu_table.add_column(style="green", justify="left")
+        menu_table.add_column(style="bold white", justify="left")
+        menu_table.add_column(style="dim", justify="right")
+
+        # Adicionando opções
+        menu_table.add_row(
+            "1",
+            "Baixar Dados",
+            "(Obter dados mais recentes)",
         )
-        sponsor_message.add_row(
-            "CEO",
-            "[u blue link=https://twitter.com/willmcgugan]https://twitter.com/willmcgugan",
+        menu_table.add_row(
+            "2",
+            "Analisar Dados",
+            "(Processar informações)",
         )
-        sponsor_message.add_row(
-            "Textualize",
-            "[u blue link=https://www.textualize.io]https://www.textualize.io",
+        menu_table.add_row(
+            "3",
+            "Tarefas",
+            f"({len(tasks)} pendentes)",
         )
+        menu_table.add_row(
+            "4",
+            "Configurações",
+            "(Ajustes do sistema)",
+        )
+        menu_table.add_row(
+            "5",
+            "Live Display",
+            "(Monitoramento em tempo real)",
+        )
+        menu_table.add_row(
+            "Q",
+            "Sair",
+            "(Encerrar o programa)",
+        )
+
+        # menu = Table.grid(padding=1)
+        # menu.add_column(no_wrap=True)
+        # menu_table.add_row(
+        #     "Twitter",
+        #     "[u blue link=https://twitter.com/textualize]https://twitter.com/textualize",
+        # )
+        # menu_table.add_row(
+        #     "CEO",
+        #     "[u blue link=https://twitter.com/willmcgugan]https://twitter.com/willmcgugan",
+        # )
+        # menu_table.add_row(
+        #     "Textualize",
+        #     "[u blue link=https://www.textualize.io]https://www.textualize.io",
+        # )
 
         message = Table.grid(padding=1)
         message.add_column()
         message.add_column(no_wrap=True)
-        message.add_row(sponsor_message)
+        message.add_row(menu_table)
 
         message_panel = Panel(
             Align.center(
-                Group("\n", Align.center(sponsor_message)),
+                Group("\n", Align.center(menu_table)),
                 vertical="middle",
             ),
             box=box.ROUNDED,
@@ -143,8 +201,8 @@ def live_display():
         TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
     )
     job_progress.add_task("[green]Cooking")
-    job_progress.add_task("[magenta]Baking", total=150)
-    job_progress.add_task("[cyan]Mixing", total=200)
+    job_progress.add_task("[magenta]Baking", total=1500)
+    job_progress.add_task("[cyan]Mixing", total=2000)
 
     total = sum(task.total for task in job_progress.tasks)
     overall_progress = Progress()
@@ -163,7 +221,7 @@ def live_display():
 
     layout = make_layout()
     layout["header"].update(Header())
-    layout["body"].update(make_sponsor_message())
+    layout["body"].update(main_menu(tasks))
     layout["box2"].update(Panel(make_syntax(), border_style="green"))
     layout["box1"].update(Panel(layout.tree, border_style="red"))
     layout["footer"].update(progress_table)
@@ -189,7 +247,7 @@ def main():
     file_manager.move_downloads_to_data_dir()
     while True:
         tasks = task_manager.get_tasks()
-        option = menu(tasks)
+        option = menu_table(tasks)
         match option.lower():
             case "baixar dados":
                 download_manager.menu()
@@ -205,13 +263,13 @@ def main():
                 # config.menu(console)
 
             case "live display":
-                live_display()
+                live_display(tasks)
 
             case "sair":
                 raise KeyboardInterrupt
 
 
-def menu(tasks: list[Task]):
+def menu_table(tasks: list[Task]):
     console.print(
         Panel.fit(
             f"{'-' * 14}RH FLOW{'-' * 14}\nBem-vindo ao Sistema de. Automação",
@@ -257,5 +315,3 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         spinner("Saindo")
-
-
