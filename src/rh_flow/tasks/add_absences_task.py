@@ -21,7 +21,7 @@ class AddAbsencesTask(TaskRunner):
     def run(self):
         print(f"\n[bold yellow]{'-' * 15} AFASTAMENTOS! {'-' * 15}[/bold yellow]")
 
-        absences_file = DATA_DIR / "fiorilli" / "absences.csv"
+        absences_file = DATA_DIR / "tasks" / "absences.csv"
         filter_file = DATA_DIR / "tasks" / "filter.txt"
         new_absences_file = DATA_DIR / "tasks" / "new_absences.txt"
 
@@ -29,6 +29,7 @@ class AddAbsencesTask(TaskRunner):
             "Insira o arquivo [bold green]absences.csv[/bold green] na importação de afastamentos AHGORA."
         )
         print("Selecione [bold white]pw_afimport_01[/bold white].")
+        print("Clique em [white on dark_green] Obter Registros[/white on dark_green].")
         copy(str(absences_file.parent))
         print(
             f"Caminho '{str(absences_file.parent)}' copiado para a área de transferência!)"
@@ -37,10 +38,12 @@ class AddAbsencesTask(TaskRunner):
         if self.wait_continue_key() == "exit":
             return
 
+        spinner("Aguarde", 10)
         print(
             "Insira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [magenta]filter.txt[/]"
         )
-        time.sleep(2)
+        filter_file.unlink(missing_ok=True)
+        filter_file.touch()
         os.startfile(filter_file)
 
         if self.wait_continue_key() == "exit":
@@ -48,9 +51,18 @@ class AddAbsencesTask(TaskRunner):
 
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
-        self.filter_lines(absences_file, new_absences_file, filter_numbers_file)
+        file_size = self.filter_lines(absences_file, new_absences_file, filter_numbers_file)
 
-        print("\nArquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!")
+        if file_size == 0:
+            print(
+                "\nNenhum novo afastamento."
+            )
+            spinner(wait_time=3)
+            return
+
+        print(
+            "\nArquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!"
+        )
         print(
             "Insira o arquivo [bold green]new_absences.txt[/bold green] na importação de afastamentos AHGORA."
         )
@@ -84,9 +96,12 @@ class AddAbsencesTask(TaskRunner):
             open(absences_file, "r", encoding="utf-8") as infile,
             open(new_absences_file, "w", encoding="utf-8") as outfile,
         ):
+            lines_written = 0
             for index, line in enumerate(infile, start=1):
                 if index not in filter_numbers_file:
                     outfile.write(line)
+                    lines_written += 1
+            return lines_written
 
     def wait_continue_key(self):
         print(

@@ -270,6 +270,6 @@ class CoreBrowser(ABC):
                 time.sleep(self.DELAY)
                 if i >= max_tries - 1:
                     print(e)
-                    #TODO: remove raise
-                    raise(e)
+                    # TODO: remove raise
+                    raise (e)
                     return

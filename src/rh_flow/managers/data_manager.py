@@ -9,6 +9,15 @@ from rich.console import Console
 from rh_flow.managers.file_manager import FileManager as file_manager
 from rh_flow.utils.constants import DATA_DIR, PT_MONTHS
 
+ABSENCES_COLUMNS = [
+    "id",
+    "cod",
+    "start_date",
+    "start_time",
+    "end_date",
+    "end_time",
+]
+
 
 class DataManager:
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):
@@ -30,11 +39,6 @@ class DataManager:
                 file_manager.save_df(
                     df=fiorilli_employees,
                     path=DATA_DIR / "fiorilli" / "employees.csv",
-                )
-                file_manager.save_df(
-                    df=all_absences,
-                    path=DATA_DIR / "fiorilli" / "absences.csv",
-                    header=False,
                 )
 
                 self.generate_tasks_dfs(
@@ -245,8 +249,7 @@ class DataManager:
         self,
         all_absences: pd.DataFrame,
     ) -> pd.DataFrame:
-        new_absences = all_absences
-        return new_absences
+        return all_absences
 
     def normalize_text(self, text):
         if pd.isna(text):
@@ -283,7 +286,8 @@ class DataManager:
         )
         file_manager.save_df(
             df=new_absences_df,
-            path=save_dir / "new_absences.csv",
+            path=save_dir / "absences.csv",
+            header=False,
         )
 
     def get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
@@ -332,26 +336,17 @@ class DataManager:
         raw_fiorilli_vacations = DATA_DIR / "fiorilli" / "raw_vacations.txt"
 
         try:
-            fiorilli_columns = [
-                "id",
-                "cod",
-                "start_date",
-                "start_time",
-                "end_date",
-                "end_time",
-            ]
-
             return pd.concat(
                 [
                     self.read_csv(
                         raw_fiorilli_vacations,
                         header=None,
-                        columns=fiorilli_columns,
+                        columns=ABSENCES_COLUMNS,
                     ),
                     self.read_csv(
                         raw_fiorilli_absences,
                         header=None,
-                        columns=fiorilli_columns,
+                        columns=ABSENCES_COLUMNS,
                     ),
                 ]
             )

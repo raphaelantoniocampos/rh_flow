@@ -1,5 +1,6 @@
 import os
 from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
 from time import sleep
 
 from dotenv import load_dotenv
@@ -30,7 +31,9 @@ class FiorilliBrowser(CoreBrowser):
 
     def _start_employees_download(self) -> None:
         console = Console()
-        with console.status("Baixando [yellow]funcionários[/] do FIORILLI", spinner="dots"):
+        with console.status(
+            "Baixando [yellow]funcionários[/] do FIORILLI", spinner="dots"
+        ):
             self._login()
             self._navigate_to_maintenance_section()
             self._navigate_to_worker_registration()
@@ -51,7 +54,9 @@ class FiorilliBrowser(CoreBrowser):
 
     def _start_absences_download(self) -> None:
         console = Console()
-        with console.status("Baixando [yellow]afastamentos[/] do FIORILLI", spinner="dots"):
+        with console.status(
+            "Baixando [yellow]afastamentos[/] do FIORILLI", spinner="dots"
+        ):
             self._login()
             self._navigate_to_utilities_section()
             self._navigate_to_import_export_section()
@@ -175,11 +180,13 @@ class FiorilliBrowser(CoreBrowser):
     def _fill_input_field(self) -> None:
         today = datetime.today()
         today_str = today.strftime("%d/%m/%Y")
+        two_months_ago = (today - relativedelta(months=2)).strftime("%d/%m/%Y")
+        year_end = date(today.year, 12, 31).strftime("%d/%m/%Y")
         super().select_and_send_keys(
             f"//input[@value='{today_str}']",
             [
-                date(today.year, 1, 1).strftime("%d/%m/%Y"),
-                date(today.year, 12, 31).strftime("%d/%m/%Y"),
+                two_months_ago,
+                year_end,
             ],
         )
 

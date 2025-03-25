@@ -78,7 +78,7 @@ PT_WEEKDAYS = {
     "Thu": "Qui",
     "Fri": "Sex",
     "Sat": "Sáb",
-    "Sun": "Dom"
+    "Sun": "Dom",
 }
 
 

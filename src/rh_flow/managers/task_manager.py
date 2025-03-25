@@ -26,7 +26,7 @@ class TaskManager:
         choice = {task.option: task for task in tasks if not task.df.empty}
         choice["Voltar"] = ""
 
-        option = inquirer.rawlist(      
+        option = inquirer.rawlist(
             message="Selecione uma tarefa",
             choices=choice.keys(),
             keybindings=INQUIRER_KEYBINDINGS,
@@ -88,7 +88,7 @@ class TaskManager:
             case "update_employees":
                 return DATA_DIR / "tasks" / "changed_employees.csv"
             case "add_absences":
-                return DATA_DIR / "tasks" / "new_absences.csv"
+                return DATA_DIR / "tasks" / "absences.csv"
 
     def _get_option(self, name: str, df: DataFrame) -> str:
         if df.empty:
@@ -105,4 +105,4 @@ class TaskManager:
                 return f"Atualizar {len(df)} funcionários"
 
             case "add_absences":
-                return f"Adicionar {len(df)} afastamentos"
+                return "Verificar e Adicionar afastamentos"

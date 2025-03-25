@@ -27,7 +27,9 @@ class TaskRunner(ABC):
             )
         )
 
-        choose_itens = inquirer.confirm(message="Ver e escolher itens da lista?", default=False).execute()
+        choose_itens = inquirer.confirm(
+            message="Ver e escolher itens da lista?", default=False
+        ).execute()
         if choose_itens:
             self._choose_itens()
 
@@ -41,8 +43,10 @@ class TaskRunner(ABC):
     def run() -> None:
         """Runs the task"""
 
-    def exit_task(self, download = ["Funcionários Ahgora"]):
-        update_list = inquirer.confirm(message="Atualizar dados", default=False).execute()
+    def exit_task(self, download=["Funcionários Ahgora"]):
+        update_list = inquirer.confirm(
+            message="Atualizar dados", default=False
+        ).execute()
         if update_list:
             download_manager = DownloadManager()
             data_manager = DataManager()

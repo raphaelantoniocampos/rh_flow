@@ -41,7 +41,9 @@ class RemoveEmployeesTask(TaskRunner):
                     print(f"(DATA '{date}' copiado para a área de transferência!)")
                     copy(date)
                     time.sleep(0.5)
-                    print(f"Pressione {self.KEY_NEXT} para próximo [bold white]funcionário[/bold white].")
+                    print(
+                        f"Pressione {self.KEY_NEXT} para próximo [bold white]funcionário[/bold white]."
+                    )
                     continue
                 if keyboard.is_pressed(self.KEY_NEXT.key):
                     time.sleep(0.5)
@@ -56,5 +58,3 @@ class RemoveEmployeesTask(TaskRunner):
                 continue
 
         super().exit_task()
-
-        

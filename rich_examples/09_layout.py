@@ -4,11 +4,13 @@ Demonstrates a Rich "application" using the Layout and Live classes.
 """
 
 from datetime import datetime
+from time import sleep
 
 from rich import box
 from rich.align import Align
 from rich.console import Console, Group
 from rich.layout import Layout
+from rich.live import Live
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.syntax import Syntax
@@ -161,9 +163,6 @@ layout["box1"].update(Panel(layout.tree, border_style="red"))
 layout["footer"].update(progress_table)
 
 
-from time import sleep
-
-from rich.live import Live
 
 with Live(layout, refresh_per_second=10, screen=True):
     while not overall_progress.finished:

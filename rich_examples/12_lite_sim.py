@@ -1,4 +1,5 @@
 """Lite simulation of the top linux command."""
+
 import datetime
 import random
 import sys
@@ -29,9 +30,9 @@ class Process:
     @property
     def memory_str(self) -> str:
         if self.memory > 1e6:
-            return f"{int(self.memory/1e6)}M"
+            return f"{int(self.memory / 1e6)}M"
         if self.memory > 1e3:
-            return f"{int(self.memory/1e3)}K"
+            return f"{int(self.memory / 1e3)}K"
         return str(self.memory)
 
     @property

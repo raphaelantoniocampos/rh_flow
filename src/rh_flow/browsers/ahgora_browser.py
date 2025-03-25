@@ -24,7 +24,9 @@ class AhgoraBrowser(CoreBrowser):
 
     def _start_employees_download(self) -> None:
         console = Console()
-        with console.status("Baixando [yellow]funcionários[/] do AHGORA", spinner="dots"):
+        with console.status(
+            "Baixando [yellow]funcionários[/] do AHGORA", spinner="dots"
+        ):
             self._login()
             self.driver.get("https://app.ahgora.com.br/funcionarios")
             self._show_dismissed_employees()
