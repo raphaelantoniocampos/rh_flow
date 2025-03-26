@@ -52,7 +52,6 @@ MAIN_MENU_OPTIONS = [
     "Analisar dados",
     "Tarefas",
     "Configurações",
-    "Live Display",
     "Sair",
 ]
 
@@ -81,11 +80,11 @@ PT_WEEKDAYS = {
     "Sun": "Dom",
 }
 
+console = Console()
 
 def spinner(
     wait_string: str = "Voltando",
     wait_time: float = 0.40,
-    console: Console = Console(),
 ):
     with console.status(f"[bold green]{wait_string}...[/bold green]", spinner="dots"):
         time.sleep(wait_time)

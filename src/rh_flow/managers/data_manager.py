@@ -4,10 +4,9 @@ from time import sleep
 import pandas as pd
 from pandas.errors import EmptyDataError
 from rich import print
-from rich.console import Console
 
 from rh_flow.managers.file_manager import FileManager as file_manager
-from rh_flow.utils.constants import DATA_DIR, PT_MONTHS
+from rh_flow.utils.constants import DATA_DIR, PT_MONTHS, console
 
 ABSENCES_COLUMNS = [
     "id",
@@ -22,7 +21,7 @@ ABSENCES_COLUMNS = [
 class DataManager:
     def analyze(self) -> (pd.DataFrame, pd.DataFrame):
         try:
-            console = Console()
+            ()
             with console.status(
                 "[bold green]Analisando dados...[/bold green]", spinner="dots"
             ):

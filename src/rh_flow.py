@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from InquirerPy import inquirer
-from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
@@ -16,9 +15,9 @@ from rh_flow.utils.constants import (
     PT_MONTHS,
     PT_WEEKDAYS,
     spinner,
+    console,
 )
 
-console = Console()
 
 # TODO: ask to create creds on start
 # TODO: make last downloads and analyze appear on main screen
@@ -55,6 +54,7 @@ class Header:
             style="cyan",
         )
 
+
 def main():
     # config = Config()
     file_manager = FileManager()
@@ -64,8 +64,6 @@ def main():
     file_manager.move_downloads_to_data_dir()
 
     while True:
-        header = Header()
-        console.print(header)
         tasks = task_manager.get_tasks()
 
         option = menu_table(tasks)
@@ -83,22 +81,13 @@ def main():
                 pass
                 # config.menu(console)
 
-            case "live display":
-                pass
-                # live_display(tasks)
-
             case "sair":
                 raise KeyboardInterrupt
 
 
 def menu_table(tasks: list[Task]):
-    console.print(
-        Panel.fit(
-            f"{'-' * 14}RH FLOW{'-' * 14}\nBem-vindo ao Sistema de. Automação",
-            style="bold blue",
-        )
-    )
-    console.print("\n")
+    header = Header()
+    console.print(header)
 
     tasks_panel = get_tasks_panel(tasks)
     console.print(tasks_panel)

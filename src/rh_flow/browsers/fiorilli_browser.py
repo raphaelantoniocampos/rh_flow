@@ -5,10 +5,10 @@ from time import sleep
 
 from dotenv import load_dotenv
 from rich import print
-from rich.console import Console
 from selenium.webdriver.common.by import By
 
 from rh_flow.browsers.core_browser import CoreBrowser
+from rh_flow.utils.constants import console
 
 
 class FiorilliBrowser(CoreBrowser):
@@ -25,12 +25,12 @@ class FiorilliBrowser(CoreBrowser):
         fiorilli_browser._start_absences_download()
 
     def __init__(self):
-        console = Console()
+        ()
         with console.status("[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"):
             super().__init__(self.URL)
 
     def _start_employees_download(self) -> None:
-        console = Console()
+        ()
         with console.status(
             "Baixando [yellow]funcionários[/] do FIORILLI", spinner="dots"
         ):
@@ -53,7 +53,7 @@ class FiorilliBrowser(CoreBrowser):
         print("[bold green]Download de funcionários do FIORILLI concluído[/bold green]")
 
     def _start_absences_download(self) -> None:
-        console = Console()
+        ()
         with console.status(
             "Baixando [yellow]afastamentos[/] do FIORILLI", spinner="dots"
         ):

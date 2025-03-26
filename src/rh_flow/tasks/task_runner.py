@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 
 from InquirerPy import inquirer
-from rich.console import Console
 from rich.panel import Panel
 
 from rh_flow.managers.data_manager import DataManager
 from rh_flow.managers.download_manager import DownloadManager
 from rh_flow.tasks.task import Task
-from rh_flow.utils.constants import spinner
+from rh_flow.utils.constants import spinner, console
 
 
 class TaskRunner(ABC):
@@ -19,7 +18,6 @@ class TaskRunner(ABC):
 
     def menu(self) -> None:
         """Displays the task menu"""
-        console = Console()
         console.print(
             Panel.fit(
                 self.task.option,

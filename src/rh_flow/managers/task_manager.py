@@ -2,7 +2,6 @@ from pathlib import Path
 
 from InquirerPy import inquirer
 from pandas import DataFrame
-from rich.console import Console
 from rich.panel import Panel
 
 from rh_flow.managers.data_manager import DataManager
@@ -11,12 +10,12 @@ from rh_flow.tasks.add_employees_task import AddEmployeesTask
 from rh_flow.tasks.remove_employees_task import RemoveEmployeesTask
 from rh_flow.tasks.task import Task
 from rh_flow.tasks.update_employees_task import UpdateEmployeesTask
-from rh_flow.utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner
+from rh_flow.utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner, console
 
 
 class TaskManager:
     def menu(self, tasks: list[Task]):
-        console = Console()
+        ()
         console.print(
             Panel.fit(
                 "Escolher Tarefas",
@@ -105,4 +104,4 @@ class TaskManager:
                 return f"Atualizar {len(df)} funcionários"
 
             case "add_absences":
-                return f"Adicionar afastamentos (+/- {len(df)})"
+                return f"Adicionar (+/- {len(df)}) afastamentos"

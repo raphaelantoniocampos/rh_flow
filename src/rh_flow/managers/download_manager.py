@@ -1,13 +1,12 @@
 import threading
 
 from InquirerPy import inquirer
-from rich.console import Console
 from rich.panel import Panel
 
 from rh_flow.browsers.ahgora_browser import AhgoraBrowser
 from rh_flow.browsers.fiorilli_browser import FiorilliBrowser
 from rh_flow.managers.file_manager import FileManager
-from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, spinner
+from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, console, spinner
 
 
 class DownloadManager:
@@ -18,7 +17,6 @@ class DownloadManager:
     }
 
     def menu(self):
-        console = Console()
         console.print(
             Panel.fit(
                 "BAIXAR DADOS",
