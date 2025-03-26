@@ -43,14 +43,15 @@ class TaskRunner(ABC):
     def run() -> None:
         """Runs the task"""
 
-    def exit_task(self, download=["Funcionários Ahgora"]):
+    def exit_task(self, download_list=["Funcionários Ahgora"], download=True):
         update_list = inquirer.confirm(
             message="Atualizar dados", default=False
         ).execute()
         if update_list:
             download_manager = DownloadManager()
             data_manager = DataManager()
-            download_manager.run(download)
+            if download:
+                download_manager.run(download_list)
             data_manager.analyze()
 
     def _choose_itens(

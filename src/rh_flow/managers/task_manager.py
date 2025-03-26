@@ -88,7 +88,7 @@ class TaskManager:
             case "update_employees":
                 return DATA_DIR / "tasks" / "changed_employees.csv"
             case "add_absences":
-                return DATA_DIR / "tasks" / "absences.csv"
+                return DATA_DIR / "tasks" / "new_absences.csv"
 
     def _get_option(self, name: str, df: DataFrame) -> str:
         if df.empty:
@@ -105,4 +105,4 @@ class TaskManager:
                 return f"Atualizar {len(df)} funcionários"
 
             case "add_absences":
-                return "Verificar e Adicionar afastamentos"
+                return f"Adicionar afastamentos (+/- {len(df)})"

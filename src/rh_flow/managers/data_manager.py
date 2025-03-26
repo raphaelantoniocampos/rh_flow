@@ -30,7 +30,7 @@ class DataManager:
                     "--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n"
                 )
                 ahgora_employees, fiorilli_employees = self.get_employees_data()
-                all_absences = self.get_absences_data()
+                last_absences, all_absences = self.get_absences_data()
 
                 file_manager.save_df(
                     df=ahgora_employees,
@@ -41,9 +41,16 @@ class DataManager:
                     path=DATA_DIR / "fiorilli" / "employees.csv",
                 )
 
+                file_manager.save_df(
+                    df=all_absences,
+                    path=DATA_DIR / "fiorilli" / "absences.csv",
+                    header=False,
+                )
+
                 self.generate_tasks_dfs(
                     fiorilli_employees=fiorilli_employees,
                     ahgora_employees=ahgora_employees,
+                    last_absences=last_absences,
                     all_absences=all_absences,
                 )
 
@@ -134,6 +141,7 @@ class DataManager:
         self,
         fiorilli_employees: pd.DataFrame,
         ahgora_employees: pd.DataFrame,
+        last_absences: pd.DataFrame,
         all_absences: pd.DataFrame,
     ) -> None:
         fiorilli_dismissed_df = fiorilli_employees[
@@ -167,6 +175,7 @@ class DataManager:
             ahgora_employees=ahgora_employees,
         )
         new_absences_df = self._get_new_absences_df(
+            last_absences=last_absences,
             all_absences=all_absences,
         )
 
@@ -247,9 +256,14 @@ class DataManager:
 
     def _get_new_absences_df(
         self,
+        last_absences: pd.DataFrame,
         all_absences: pd.DataFrame,
     ) -> pd.DataFrame:
-        return all_absences
+        merged = pd.merge(last_absences, all_absences, how='outer', indicator=True)
+
+        new_absences = merged[merged['_merge'] == 'right_only'].drop('_merge', axis=1)
+
+        return new_absences
 
     def normalize_text(self, text):
         if pd.isna(text):
@@ -286,8 +300,7 @@ class DataManager:
         )
         file_manager.save_df(
             df=new_absences_df,
-            path=save_dir / "absences.csv",
-            header=False,
+            path=save_dir / "new_absences.csv",
         )
 
     def get_employees_data(self) -> (pd.DataFrame, pd.DataFrame):
@@ -332,24 +345,31 @@ class DataManager:
         return ahgora_employees, fiorilli_employees
 
     def get_absences_data(self) -> pd.DataFrame:
-        raw_fiorilli_absences = DATA_DIR / "fiorilli" / "raw_absences.txt"
-        raw_fiorilli_vacations = DATA_DIR / "fiorilli" / "raw_vacations.txt"
-
         try:
-            return pd.concat(
+            last_absences_path = DATA_DIR / "tasks" / "absences.csv"
+            raw_absences_path = DATA_DIR / "fiorilli" / "raw_absences.txt"
+            raw_vacations_path = DATA_DIR / "fiorilli" / "raw_vacations.txt"
+
+            last_absences= self.read_csv(
+                last_absences_path,
+                header=None,
+                columns=ABSENCES_COLUMNS,
+            )
+            all_absences = pd.concat(
                 [
                     self.read_csv(
-                        raw_fiorilli_vacations,
+                        raw_vacations_path,
                         header=None,
                         columns=ABSENCES_COLUMNS,
                     ),
                     self.read_csv(
-                        raw_fiorilli_absences,
+                        raw_absences_path,
                         header=None,
                         columns=ABSENCES_COLUMNS,
                     ),
                 ]
             )
+            return last_absences, all_absences
         except EmptyDataError:
             return pd.DataFrame
 

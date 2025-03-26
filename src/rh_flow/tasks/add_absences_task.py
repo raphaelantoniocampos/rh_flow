@@ -6,6 +6,7 @@ from pyperclip import copy
 
 from rh_flow.tasks.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
+from rh_flow.managers.file_manager import FileManager
 
 import os
 from rh_flow.utils.constants import DATA_DIR, Key, spinner
@@ -21,7 +22,7 @@ class AddAbsencesTask(TaskRunner):
     def run(self):
         print(f"\n[bold yellow]{'-' * 15} AFASTAMENTOS! {'-' * 15}[/bold yellow]")
 
-        absences_file = DATA_DIR / "tasks" / "absences.csv"
+        absences_file = DATA_DIR / "fiorilli" / "absences.csv"
         filter_file = DATA_DIR / "tasks" / "filter.txt"
         new_absences_file = DATA_DIR / "tasks" / "new_absences.txt"
 
@@ -49,14 +50,16 @@ class AddAbsencesTask(TaskRunner):
         if self.wait_continue_key() == "exit":
             return
 
+        spinner("Aguarde", 1)
+
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
-        file_size = self.filter_lines(absences_file, new_absences_file, filter_numbers_file)
+        file_size = self.filter_lines(
+            absences_file, new_absences_file, filter_numbers_file
+        )
 
         if file_size == 0:
-            print(
-                "\nNenhum novo afastamento."
-            )
+            print("\nNenhum novo afastamento.")
             spinner(wait_time=3)
             return
 
@@ -71,8 +74,13 @@ class AddAbsencesTask(TaskRunner):
             f"Caminho '{str(new_absences_file.parent)}' copiado para a área de transferência!)"
         )
 
-        self.wait_continue_key()
-        super().exit_task()
+        spinner("Aguarde", 5)
+        file_manager = FileManager()
+        file_manager.move_file(
+            source=absences_file,
+            destination=DATA_DIR / "tasks" / "absences.csv",
+        )
+        super().exit_task(download=False)
         spinner()
         return
 
