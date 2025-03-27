@@ -45,17 +45,13 @@ class FileManager:
 
     @staticmethod
     def file_name_to_file_path(file_name: str, raw: bool = True) -> Path:
-        prefix = "raw_" if raw else ""
-        format = "txt" if raw else ""
         match file_name:
             case "ahgora_employees":
-                return DATA_DIR / "ahgora" / f"{prefix}employees.csv"
+                return DATA_DIR / "ahgora" / "raw_employees.csv"
             case "fiorilli_employees":
-                return DATA_DIR / "fiorilli" / f"{prefix}employees.{format}"
-            case "fiorilli_absences":
-                return DATA_DIR / "fiorilli" / f"{prefix}employees.{format}"
-            case "fiorilli_vacations":
-                return DATA_DIR / "fiorilli" / f"{prefix}vacations.{format}"
+                return DATA_DIR / "fiorilli" / "raw_employees.txt"
+            case "absences":
+                return DATA_DIR / "fiorilli" / "raw_absences.txt"
 
     def move_file(self, source: Path, destination: Path):
         if not destination.parent.exists():

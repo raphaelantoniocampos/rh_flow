@@ -17,6 +17,7 @@ from rh_flow.utils.constants import (
     spinner,
     console,
 )
+from rh_flow.utils.config import Config
 
 
 # TODO: ask to create creds on start
@@ -38,18 +39,24 @@ class Header:
         pt_weekday = PT_WEEKDAYS.get(en_weekday, en_weekday)
         pt_month = PT_MONTHS.get(en_month, en_month)
 
-        time_str = now.strftime("%H[blink]:[/]%M[blink]:[/]%S")
+        time_str = now.strftime("%H[blink]:[/]%M[blink]")
 
-        grid = Table.grid(expand=True)
-        grid.add_column(justify="left")
-        grid.add_column(justify="center", ratio=1)
-        grid.add_column(justify="right")
+        grid = Table.grid()
+        # grid.add_column(justify="left")
+        # grid.add_column(justify="center", ratio=1)
+        # grid.add_column(justify="right")
         grid.add_row(
             f"{pt_weekday} {day} {pt_month} {year}",
+        )
+
+        grid.add_row(
             "[b]Integração[/b] Fiorilli/Ahgora",
+        )
+
+        grid.add_row(
             time_str,
         )
-        return Panel(
+        return Panel.fit(
             grid,
             style="cyan",
         )
@@ -61,6 +68,7 @@ def main():
     task_manager = TaskManager()
     data_manager = DataManager()
     download_manager = DownloadManager()
+    config = Config()
     file_manager.move_downloads_to_data_dir()
 
     while True:
@@ -78,8 +86,7 @@ def main():
                 task_manager.menu(tasks)
 
             case "configurações":
-                pass
-                # config.menu(console)
+                config.menu()
 
             case "sair":
                 raise KeyboardInterrupt

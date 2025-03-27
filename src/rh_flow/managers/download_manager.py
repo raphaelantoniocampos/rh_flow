@@ -1,5 +1,3 @@
-import threading
-
 from InquirerPy import inquirer
 from rich.panel import Panel
 
@@ -46,17 +44,9 @@ class DownloadManager:
             self.run(selected_options)
 
     def run(self, selected_options):
-        threads = []
         for option in selected_options:
             fun = self.DOWNLOAD_OPTIONS[option]
-            thread = threading.Thread(target=fun)
-            threads.append(thread)
-
-        for thread in threads:
-            thread.start()
-
-        for thread in threads:
-            thread.join()
+            fun()
 
         self._move_files_to_data_dir()
 

@@ -5,6 +5,7 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 from rich import print
 
+from rh_flow.utils.config import Config
 from rh_flow.managers.file_manager import FileManager as file_manager
 from rh_flow.utils.constants import DATA_DIR, PT_MONTHS, console
 
@@ -53,6 +54,7 @@ class DataManager:
                     all_absences=all_absences,
                 )
 
+            Config.update_last_analisys()
             print("[bold green]Dados sincronizados com sucesso![/bold green]\n")
             sleep(1)
         except KeyboardInterrupt as e:

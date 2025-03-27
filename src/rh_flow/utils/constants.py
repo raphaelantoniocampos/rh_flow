@@ -42,8 +42,7 @@ JSON_INIT_CONFIG = {
     "last_download": {
         "ahgora_employees": {"datetime": "", "time_since": ""},
         "fiorilli_employees": {"datetime": "", "time_since": ""},
-        "fiorilli_absences": {"datetime": "", "time_since": ""},
-        "fiorilli_vacations": {"datetime": "", "time_since": ""},
+        "absences": {"datetime": "", "time_since": ""},
     },
 }
 
@@ -81,6 +80,7 @@ PT_WEEKDAYS = {
 }
 
 console = Console()
+
 
 def spinner(
     wait_string: str = "Voltando",
