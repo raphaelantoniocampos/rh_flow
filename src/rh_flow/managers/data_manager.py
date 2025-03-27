@@ -258,10 +258,14 @@ class DataManager:
         last_absences: pd.DataFrame,
         all_absences: pd.DataFrame,
     ) -> pd.DataFrame:
-        merged = pd.merge(last_absences, all_absences, how='outer', indicator=True)
+        try:
+            merged = pd.merge(last_absences, all_absences, how="outer", indicator=True)
 
-        new_absences = merged[merged['_merge'] == 'right_only'].drop('_merge', axis=1)
-
+            new_absences = merged[merged["_merge"] == "right_only"].drop(
+                "_merge", axis=1
+            )
+        except TypeError:
+            new_absences = all_absences
         return new_absences
 
     def normalize_text(self, text):
@@ -344,16 +348,19 @@ class DataManager:
         return ahgora_employees, fiorilli_employees
 
     def get_absences_data(self) -> pd.DataFrame:
-        try:
-            last_absences_path = DATA_DIR / "tasks" / "absences.csv"
-            raw_absences_path = DATA_DIR / "fiorilli" / "raw_absences.txt"
-            raw_vacations_path = DATA_DIR / "fiorilli" / "raw_vacations.txt"
+        last_absences_path = DATA_DIR / "tasks" / "absences.csv"
+        raw_absences_path = DATA_DIR / "fiorilli" / "raw_absences.txt"
+        raw_vacations_path = DATA_DIR / "fiorilli" / "raw_vacations.txt"
 
-            last_absences= self.read_csv(
+        try:
+            last_absences = self.read_csv(
                 last_absences_path,
                 header=None,
                 columns=ABSENCES_COLUMNS,
             )
+        except FileNotFoundError:
+            last_absences = pd.DataFrame
+        try:
             all_absences = pd.concat(
                 [
                     self.read_csv(
@@ -368,9 +375,10 @@ class DataManager:
                     ),
                 ]
             )
-            return last_absences, all_absences
         except EmptyDataError:
-            return pd.DataFrame
+            all_absences = pd.DataFrame
+
+        return last_absences, all_absences
 
     def verify_typos(self, text: str) -> str:
         if text == "VIGILACIA EM SAUDE":

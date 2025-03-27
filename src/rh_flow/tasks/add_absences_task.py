@@ -1,20 +1,19 @@
 from rich import print
 
-import time
-import keyboard
 from pyperclip import copy
 
-from rh_flow.tasks.task import Task
+from rh_flow.models.task import Task
+from rh_flow.models.key import Key, wait_key_press
 from rh_flow.tasks.task_runner import TaskRunner
 from rh_flow.managers.file_manager import FileManager
 
 import os
-from rh_flow.utils.constants import DATA_DIR, Key, spinner
+from rh_flow.utils.constants import DATA_DIR, spinner
 
 
 class AddAbsencesTask(TaskRunner):
-    KEY_CONTINUE = Key("F2", "green")
-    KEY_STOP = Key("F4", "red3")
+    KEY_CONTINUE = Key("F2", "green", "continuar")
+    KEY_STOP = Key("F4", "red3", "sair")
 
     def __init__(self, task: Task):
         super().__init__(task)
@@ -36,10 +35,10 @@ class AddAbsencesTask(TaskRunner):
             f"Caminho '{str(absences_file.parent)}' copiado para a área de transferência!)"
         )
 
-        if self.wait_continue_key() == "exit":
+        if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
             return
 
-        spinner("Aguarde", 10)
+        spinner("Aguarde", 2)
         print(
             "Insira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [magenta]filter.txt[/]"
         )
@@ -47,10 +46,10 @@ class AddAbsencesTask(TaskRunner):
         filter_file.touch()
         os.startfile(filter_file)
 
-        if self.wait_continue_key() == "exit":
+        if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
             return
 
-        spinner("Aguarde", 1)
+        spinner("Aguarde", 2)
 
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
@@ -74,7 +73,9 @@ class AddAbsencesTask(TaskRunner):
             f"Caminho '{str(new_absences_file.parent)}' copiado para a área de transferência!)"
         )
 
-        spinner("Aguarde", 5)
+        wait_key_press(self.KEY_CONTINUE)
+
+        spinner("Aguarde", 2)
         file_manager = FileManager()
         file_manager.move_file(
             source=absences_file,
@@ -110,16 +111,3 @@ class AddAbsencesTask(TaskRunner):
                     outfile.write(line)
                     lines_written += 1
             return lines_written
-
-    def wait_continue_key(self):
-        print(
-            f"\nPressione {self.KEY_CONTINUE} para [bold white]continuar[/bold white] ."
-        )
-        print(f"Pressione {self.KEY_STOP} para [bold white]sair...[/bold white]")
-        while True:
-            if keyboard.is_pressed(self.KEY_CONTINUE.key):
-                time.sleep(0.5)
-                return "continue"
-            if keyboard.is_pressed(self.KEY_STOP.key):
-                time.sleep(0.5)
-                return "exit"

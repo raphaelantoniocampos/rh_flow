@@ -1,68 +1,65 @@
 import time
 
-import keyboard
 import pyautogui
 from pyperclip import copy
 from rich import print
 
-from rh_flow.tasks.task import Task
+from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
-from rh_flow.utils.constants import Key, spinner
+from rh_flow.utils.constants import spinner
+from rh_flow.models.key import Key, wait_key_press
 
 
 class AddEmployeesTask(TaskRunner):
-    KEY_CONTINUE = Key("F2", "green")
-    KEY_NEXT = Key("F3", "yellow")
-    KEY_STOP = Key("F4", "red3")
+    KEY_CONTINUE = Key("F2", "green", "continuar")
+    KEY_NEXT = Key("F3", "yellow", "próximo")
+    KEY_BACK = Key("F3", "yellow", "voltar")
+    KEY_STOP = Key("F4", "red3", "sair")
 
     def __init__(self, task: Task):
         super().__init__(task)
 
     def run(self) -> None:
         df = self.task.df
+        print(
+            "Abra o [bold magenta]Ahgora[/bold magenta] e vá para a página de funcionários."
+        )
+        url = "https://app.ahgora.com.br/funcionarios"
+        copy(url)
+        print(f"Link '{url}' copiado para a área de transferência!)")
+        wait_key_press(self.KEY_CONTINUE)
         for i, series in df.iterrows():
             print(
                 f"\n[bold yellow]{'-' * 15} NOVO FUNCIONÁRIO! {'-' * 15}[/bold yellow]"
             )
             print(series)
-            print(
-                f"\nPressione {self.KEY_CONTINUE} para [bold white]adicionar[/bold white] o funcionário."
-            )
-            print(
-                f"Pressione {self.KEY_NEXT} para o [bold white]próximo[/bold white] funcionário."
-            )
-            print(f"Pressione {self.KEY_STOP} para [bold white]sair...[/bold white]")
             name = series.get("name")
             copy(name)
             print(f"Nome '{name}' copiado para a área de transferência!)")
-            while True:
-                if keyboard.is_pressed(self.KEY_CONTINUE.key):
-                    time.sleep(0.5)
+            match wait_key_press([self.KEY_CONTINUE, self.KEY_NEXT, self.KEY_STOP]):
+                case "continuar":
+                    spinner("Continuando")
                     self._auto_new(series)
                     break
-                if keyboard.is_pressed(self.KEY_NEXT.key):
-                    time.sleep(0.5)
+                case "próximo":
+                    spinner("Continuando")
                     break
-                if keyboard.is_pressed(self.KEY_STOP.key):
-                    time.sleep(0.5)
+                case "sair":
                     super().exit_task()
                     spinner()
                     return
 
+        print("[bold green]Não há mais novos funcionários![/bold green]")
         super().exit_task()
 
     def _auto_new(self, row):
         print(
-            f"\nClique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/] e Aperte {self.KEY_CONTINUE} para começar ou {self.KEY_NEXT} para voltar."
+            "Clique em [bright_blue]Novo Funcionário[/], clique no [bright_blue]Nome[/]"
         )
-        while True:
-            if keyboard.is_pressed(self.KEY_CONTINUE.key):
-                time.sleep(0.5)
-                break
-            if keyboard.is_pressed(self.KEY_STOP.key):
+        match wait_key_press([self.KEY_CONTINUE, self.KEY_BACK]):
+            case "voltar":
                 spinner()
                 return
-
         pyautogui.write(row["name"], interval=0.02)
         time.sleep(0.2)
 
@@ -79,13 +76,9 @@ class AddEmployeesTask(TaskRunner):
             wait_string="[yellow]Processando PIS-PASEP[/yellow]",
             wait_time=5,
         )
-        print(
-            f"PIS-PASEP: [yellow]{row['pis_pasep']}[/]\nAperte {self.KEY_CONTINUE} para continuar."
-        )
-        while True:
-            if keyboard.is_pressed(self.KEY_CONTINUE.key):
-                time.sleep(0.5)
-                break
+        print(f"PIS-PASEP: [yellow]{row['pis_pasep']}[/]")
+
+        wait_key_press(self.KEY_CONTINUE)
         print("[bold green]Continuando![/bold green]")
 
         pyautogui.press("tab")
@@ -152,11 +145,6 @@ class AddEmployeesTask(TaskRunner):
         pyautogui.press("space")
         time.sleep(0.2)
 
-        print(
-            f"Insira o Departamento\n[yellow]{row['department']}\n[/]Pressione {self.KEY_NEXT} para o próximo funcionário..."
-        )
+        print(f"Insira o Departamento\n[yellow]{row['department']}[/]")
 
-        while True:
-            if keyboard.is_pressed(self.KEY_NEXT.key):
-                time.sleep(0.5)
-                return
+        wait_key_press(self.KEY_NEXT)

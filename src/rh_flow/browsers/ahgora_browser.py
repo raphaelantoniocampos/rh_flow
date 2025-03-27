@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from rich import print
 from selenium.webdriver.common.by import By
 
-from rh_flow.utils.constants import console
+from rich.console import Console
 from rh_flow.browsers.core_browser import CoreBrowser
 
 
@@ -18,13 +18,12 @@ class AhgoraBrowser(CoreBrowser):
         ahgora_browser._start_employees_download()
 
     def __init__(self):
-        ()
-        with console.status("[yellow]Iniciando AHGORA webdriver[/]", spinner="dots"):
+        self.console = Console()
+        with self.console.status("[yellow]Iniciando AHGORA webdriver[/]", spinner="dots"):
             super().__init__(self.URL)
 
     def _start_employees_download(self) -> None:
-        ()
-        with console.status(
+        with self.console.status(
             "Baixando [yellow]funcionários[/] do AHGORA", spinner="dots"
         ):
             self._login()

@@ -7,8 +7,8 @@ from dotenv import load_dotenv
 from rich import print
 from selenium.webdriver.common.by import By
 
+from rich.console import Console
 from rh_flow.browsers.core_browser import CoreBrowser
-from rh_flow.utils.constants import console
 
 
 class FiorilliBrowser(CoreBrowser):
@@ -25,13 +25,13 @@ class FiorilliBrowser(CoreBrowser):
         fiorilli_browser._start_absences_download()
 
     def __init__(self):
-        ()
-        with console.status("[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"):
+        self.console = Console()
+        with self.console.status("[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"):
             super().__init__(self.URL)
 
     def _start_employees_download(self) -> None:
         ()
-        with console.status(
+        with self.console.status(
             "Baixando [yellow]funcionários[/] do FIORILLI", spinner="dots"
         ):
             self._login()
@@ -54,7 +54,7 @@ class FiorilliBrowser(CoreBrowser):
 
     def _start_absences_download(self) -> None:
         ()
-        with console.status(
+        with self.console.status(
             "Baixando [yellow]afastamentos[/] do FIORILLI", spinner="dots"
         ):
             self._login()
@@ -180,7 +180,7 @@ class FiorilliBrowser(CoreBrowser):
     def _fill_input_field(self) -> None:
         today = datetime.today()
         today_str = today.strftime("%d/%m/%Y")
-        two_months_ago = (today - relativedelta(months=2)).strftime("%d/%m/%Y")
+        two_months_ago = (today - relativedelta(months=1)).strftime("%d/%m/%Y")
         year_end = date(today.year, 12, 31).strftime("%d/%m/%Y")
         super().select_and_send_keys(
             f"//input[@value='{today_str}']",

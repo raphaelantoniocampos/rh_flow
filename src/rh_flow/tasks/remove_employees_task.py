@@ -1,60 +1,54 @@
 import time
-
-import keyboard
 from pyperclip import copy
 from rich import print
 
-from rh_flow.tasks.task import Task
+from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
-from rh_flow.utils.constants import Key, spinner
+from rh_flow.utils.constants import spinner
+from rh_flow.models.key import Key, wait_key_press
 
 
 class RemoveEmployeesTask(TaskRunner):
-    KEY_CONTINUE = Key("F2", "green")
-    KEY_NEXT = Key("F3", "yellow")
-    KEY_STOP = Key("F4", "red3")
+    KEY_CONTINUE = Key("F2", "green", "continuar")
+    KEY_NEXT = Key("F3", "yellow", "próximo")
+    KEY_STOP = Key("F4", "red3", "sair")
 
     def __init__(self, task: Task):
         super().__init__(task)
 
     def run(self):
         df = self.task.df
+
+        print(
+            "Abra o [bold magenta]Ahgora[/bold magenta] e vá para a página de funcionários."
+        )
+        url = "https://app.ahgora.com.br/funcionarios"
+        copy(url)
+        print(f"Link '{url}' copiado para a área de transferência!)")
+        wait_key_press(self.KEY_CONTINUE)
         for i, series in df.iterrows():
             print(
                 f"\n[bold yellow]{'-' * 15} FUNCIONÁRIO DESLIGADO! {'-' * 15}[/bold yellow]"
             )
             print(series)
-
-            print(
-                f"Pressione {self.KEY_CONTINUE} para copiar a [bold white]Data de Desligamento[/bold white]."
-            )
-            print(
-                f"Pressione {self.KEY_NEXT} para próximo [bold white]funcionário[/bold white]."
-            )
-            print(f"Pressione {self.KEY_STOP} para [bold white]sair...[/bold white]")
             name = series["name"]
             copy(name)
             print(f"(Nome '{name}' copiado para a área de transferência!)")
-            while True:
-                if keyboard.is_pressed(self.KEY_CONTINUE.key):
+            match wait_key_press([self.KEY_CONTINUE, self.KEY_NEXT, self.KEY_STOP]):
+                case "continuar":
+                    spinner("Continuando")
                     date = series["dismissal_date"]
                     print(f"(DATA '{date}' copiado para a área de transferência!)")
                     copy(date)
                     time.sleep(0.5)
-                    print(
-                        f"Pressione {self.KEY_NEXT} para próximo [bold white]funcionário[/bold white]."
-                    )
+                    wait_key_press(self.KEY_CONTINUE)
                     continue
-                if keyboard.is_pressed(self.KEY_NEXT.key):
-                    time.sleep(0.5)
-                    break
-                if keyboard.is_pressed(self.KEY_STOP.key):
-                    time.sleep(0.5)
+                case "próximo":
+                    continue
+                case "sair":
                     super().exit_task()
                     spinner()
                     return
-            if keyboard.is_pressed(self.KEY_NEXT.key):
-                time.sleep(0.5)
-                continue
 
+        print("[bold green]Não há mais funcionários desligados![/bold green]")
         super().exit_task()

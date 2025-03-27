@@ -8,7 +8,7 @@ from rh_flow.managers.data_manager import DataManager
 from rh_flow.tasks.add_absences_task import AddAbsencesTask
 from rh_flow.tasks.add_employees_task import AddEmployeesTask
 from rh_flow.tasks.remove_employees_task import RemoveEmployeesTask
-from rh_flow.tasks.task import Task
+from rh_flow.models.task import Task
 from rh_flow.tasks.update_employees_task import UpdateEmployeesTask
 from rh_flow.utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, spinner, console
 

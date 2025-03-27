@@ -1,19 +1,18 @@
 import time
-
-import keyboard
 from pyperclip import copy
 from rich import print
 
-from rh_flow.tasks.task import Task
+from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
-from rh_flow.utils.constants import Key, spinner
+from rh_flow.utils.constants import spinner
+from rh_flow.models.key import Key, wait_key_press
 
 
 class UpdateEmployeesTask(TaskRunner):
-    KEY_POSITION = Key("F1", "cyan")
-    KEY_DEPARTMENT = Key("F2", "purple")
-    KEY_NEXT = Key("F3", "yellow")
-    KEY_STOP = Key("F4", "red")
+    KEY_POSITION = Key("F1", "cyan", "copiar o cargo")
+    KEY_DEPARTMENT = Key("F2", "purple", "copiar o departamento")
+    KEY_NEXT = Key("F3", "yellow", "próximo")
+    KEY_STOP = Key("F4", "red", "sair")
 
     def __init__(self, task: Task):
         super().__init__(task)
@@ -57,46 +56,36 @@ class UpdateEmployeesTask(TaskRunner):
                 f"Novo Departamento (Fiorilli): {f'[green]{department_fiorilli}[/]' if 'DEPARTAMENTO' in changes else f'{department_fiorilli}'}"
             )
             print("\n")
-
-            if "CARGO" in changes:
-                print(
-                    f"Pressione {self.KEY_POSITION} para copiar o novo [bold white]Cargo[/bold white]."
-                )
-            if "DEPARTAMENTO" in changes:
-                print(
-                    f"Pressione {self.KEY_DEPARTMENT} para copiar o novo [bold white]Departamento[/bold white]."
-                )
-            print(
-                f"Pressione {self.KEY_NEXT} para o [bold white]próximo[/bold white] funcionário."
-            )
-            print(f"Pressione {self.KEY_STOP} para [bold white]sair...[/bold white]")
             copy(name)
             print(f"(Nome '{name}' copiado para a área de transferência!)")
             while True:
-                if keyboard.is_pressed(self.KEY_POSITION.key):
-                    copy(position_fiorilli)
-                    print(
-                        f"(Cargo '{position_fiorilli}' copiado para a área de transferência!)"
-                    )
-                    time.sleep(0.5)
-                    continue
-                if keyboard.is_pressed(self.KEY_DEPARTMENT.key):
-                    copy(department_fiorilli)
-                    print(
-                        f"(Departamento '{department_fiorilli}' copiado para a área de transferência!)"
-                    )
-                    time.sleep(0.5)
-                    continue
-                if keyboard.is_pressed(self.KEY_NEXT.key):
-                    time.sleep(0.5)
-                    break
-                if keyboard.is_pressed(self.KEY_STOP.key):
-                    time.sleep(0.5)
-                    super().exit_task()
-                    spinner()
-                    return
-            if keyboard.is_pressed(self.KEY_NEXT.key):
-                time.sleep(0.5)
-                continue
+                match wait_key_press(
+                    [
+                        self.KEY_POSITION,
+                        self.KEY_DEPARTMENT,
+                        self.KEY_NEXT,
+                        self.KEY_STOP,
+                    ]
+                ):
+                    case "copiar o cargo":
+                        copy(position_fiorilli)
+                        print(
+                            f"(Cargo '{position_fiorilli}' copiado para a área de transferência!)"
+                        )
+                        time.sleep(0.5)
+                    case "copiar o departamento":
+                        copy(department_fiorilli)
+                        print(
+                            f"(Departamento '{department_fiorilli}' copiado para a área de transferência!)"
+                        )
+                        time.sleep(0.5)
+                    case "próximo":
+                        spinner("Continuando")
+                        break
+                    case "sair":
+                        super().exit_task()
+                        spinner()
+                        return
 
+        print("[bold green]Não há mais cargos para alterar![/bold green]")
         super().exit_task()
