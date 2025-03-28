@@ -1,12 +1,15 @@
 from abc import ABC, abstractmethod
 
 from InquirerPy import inquirer
+from pyperclip import copy
+from rich import print
 from rich.panel import Panel
 
 from rh_flow.managers.data_manager import DataManager
 from rh_flow.managers.download_manager import DownloadManager
+from rh_flow.models.key import wait_key_press
 from rh_flow.models.task import Task
-from rh_flow.utils.constants import spinner, console
+from rh_flow.utils.constants import console, spinner
 
 
 class TaskRunner(ABC):
@@ -31,8 +34,12 @@ class TaskRunner(ABC):
         if choose_itens:
             self._choose_itens()
 
-        proceed = inquirer.confirm(message="Continuar?", default=True).execute()
+        proceed = inquirer.confirm(message="Iniciar?", default=True).execute()
         if proceed:
+            print("Abra o [bold violet]Ahgora[/bold violet] e vá para a URL abaixo.")
+            copy(self.task.url)
+            print(f"URL '{self.task.url}' copiada para a área de transferência!)")
+            wait_key_press(self.KEY_CONTINUE)
             self.run()
 
         spinner()

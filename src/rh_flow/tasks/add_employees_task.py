@@ -4,10 +4,10 @@ import pyautogui
 from pyperclip import copy
 from rich import print
 
+from rh_flow.models.key import Key, wait_key_press
 from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
 from rh_flow.utils.constants import spinner
-from rh_flow.models.key import Key, wait_key_press
 
 
 class AddEmployeesTask(TaskRunner):
@@ -21,13 +21,6 @@ class AddEmployeesTask(TaskRunner):
 
     def run(self) -> None:
         df = self.task.df
-        print(
-            "Abra o [bold violet]Ahgora[/bold violet] e vá para a página de funcionários."
-        )
-        url = "https://app.ahgora.com.br/funcionarios"
-        copy(url)
-        print(f"Link '{url}' copiado para a área de transferência!)")
-        wait_key_press(self.KEY_CONTINUE)
         for i, series in df.iterrows():
             print(
                 f"\n[bold yellow]{'-' * 15} NOVO FUNCIONÁRIO! {'-' * 15}[/bold yellow]"
