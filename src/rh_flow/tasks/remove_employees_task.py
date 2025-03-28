@@ -20,7 +20,7 @@ class RemoveEmployeesTask(TaskRunner):
         df = self.task.df
 
         print(
-            "Abra o [bold magenta]Ahgora[/bold magenta] e vá para a página de funcionários."
+            "Abra o [bold violet]Ahgora[/bold violet] e vá para a página de funcionários."
         )
         url = "https://app.ahgora.com.br/funcionarios"
         copy(url)

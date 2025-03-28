@@ -5,8 +5,8 @@ import pandas as pd
 from pandas.errors import EmptyDataError
 from rich import print
 
-from rh_flow.utils.config import Config
 from rh_flow.managers.file_manager import FileManager as file_manager
+from rh_flow.utils.config import Config
 from rh_flow.utils.constants import DATA_DIR, PT_MONTHS, console
 
 ABSENCES_COLUMNS = [
@@ -26,9 +26,6 @@ class DataManager:
             with console.status(
                 "[bold green]Analisando dados...[/bold green]", spinner="dots"
             ):
-                print(
-                    "--- Analisando dados de Funcionários entre Fiorilli e Ahgora ---\n"
-                )
                 ahgora_employees, fiorilli_employees = self.get_employees_data()
                 last_absences, all_absences = self.get_absences_data()
 
@@ -279,7 +276,7 @@ class DataManager:
             .encode("ASCII", "ignore")
             .decode("ASCII")
         )
-        normalized = self.verify_typos(normalized)
+        normalized = self.treat_exceptions_and_typos(normalized)
         return normalized.lower().strip()
 
     def save_tasks_dfs(
@@ -382,7 +379,13 @@ class DataManager:
 
         return last_absences, all_absences
 
-    def verify_typos(self, text: str) -> str:
+    def treat_exceptions_and_typos(self, text: str) -> str:
         if text == "VIGILACIA EM SAUDE":
             return "VIGILANCIA EM SAUDE"
+        if text == "UBS SAO JOSE/CIDADE JARDIM":
+            return "UBS CIDADE JARDIM"
+        if text == "PREFEITURA MUNICIPAL DE NOVA SERRANA":
+            return "SECRETARIA DE EDUCACAO"
+        if text == "FINANCAS":
+            return "SECRETARIA MUN. FINANCAS"
         return text

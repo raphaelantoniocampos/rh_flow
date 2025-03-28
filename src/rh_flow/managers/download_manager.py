@@ -9,9 +9,9 @@ from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, console, spinner
 
 class DownloadManager:
     DOWNLOAD_OPTIONS = {
+        "Afastamentos": FiorilliBrowser.download_absences_data,
         "Funcionários Ahgora": AhgoraBrowser.download_employees_data,
         "Funcionários Fiorilli": FiorilliBrowser.download_employees_data,
-        "Afastamentos": FiorilliBrowser.download_absences_data,
     }
 
     def menu(self):

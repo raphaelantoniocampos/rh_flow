@@ -40,7 +40,7 @@ class AddAbsencesTask(TaskRunner):
 
         spinner("Aguarde", 2)
         print(
-            "Insira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [magenta]filter.txt[/]"
+            "Insira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [violet]filter.txt[/]"
         )
         filter_file.unlink(missing_ok=True)
         filter_file.touch()
@@ -59,8 +59,15 @@ class AddAbsencesTask(TaskRunner):
 
         if file_size == 0:
             print("\nNenhum novo afastamento.")
+            file_manager = FileManager()
+            file_manager.move_file(
+                source=absences_file,
+                destination=DATA_DIR / "tasks" / "absences.csv",
+            )
             spinner(wait_time=3)
             return
+
+
 
         print(
             "\nArquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!"

@@ -10,8 +10,8 @@ from rh_flow.models.key import Key, wait_key_press
 
 class UpdateEmployeesTask(TaskRunner):
     KEY_POSITION = Key("F1", "cyan", "copiar o cargo")
-    KEY_DEPARTMENT = Key("F2", "purple", "copiar o departamento")
-    KEY_NEXT = Key("F3", "yellow", "próximo")
+    KEY_DEPARTMENT = Key("F2", "violet", "copiar o departamento")
+    KEY_NEXT = Key("F3", "green", "continuar")
     KEY_STOP = Key("F4", "red", "sair")
 
     def __init__(self, task: Task):
@@ -38,9 +38,9 @@ class UpdateEmployeesTask(TaskRunner):
 
             changes = []
             if position_changed:
-                changes.append("CARGO")
+                changes.append("[cyan]CARGO[/]")
             if department_changed:
-                changes.append("DEPARTAMENTO")
+                changes.append("[violet]DEPARTAMENTO[/]")
 
             print(
                 f"\n[bold yellow]{'-' * 15} FUNCIONÁRIO ALTERADO! {'-' * 15}[/bold yellow]"
@@ -49,11 +49,11 @@ class UpdateEmployeesTask(TaskRunner):
             print(f"Alterar {' e '.join(changes)}")
             print(f"Antigo Cargo (Ahgora): {position_ahgora}")
             print(
-                f"Novo Cargo (Fiorilli): {f'[green]{position_fiorilli}[/]' if 'CARGO' in changes else f'{position_fiorilli}'}"
+                f"Novo Cargo (Fiorilli): {f'[cyan]{position_fiorilli}[/]' if '[cyan]CARGO[/]' in changes else f'{position_fiorilli}'}"
             )
             print(f"Antigo Departamento (Ahgora): [bold]{department_ahgora}[/bold]")
             print(
-                f"Novo Departamento (Fiorilli): {f'[green]{department_fiorilli}[/]' if 'DEPARTAMENTO' in changes else f'{department_fiorilli}'}"
+                f"Novo Departamento (Fiorilli): {f'[violet]{department_fiorilli}[/]' if '[violet]DEPARTAMENTO[/]' in changes else f'{department_fiorilli}'}"
             )
             print("\n")
             copy(name)
@@ -79,7 +79,7 @@ class UpdateEmployeesTask(TaskRunner):
                             f"(Departamento '{department_fiorilli}' copiado para a área de transferência!)"
                         )
                         time.sleep(0.5)
-                    case "próximo":
+                    case "continuar":
                         spinner("Continuando")
                         break
                     case "sair":
