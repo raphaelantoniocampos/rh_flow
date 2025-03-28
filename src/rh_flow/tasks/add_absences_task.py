@@ -35,9 +35,9 @@ class AddAbsencesTask(TaskRunner):
         if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
             return
 
-        spinner("Aguarde", 2)
+        spinner("Aguarde", 1)
         print(
-            "Insira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [violet]filter.txt[/]"
+            "\nInsira os erros de registros no arquivo e salve (Ctrl+S) no arquivo [violet]filter.txt[/]"
         )
         filter_file.touch()
         os.startfile(filter_file)
@@ -45,7 +45,7 @@ class AddAbsencesTask(TaskRunner):
         if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
             return
 
-        spinner("Aguarde", 2)
+        spinner("Aguarde", 1)
 
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
@@ -57,15 +57,15 @@ class AddAbsencesTask(TaskRunner):
             print("\nNenhum novo afastamento.")
             self.exit_task(temp_absences)
 
-        print(f"[bold]{file_size} NOVOS AFASTAMENTOS![/bold]\n")
+        print(f"\n[bold]{file_size} NOVOS AFASTAMENTOS![/bold]\n")
         print(
-            "\nArquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!"
+            "Arquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!"
         )
 
         self.insert_file("new_absences.txt")
         wait_key_press(self.KEY_CONTINUE)
 
-        spinner("Aguarde", 2)
+        spinner("Aguarde", 1)
         self.exit_task(temp_absences)
         return
 
