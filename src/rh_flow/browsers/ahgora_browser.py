@@ -15,11 +15,16 @@ class AhgoraBrowser(CoreBrowser):
     @staticmethod
     def download_employees_data() -> None:
         ahgora_browser = AhgoraBrowser()
-        ahgora_browser._start_employees_download()
+        ahgora_browser.retry_func(
+            func=lambda: ahgora_browser._start_employees_download(),
+            max_tries=2,
+        )
 
     def __init__(self):
         self.console = Console()
-        with self.console.status("[yellow]Iniciando AHGORA webdriver[/]", spinner="dots"):
+        with self.console.status(
+            "[yellow]Iniciando AHGORA webdriver[/]", spinner="dots"
+        ):
             super().__init__(self.URL)
 
     def _start_employees_download(self) -> None:

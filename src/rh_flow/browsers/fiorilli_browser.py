@@ -17,16 +17,24 @@ class FiorilliBrowser(CoreBrowser):
     @staticmethod
     def download_employees_data() -> None:
         fiorilli_browser = FiorilliBrowser()
-        fiorilli_browser._start_employees_download()
+        fiorilli_browser.retry_func(
+            func=lambda: fiorilli_browser._start_employees_download(),
+            max_tries=2,
+        )
 
     @staticmethod
     def download_absences_data() -> None:
         fiorilli_browser = FiorilliBrowser()
-        fiorilli_browser._start_absences_download()
+        fiorilli_browser.retry_func(
+            func=lambda: fiorilli_browser._start_absences_download(),
+            max_tries=2,
+        )
 
     def __init__(self):
         self.console = Console()
-        with self.console.status("[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"):
+        with self.console.status(
+            "[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"
+        ):
             super().__init__(self.URL)
 
     def _start_employees_download(self) -> None:

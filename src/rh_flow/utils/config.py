@@ -17,9 +17,10 @@ class Config:
     def __init__(self):
         self.json_path: Path = DATA_DIR / "config.json"
         self.data: dict = self._load()
-        self._update_time_since()
+        self.update_time_since()
 
     def menu(self) -> None:
+        self.update_time_since()
         console.print(
             Panel.fit(
                 "CONFIGURAÇÕES",
@@ -120,7 +121,7 @@ class Config:
         minutes, seconds = divmod(remainder, 60)
         return f"{days}d {hours}h {minutes}m"
 
-    def _update_time_since(self) -> None:
+    def update_time_since(self) -> None:
         try:
             now = datetime.now()
             last_analisys = self.data.get("last_analisys")

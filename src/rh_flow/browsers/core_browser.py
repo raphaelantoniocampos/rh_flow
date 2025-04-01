@@ -2,7 +2,6 @@ import time
 from abc import ABC
 
 from dotenv import load_dotenv
-from rich import print
 from selenium import webdriver
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
@@ -17,7 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from rh_flow.utils.constants import DOWNLOADS_DIR
+from rh_flow.utils.constants import DOWNLOADS_DIR, console
 
 
 class CoreBrowser(ABC):
@@ -269,7 +268,6 @@ class CoreBrowser(ABC):
             except Exception as e:
                 time.sleep(self.DELAY)
                 if i >= max_tries - 1:
-                    print(e)
-                    # TODO: remove raise
-                    raise (e)
+                    console.print(e)
+                    # raise (e)
                     return
