@@ -33,10 +33,8 @@ class AddEmployeesTask(TaskRunner):
                 case "continuar":
                     spinner("Continuando")
                     self._auto_new(series)
-                    break
                 case "próximo":
                     spinner("Continuando")
-                    break
                 case "sair":
                     super().exit_task()
                     spinner()
@@ -67,7 +65,7 @@ class AddEmployeesTask(TaskRunner):
 
         spinner(
             wait_string="[yellow]Processando PIS-PASEP[/yellow]",
-            wait_time=5,
+            wait_time=3,
         )
         print(f"PIS-PASEP: [yellow]{row['pis_pasep']}[/]")
 

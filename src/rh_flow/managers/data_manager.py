@@ -104,6 +104,10 @@ class DataManager:
         if "name" in df.columns:
             df["name"] = df["name"].str.strip().str.upper()
 
+        if "pis_pasep" in df.columns:
+            if not pd.api.types.is_string_dtype(df["pis_pasep"]):
+                df["pis_pasep"] = df["pis_pasep"].fillna(0).astype(int).astype(str)
+
         if "id" in df.columns:
             df["id"] = df["id"].astype(str).str.zfill(6)
 

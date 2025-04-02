@@ -42,9 +42,8 @@ class RemoveEmployeesTask(TaskRunner):
                     copy(date)
                     time.sleep(0.5)
                     wait_key_press(self.KEY_CONTINUE)
-                    continue
                 case "próximo":
-                    continue
+                    spinner("Continuando")
                 case "sair":
                     super().exit_task()
                     spinner()
