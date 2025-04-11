@@ -188,12 +188,12 @@ class FiorilliBrowser(CoreBrowser):
     def _fill_input_field(self) -> None:
         today = datetime.today()
         today_str = today.strftime("%d/%m/%Y")
-        two_months_ago = (today - relativedelta(months=1)).strftime("%d/%m/%Y")
+        last_month = (today - relativedelta(months=1)).strftime("%d/%m/%Y")
         year_end = date(today.year, 12, 31).strftime("%d/%m/%Y")
         super().select_and_send_keys(
             f"//input[@value='{today_str}']",
             [
-                two_months_ago,
+                last_month,
                 year_end,
             ],
         )

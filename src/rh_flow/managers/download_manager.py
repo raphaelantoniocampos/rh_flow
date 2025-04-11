@@ -4,6 +4,7 @@ from rich.panel import Panel
 from rh_flow.browsers.ahgora_browser import AhgoraBrowser
 from rh_flow.browsers.fiorilli_browser import FiorilliBrowser
 from rh_flow.managers.file_manager import FileManager
+from rh_flow.managers.data_manager import DataManager
 from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, console, spinner
 
 
@@ -24,11 +25,10 @@ class DownloadManager:
         choices = [option for option in self.DOWNLOAD_OPTIONS]
         choices.append("Voltar")
 
-        answers = inquirer.rawlist(
+        answers = inquirer.checkbox(
             message="Selecione as opções de download",
             choices=choices,
             keybindings=INQUIRER_KEYBINDINGS,
-            multiselect=True,
         ).execute()
 
         selected_options = []
@@ -40,8 +40,11 @@ class DownloadManager:
             selected_options.append(answer)
 
         proceed = inquirer.confirm(message="Continuar?", default=True).execute()
-        if proceed:
-            self.run(selected_options)
+        if not proceed:
+            return
+
+        self.run(selected_options)
+        DataManager().analyze()
 
     def run(self, selected_options):
         for option in selected_options:

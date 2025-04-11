@@ -9,9 +9,10 @@ from rh_flow.models.key import Key, wait_key_press
 
 
 class UpdateEmployeesTask(TaskRunner):
+    KEY_CONTINUE = Key("F2", "green", "continuar")
     KEY_POSITION = Key("F1", "cyan", "copiar o cargo")
     KEY_DEPARTMENT = Key("F2", "violet", "copiar o departamento")
-    KEY_NEXT = Key("F3", "green", "continuar")
+    KEY_NEXT = Key("F3", "yellow", "próximo")
     KEY_STOP = Key("F4", "red", "sair")
 
     def __init__(self, task: Task):
@@ -79,7 +80,7 @@ class UpdateEmployeesTask(TaskRunner):
                             f"(Departamento '{department_fiorilli}' copiado para a área de transferência!)"
                         )
                         time.sleep(0.5)
-                    case "continuar":
+                    case "próximo":
                         spinner("Continuando")
                         break
                     case "sair":

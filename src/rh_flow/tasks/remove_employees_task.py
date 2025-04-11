@@ -18,14 +18,6 @@ class RemoveEmployeesTask(TaskRunner):
 
     def run(self):
         df = self.task.df
-
-        print(
-            "Abra o [bold violet]Ahgora[/bold violet] e vá para a página de funcionários."
-        )
-        url = "https://app.ahgora.com.br/funcionarios"
-        copy(url)
-        print(f"Link '{url}' copiado para a área de transferência!)")
-        wait_key_press(self.KEY_CONTINUE)
         for i, series in df.iterrows():
             print(
                 f"\n[bold yellow]{'-' * 15} FUNCIONÁRIO DESLIGADO! {'-' * 15}[/bold yellow]"
@@ -33,15 +25,18 @@ class RemoveEmployeesTask(TaskRunner):
             print(series)
             name = series["name"]
             copy(name)
-            print(f"(Nome '{name}' copiado para a área de transferência!)")
+            print("\nProcure o nome e clique no [bold red]x[/bold red]")
+            print(f"(Nome '{name}' copiado para a área de transferência!)\n")
             match wait_key_press([self.KEY_CONTINUE, self.KEY_NEXT, self.KEY_STOP]):
                 case "continuar":
                     spinner("Continuando")
                     date = series["dismissal_date"]
-                    print(f"(DATA '{date}' copiado para a área de transferência!)")
+                    print(
+                        f"(Data de Desligamento '{date}' copiado para a área de transferência!)"
+                    )
                     copy(date)
                     time.sleep(0.5)
-                    wait_key_press(self.KEY_CONTINUE)
+                    wait_key_press(self.KEY_NEXT)
                 case "próximo":
                     spinner("Continuando")
                 case "sair":

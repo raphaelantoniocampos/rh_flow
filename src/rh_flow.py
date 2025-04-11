@@ -68,10 +68,10 @@ def main():
     task_manager = TaskManager()
     data_manager = DataManager()
     download_manager = DownloadManager()
-    config = Config()
     file_manager.move_downloads_to_data_dir()
 
     while True:
+        config = Config()
         tasks = task_manager.get_tasks()
 
         option = menu_table(tasks)
@@ -89,7 +89,8 @@ def main():
                 config.menu()
 
             case "sair":
-                raise KeyboardInterrupt
+                spinner("Saindo")
+                return
 
 
 def menu_table(tasks: list[Task]):

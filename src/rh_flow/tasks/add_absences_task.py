@@ -53,9 +53,11 @@ class AddAbsencesTask(TaskRunner):
             temp_absences, new_absences_file, filter_numbers_file
         )
 
+        spinner("Aguarde", 1)
         if file_size == 0:
             print("\nNenhum novo afastamento.")
             self.exit_task(temp_absences)
+            return
 
         print(f"\n[bold]{file_size} NOVOS AFASTAMENTOS![/bold]\n")
         print(

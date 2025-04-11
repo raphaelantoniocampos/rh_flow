@@ -57,7 +57,8 @@ class AddEmployeesTask(TaskRunner):
         pyautogui.press("tab", presses=7, interval=0.005)
         time.sleep(0.2)
 
-        pyautogui.write(str(row["pis_pasep"]), interval=0.02)
+        pis_pasep = row["pis_pasep"]
+        pyautogui.write(pis_pasep, interval=0.2)
         time.sleep(0.2)
 
         pyautogui.press("tab")
@@ -65,9 +66,12 @@ class AddEmployeesTask(TaskRunner):
 
         spinner(
             wait_string="[yellow]Processando PIS-PASEP[/yellow]",
-            wait_time=3,
+            wait_time=2,
         )
-        print(f"PIS-PASEP: [yellow]{row['pis_pasep']}[/]")
+        formatted_pis_pasep = (
+            f"{pis_pasep[:3]}.{pis_pasep[3:8]}.{pis_pasep[8:10]}-{pis_pasep[10]}"
+        )
+        print(f"PIS-PASEP: [yellow]{formatted_pis_pasep}[/]")
 
         wait_key_press(self.KEY_CONTINUE)
         print("[bold green]Continuando![/bold green]")

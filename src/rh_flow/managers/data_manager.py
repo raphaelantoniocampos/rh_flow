@@ -1,5 +1,6 @@
 import unicodedata
 from time import sleep
+from datetime import datetime
 
 import pandas as pd
 from pandas.errors import EmptyDataError
@@ -217,13 +218,18 @@ class DataManager:
             ahgora_employees["id"].isin(fiorilli_dismissed_ids)
             & ~ahgora_employees["id"].isin(ahgora_dismissed_ids)
         ]
-
+        
         dismissed_employees_df = dismissed_employees_df.drop(columns=["dismissal_date"])
         dismissed_employees_df = dismissed_employees_df.merge(
             fiorilli_dismissed_df[["id", "dismissal_date"]],
             on="id",
             how="left",
         )
+        dismissed_employees_df["dismissal_date"] = pd.to_datetime(dismissed_employees_df["dismissal_date"], format="%d/%m/%Y")
+        
+        today = datetime.today()
+        dismissed_employees_df = dismissed_employees_df[dismissed_employees_df["dismissal_date"] <= today]
+        
         return dismissed_employees_df
 
     def _get_changed_employees_df(
