@@ -47,6 +47,10 @@ class AddAbsencesTask(TaskRunner):
 
         spinner("Aguarde", 1)
 
+        # Processa e exibe os erros agrupados
+        error_groups = self.process_filter_errors(filter_file)
+        self.display_error_groups(error_groups)
+
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
         file_size = self.filter_lines(
@@ -71,19 +75,19 @@ class AddAbsencesTask(TaskRunner):
         self.exit_task(temp_absences)
         return
 
-    def read_filter_numbers(self, file_path):
-        """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
-        filter_numbers = []
-        with open(file_path, "r", encoding="utf-8") as file:
-            for line in file:
-                if "Erro ao obter registros:" in line:
-                    continue
-                if "registro" in line:
-                    start = line.find("[") + 1
-                    end = line.find("]")
-                    filter_number = int(line[start:end])
-                    filter_numbers.append(filter_number)
-        return filter_numbers
+    # def read_filter_numbers(self, file_path):
+    #     """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
+    #     filter_numbers = []
+    #     with open(file_path, "r", encoding="utf-8") as file:
+    #         for line in file:
+    #             if "Erro ao obter registros:" in line:
+    #                 continue
+    #             if "registro" in line:
+    #                 start = line.find("[") + 1
+    #                 end = line.find("]")
+    #                 filter_number = int(line[start:end])
+    #                 filter_numbers.append(filter_number)
+    #     return filter_numbers
 
     def filter_lines(self, absences_file, new_absences_file, filter_numbers_file):
         """Filtra as linhas do arquivo de entrada e escreve no arquivo de saída."""
@@ -97,6 +101,80 @@ class AddAbsencesTask(TaskRunner):
                     outfile.write(line)
                     lines_written += 1
             return lines_written
+
+    def process_filter_errors(self, file_path):
+        """Processa o arquivo de erros e retorna um dicionário com os erros agrupados"""
+        error_groups = {
+            "Intersecção com afastamento existente": [],
+            "Intersecção com período bloqueado": [],
+            "Matrícula inexistente": [],
+            "Informe matrícula": [],
+            "Outros erros": []
+        }
+        
+        with open(file_path, "r", encoding="utf-8") as file:
+            for line in file:
+                line = line.strip()
+                if not line:
+                    continue
+                
+                if "Intersecção com afastamento existente" in line:
+                    error_groups["Intersecção com afastamento existente"].append(line)
+                elif "Intersecção com período bloqueado" in line:
+                    error_groups["Intersecção com período bloqueado"].append(line)
+                elif "Matrícula" in line and "inexistente" in line:
+                    error_groups["Matrícula inexistente"].append(line)
+                elif "Informe matrícula" in line:
+                    error_groups["Informe matrícula"].append(line)
+                else:
+                    error_groups["Outros erros"].append(line)
+        
+        return error_groups
+
+    def display_error_groups(self, error_groups):
+        """Exibe os erros agrupados por categoria"""
+        
+        print("\n[bold]RESUMO DE ERROS ENCONTRADOS:[/bold]")
+        
+        for error_type, errors in error_groups.items():
+            if not errors:
+                continue
+                
+            print(f"\n[bold]{error_type.upper()}:[/bold] {len(errors)} ocorrências")
+            
+            if error_type == "Intersecção com afastamento existente":
+                # Mostra apenas o primeiro e último se houver muitos
+                if len(errors) > 5:
+                    print(f"  - {errors[0]}")
+                    print("  - ...")
+                    print(f"  - {errors[-1]}")
+                else:
+                    for error in errors:
+                        print(f"  - {error}")
+            else:
+                # Mostra todos os outros erros
+                for error in errors:
+                    print(f"  - {error}")
+        
+        print("\n[bold yellow]Pressione F2 para continuar ou F4 para sair[/bold yellow]")
+        if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
+            return
+
+    def read_filter_numbers(self, file_path):
+        """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
+        filter_numbers = []
+        with open(file_path, "r", encoding="utf-8") as file:
+            for line in file:
+                if "registro" in line:
+                    start = line.find("[") + 1
+                    end = line.find("]")
+                    if start > 0 and end > start:
+                        try:
+                            filter_number = int(line[start:end])
+                            filter_numbers.append(filter_number)
+                        except ValueError:
+                            continue
+        return filter_numbers
 
     def insert_file(self, file_name):
         print(
