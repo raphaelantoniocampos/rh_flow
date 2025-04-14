@@ -63,7 +63,6 @@ class Header:
 
 
 def main():
-    # config = Config()
     file_manager = FileManager()
     task_manager = TaskManager()
     data_manager = DataManager()

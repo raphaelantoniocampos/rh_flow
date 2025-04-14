@@ -2,6 +2,7 @@ import os
 import tempfile
 from pathlib import Path
 
+from InquirerPy import inquirer
 from pyperclip import copy
 from rich import print
 
@@ -15,6 +16,7 @@ from rh_flow.utils.constants import DATA_DIR, spinner
 class AddAbsencesTask(TaskRunner):
     KEY_CONTINUE = Key("F2", "green", "continuar")
     KEY_STOP = Key("F4", "red3", "sair")
+    KEY_REPEAT = Key("F3", "yellow", "repetir")
 
     def __init__(self, task: Task):
         with tempfile.TemporaryDirectory() as tmpdirname:
@@ -23,15 +25,15 @@ class AddAbsencesTask(TaskRunner):
 
     def run(self):
         print(f"\n[bold yellow]{'-' * 15} AFASTAMENTOS! {'-' * 15}[/bold yellow]")
-        absences = (DATA_DIR / "fiorilli" / "absences.csv").read_bytes()
+        absences_bytes = (DATA_DIR / "fiorilli" / "absences.csv").read_bytes()
 
-        temp_absences = self.temp_dir_path / "absences.csv"
+        temp_absences_file = self.temp_dir_path / "absences.csv"
         filter_file = self.temp_dir_path / "filter.txt"
         new_absences_file = self.temp_dir_path / "new_absences.txt"
 
-        temp_absences.write_bytes(absences)
+        temp_absences_file.write_bytes(absences_bytes)
 
-        self.insert_file("absences.csv")
+        self.ask_to_insert_file("absences.csv")
         if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
             return
 
@@ -47,47 +49,36 @@ class AddAbsencesTask(TaskRunner):
 
         spinner("Aguarde", 1)
 
-        # Processa e exibe os erros agrupados
-        error_groups = self.process_filter_errors(filter_file)
-        self.display_error_groups(error_groups)
+        repeat = "repetir"
+        while repeat == "repetir":
+            error_groups = self.process_filter_errors(filter_file)
+            self.display_error_groups(error_groups)
+            if inquirer.confirm(message="Abrir arquivo?", default=True).execute():
+                os.startfile(temp_absences_file)
+
+            repeat = wait_key_press([self.KEY_CONTINUE, self.KEY_REPEAT])
 
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
         file_size = self.filter_lines(
-            temp_absences, new_absences_file, filter_numbers_file
+            temp_absences_file, new_absences_file, filter_numbers_file
         )
 
         spinner("Aguarde", 1)
         if file_size == 0:
             print("\nNenhum novo afastamento.")
-            self.exit_task(temp_absences)
+            self.exit_task(temp_absences_file)
             return
 
         print(f"\n[bold]{file_size} NOVOS AFASTAMENTOS![/bold]\n")
-        print(
-            "Arquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!"
-        )
+        print("Arquivo '[bold green]new_absences.txt[/bold green]' gerado com sucesso!")
 
-        self.insert_file("new_absences.txt")
+        self.ask_to_insert_file("new_absences.txt")
         wait_key_press(self.KEY_CONTINUE)
 
         spinner("Aguarde", 1)
-        self.exit_task(temp_absences)
+        self.exit_task(temp_absences_file)
         return
-
-    # def read_filter_numbers(self, file_path):
-    #     """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
-    #     filter_numbers = []
-    #     with open(file_path, "r", encoding="utf-8") as file:
-    #         for line in file:
-    #             if "Erro ao obter registros:" in line:
-    #                 continue
-    #             if "registro" in line:
-    #                 start = line.find("[") + 1
-    #                 end = line.find("]")
-    #                 filter_number = int(line[start:end])
-    #                 filter_numbers.append(filter_number)
-    #     return filter_numbers
 
     def filter_lines(self, absences_file, new_absences_file, filter_numbers_file):
         """Filtra as linhas do arquivo de entrada e escreve no arquivo de saída."""
@@ -109,16 +100,18 @@ class AddAbsencesTask(TaskRunner):
             "Intersecção com período bloqueado": [],
             "Matrícula inexistente": [],
             "Informe matrícula": [],
-            "Outros erros": []
+            "Outros erros": [],
         }
-        
+
         with open(file_path, "r", encoding="utf-8") as file:
             for line in file:
                 line = line.strip()
                 if not line:
                     continue
-                
-                if "Intersecção com afastamento existente" in line:
+
+                if "Erro ao obter registros" in line:
+                    continue
+                elif "Intersecção com afastamento existente" in line:
                     error_groups["Intersecção com afastamento existente"].append(line)
                 elif "Intersecção com período bloqueado" in line:
                     error_groups["Intersecção com período bloqueado"].append(line)
@@ -128,22 +121,21 @@ class AddAbsencesTask(TaskRunner):
                     error_groups["Informe matrícula"].append(line)
                 else:
                     error_groups["Outros erros"].append(line)
-        
+
         return error_groups
 
     def display_error_groups(self, error_groups):
         """Exibe os erros agrupados por categoria"""
-        
-        print("\n[bold]RESUMO DE ERROS ENCONTRADOS:[/bold]")
-        
+
+        print("\n[bold yellow]RESUMO DE ERROS ENCONTRADOS:[/bold yellow]")
+
         for error_type, errors in error_groups.items():
             if not errors:
                 continue
-                
+
             print(f"\n[bold]{error_type.upper()}:[/bold] {len(errors)} ocorrências")
-            
+
             if error_type == "Intersecção com afastamento existente":
-                # Mostra apenas o primeiro e último se houver muitos
                 if len(errors) > 5:
                     print(f"  - {errors[0]}")
                     print("  - ...")
@@ -155,10 +147,6 @@ class AddAbsencesTask(TaskRunner):
                 # Mostra todos os outros erros
                 for error in errors:
                     print(f"  - {error}")
-        
-        print("\n[bold yellow]Pressione F2 para continuar ou F4 para sair[/bold yellow]")
-        if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
-            return
 
     def read_filter_numbers(self, file_path):
         """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
@@ -176,7 +164,7 @@ class AddAbsencesTask(TaskRunner):
                             continue
         return filter_numbers
 
-    def insert_file(self, file_name):
+    def ask_to_insert_file(self, file_name):
         print(
             f"Insira o arquivo [bold green]{file_name}[/bold green] na importação de afastamentos AHGORA."
         )
