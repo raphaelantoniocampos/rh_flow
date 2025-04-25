@@ -20,7 +20,7 @@ from rh_flow.utils.constants import DOWNLOADS_DIR, console
 
 
 class CoreBrowser(ABC):
-    MAX_TRIES = 30
+    MAX_TRIES = 50
     DELAY = 0.5
     IGNORED_EXCEPTIONS = (
         ElementClickInterceptedException,
@@ -30,9 +30,9 @@ class CoreBrowser(ABC):
         StaleElementReferenceException,
     )
 
-    def __init__(self, url):
+    def __init__(self, url, headless_mode: bool = True):
         load_dotenv()
-        self.driver = self._get_web_driver()
+        self.driver = self._get_web_driver(headless_mode=headless_mode)
         self.driver.get(url)
 
     def _login(self) -> None:
@@ -44,7 +44,7 @@ class CoreBrowser(ABC):
     def _enter_password(self) -> None:
         """Enters the password into the login form"""
 
-    def _get_web_driver(self, headless_mode: bool = True) -> webdriver.Firefox:
+    def _get_web_driver(self, headless_mode: bool) -> webdriver.Firefox:
         """Configures and returns an instance of the Firefox WebDriver"""
         options = webdriver.FirefoxOptions()
         if headless_mode:
