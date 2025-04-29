@@ -3,14 +3,15 @@ import time
 
 from dotenv import load_dotenv
 from rich import print
-from selenium.webdriver.common.by import By
-
 from rich.console import Console
+from selenium.webdriver.common.by import By
+from rh_flow.utils.config import Config
+
 from rh_flow.browsers.core_browser import CoreBrowser
 
 
 class AhgoraBrowser(CoreBrowser):
-    URL = "https://login.ahgora.com.br/"
+    URL = "https://auth.ahgora.com.br/#/login"
 
     @staticmethod
     def download_employees_data() -> None:
@@ -25,13 +26,18 @@ class AhgoraBrowser(CoreBrowser):
         with self.console.status(
             "[yellow]Iniciando AHGORA webdriver[/]", spinner="dots"
         ):
-            super().__init__(self.URL)
+            headless_mode = Config().data.get("headless_mode")
+            super().__init__(url=self.URL, headless_mode=headless_mode)
 
     def _start_employees_download(self) -> None:
         with self.console.status(
             "Baixando [yellow]funcionários[/] do AHGORA", spinner="dots"
         ):
             self._login()
+            try:
+                self._login()
+            except Exception:
+                pass
             self.driver.get("https://app.ahgora.com.br/funcionarios")
             self._show_dismissed_employees()
             self._click_plus_button()
@@ -53,10 +59,10 @@ class AhgoraBrowser(CoreBrowser):
         time.sleep(super().DELAY)
 
     def _enter_username(self, selector: str, user: str) -> None:
-        super().send_keys(selector, user, selector_type=By.ID)
+        super().send_keys(selector, user, selector_type=By.NAME)
 
     def _enter_password(self, selector: str, password: str) -> None:
-        super().send_keys(selector, password, selector_type=By.ID)
+        super().send_keys(selector, password, selector_type=By.NAME)
 
     def _select_company(self) -> None:
         company = os.getenv("AHGORA_COMPANY")

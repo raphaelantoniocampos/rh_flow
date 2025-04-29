@@ -28,39 +28,48 @@ class Config:
             )
         )
         last_analisys = self.data.get("last_analisys")
+        headless_mode = self.data.get("headless_mode")
         last_download_fiorilli = self.data.get("last_download")["fiorilli_employees"]
         last_download_ahgora = self.data.get("last_download")["ahgora_employees"]
         last_download_absences = self.data.get("last_download")["absences"]
 
         console.print(
             f"""
-[cyan]•[/] [bold]Última análise[/]: {last_analisys["datetime"]} ([bold]{
+[bold orange]Opções[/bold orange]
+[cyan]•[/] [bold]Modo de Download Headless[/bold]: {headless_mode}
+
+[bold orange]Dados[/bold orange]
+[cyan]•[/] [bold]Análise[/]: {last_analisys["datetime"]} ([bold]{
                 last_analisys["time_since"]
             }[/] atrás)
 
-[cyan]•[/] [bold]Últimos downloads[/]: 
-• Funcionários Fiorilli - {last_download_fiorilli["datetime"]} ([bold]{
+[cyan]•[/] [bold]Downloads[/]: 
+  • Afastamentos - {last_download_absences["datetime"]} ([bold]{
+                last_download_absences["time_since"]
+            }[/] atrás)
+  • Funcionários Fiorilli - {last_download_fiorilli["datetime"]} ([bold]{
                 last_download_fiorilli["time_since"]
             }[/] atrás)
-• Funcionários Ahgora - {last_download_ahgora["datetime"]} ([bold]{
+  • Funcionários Ahgora - {last_download_ahgora["datetime"]} ([bold]{
                 last_download_ahgora["time_since"]
-            }[/] atrás)
-• Afastamentos - {last_download_absences["datetime"]} ([bold]{
-                last_download_absences["time_since"]
             }[/] atrás)
 """
         )
 
         answer = inquirer.rawlist(
             message="Selecione as opções de download",
-            choices=["Voltar"],
+            choices=["Voltar", "Alterar Headless Mode"],
             keybindings=INQUIRER_KEYBINDINGS,
             multiselect=True,
         ).execute()
 
-        if answer == "Voltar":
-            spinner()
-            return
+        match answer[0]:
+            case "Voltar":
+                spinner()
+                return
+            case "Alterar Headless Mode":
+                self.toggle_headless_mode()
+                self.menu()
 
     @staticmethod
     def update_last_analisys():
@@ -135,6 +144,10 @@ class Config:
             raise Exception(
                 f"{error}\nBaixe o arquivo e o coloque na pasta solicitada."
             )
+
+    def toggle_headless_mode(self):
+        headless_mode = self.data.get("headless_mode")
+        self._update("headless_mode", value=not headless_mode)
 
     def _update_analysis_time_since(self, last_analisys: dict, now: timedelta) -> None:
         if last_analisys["datetime"]:

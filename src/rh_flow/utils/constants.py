@@ -38,6 +38,7 @@ INQUIRER_KEYBINDINGS = {
 
 JSON_INIT_CONFIG = {
     "init_date": "",
+    "headless_mode": True,
     "last_analisys": {"datetime": "", "time_since": ""},
     "last_download": {
         "ahgora_employees": {"datetime": "", "time_since": ""},

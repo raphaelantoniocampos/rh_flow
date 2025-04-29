@@ -131,5 +131,7 @@ def get_tasks_panel(tasks: list[Task]) -> Panel:
 if __name__ == "__main__":
     try:
         main()
+        exit(0)
     except KeyboardInterrupt:
         spinner("Saindo")
+        exit(0)

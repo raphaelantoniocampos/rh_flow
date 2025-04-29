@@ -1,13 +1,14 @@
 import os
 from datetime import date, datetime
-from dateutil.relativedelta import relativedelta
 from time import sleep
 
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from rich import print
-from selenium.webdriver.common.by import By
-
 from rich.console import Console
+from selenium.webdriver.common.by import By
+from rh_flow.utils.config import Config
+
 from rh_flow.browsers.core_browser import CoreBrowser
 
 
@@ -35,7 +36,9 @@ class FiorilliBrowser(CoreBrowser):
         with self.console.status(
             "[yellow]Iniciando FIORILLI webdriver[/]", spinner="dots"
         ):
-            super().__init__(self.URL)
+
+            headless_mode = Config().data.get("headless_mode")
+            super().__init__(url=self.URL, headless_mode=headless_mode)
 
     def _start_employees_download(self) -> None:
         ()

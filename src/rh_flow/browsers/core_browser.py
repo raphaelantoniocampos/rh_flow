@@ -30,7 +30,7 @@ class CoreBrowser(ABC):
         StaleElementReferenceException,
     )
 
-    def __init__(self, url, headless_mode: bool = True):
+    def __init__(self, url: str, headless_mode: bool):
         load_dotenv()
         self.driver = self._get_web_driver(headless_mode=headless_mode)
         self.driver.get(url)
@@ -269,5 +269,4 @@ class CoreBrowser(ABC):
                 time.sleep(self.DELAY)
                 if i >= max_tries - 1:
                     console.print(e)
-                    # raise (e)
-                    return
+                    raise (e)
