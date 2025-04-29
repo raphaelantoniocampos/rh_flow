@@ -34,10 +34,6 @@ class AhgoraBrowser(CoreBrowser):
             "Baixando [yellow]funcionários[/] do AHGORA", spinner="dots"
         ):
             self._login()
-            try:
-                self._login()
-            except Exception:
-                pass
             self.driver.get("https://app.ahgora.com.br/funcionarios")
             self._show_dismissed_employees()
             self._click_plus_button()
@@ -50,10 +46,11 @@ class AhgoraBrowser(CoreBrowser):
         user = os.getenv("AHGORA_USER")
         pwd = os.getenv("AHGORA_PASSWORD")
 
-        self._enter_username("email", user)
-        self._click_enter_button()
-        self._enter_password("password", pwd)
-        self._click_enter_button()
+        for i in range(2):
+            self._enter_username("email", user)
+            self._click_enter_button()
+            self._enter_password("password", pwd)
+            self._click_enter_button()
         self._select_company()
         self._close_banner()
         time.sleep(super().DELAY)
