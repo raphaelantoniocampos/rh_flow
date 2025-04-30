@@ -59,19 +59,20 @@ class TaskManager:
         ]
 
     def name_to_task(self, name: str) -> Task:
-        df = self._get_df(name)
+        path = self._get_path(name)
+        df = self._get_df(path)
         option = self._get_option(name, df)
 
         task = Task(
             name=name,
+            path=path,
             df=df,
             option=option,
         )
         return task
 
-    def _get_df(self, name) -> DataFrame | None:
+    def _get_df(self, path) -> DataFrame | None:
         data_manager = DataManager()
-        path = self._get_path(name)
         if isinstance(path, str):
             return DataFrame()
         if not path.exists():

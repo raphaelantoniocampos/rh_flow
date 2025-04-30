@@ -6,7 +6,6 @@ from rich import print
 from rich.panel import Panel
 
 from rh_flow.managers.data_manager import DataManager
-from rh_flow.managers.download_manager import DownloadManager
 from rh_flow.models.key import wait_key_press
 from rh_flow.models.task import Task
 from rh_flow.utils.constants import console, spinner
@@ -48,16 +47,9 @@ class TaskRunner(ABC):
     def run() -> None:
         """Runs the task"""
 
-    def exit_task(self, download_list=["Funcionários Ahgora"], download=True):
-        update_list = inquirer.confirm(
-            message="Atualizar dados", default=False
-        ).execute()
-        if update_list:
-            download_manager = DownloadManager()
-            data_manager = DataManager()
-            if download:
-                download_manager.run(download_list)
-            data_manager.analyze()
+    def exit_task(self):
+        if inquirer.confirm(message="Atualizar dados", default=False).execute():
+            self.task.path.unlink()
 
     def _choose_itens(
         self,

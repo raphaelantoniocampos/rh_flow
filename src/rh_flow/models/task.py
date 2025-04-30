@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from pandas import DataFrame
 
 
 class Task:
-    def __init__(self, name: str, df: DataFrame, option: str):
+    def __init__(self, name: str, path: Path, df: DataFrame, option: str):
         self.name = name
+        self.path = path
         self.df = df
         self.option = option
         self.url = (
