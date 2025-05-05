@@ -1,16 +1,14 @@
-from InquirerPy import inquirer
-from rich.panel import Panel
-from rh_flow.utils.constants import (
-    console,
-    JSON_INIT_CONFIG,
-    DATA_DIR,
-    INQUIRER_KEYBINDINGS,
-    spinner,
-)
-from pathlib import Path
 import json
 from datetime import datetime, timedelta
+from pathlib import Path
+
+from InquirerPy import inquirer
+from rich.panel import Panel
+
 from rh_flow.managers.file_manager import FileManager
+from rh_flow.utils.constants import DATA_DIR, INQUIRER_KEYBINDINGS, JSON_INIT_CONFIG
+from rh_flow.utils.creds import Creds
+from rh_flow.utils.ui import console, spinner
 
 
 class Config:
@@ -18,6 +16,9 @@ class Config:
         self.json_path: Path = DATA_DIR / "config.json"
         self.data: dict = self._load()
         self.update_time_since()
+        self.is_env_ok = Creds.is_env_ok()
+        if not self.is_env_ok:
+            Creds()
 
     def menu(self) -> None:
         self.update_time_since()
@@ -56,9 +57,12 @@ class Config:
 """
         )
 
+        choices = (
+            ["Voltar", "Alterar Headless Mode", "Configurar Variaveis de Ambiente"],
+        )
         answer = inquirer.rawlist(
             message="Selecione as opções de download",
-            choices=["Voltar", "Alterar Headless Mode"],
+            choices=choices if not self.is_env_ok else choices,
             keybindings=INQUIRER_KEYBINDINGS,
             multiselect=True,
         ).execute()
@@ -69,6 +73,9 @@ class Config:
                 return
             case "Alterar Headless Mode":
                 self.toggle_headless_mode()
+                self.menu()
+            case "Configurar Variaveis de Ambiente":
+                Creds()
                 self.menu()
 
     @staticmethod

@@ -4,25 +4,19 @@ from InquirerPy import inquirer
 from rich.panel import Panel
 from rich.table import Table
 
-from rh_flow.managers.file_manager import FileManager
 from rh_flow.managers.data_manager import DataManager
-from rh_flow.managers.task_manager import TaskManager
 from rh_flow.managers.download_manager import DownloadManager
+from rh_flow.managers.file_manager import FileManager
+from rh_flow.managers.task_manager import TaskManager
 from rh_flow.models.task import Task
+from rh_flow.utils.config import Config
 from rh_flow.utils.constants import (
     INQUIRER_KEYBINDINGS,
     MAIN_MENU_OPTIONS,
     PT_MONTHS,
     PT_WEEKDAYS,
-    spinner,
-    console,
 )
-from rh_flow.utils.config import Config
-
-
-# TODO: ask to create creds on start
-# TODO: make last downloads and analyze appear on main screen
-# TODO: configure the panel to be central and prettier
+from rh_flow.utils.ui import console, spinner
 
 
 class Header:

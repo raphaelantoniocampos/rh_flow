@@ -5,7 +5,8 @@ from rh_flow.browsers.ahgora_browser import AhgoraBrowser
 from rh_flow.browsers.fiorilli_browser import FiorilliBrowser
 from rh_flow.managers.file_manager import FileManager
 from rh_flow.managers.data_manager import DataManager
-from rh_flow.utils.constants import INQUIRER_KEYBINDINGS, console, spinner
+from rh_flow.utils.constants import INQUIRER_KEYBINDINGS
+from rh_flow.utils.ui import console, spinner
 
 
 class DownloadManager:

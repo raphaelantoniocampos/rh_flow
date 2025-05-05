@@ -1,7 +1,4 @@
-import time
 from pathlib import Path
-
-from rich.console import Console
 
 BASE_DIR = Path(Path.cwd() / "src")
 DATA_DIR = BASE_DIR / "data"
@@ -80,12 +77,10 @@ PT_WEEKDAYS = {
     "Sun": "Dom",
 }
 
-console = Console()
-
-
-def spinner(
-    wait_string: str = "Voltando",
-    wait_time: float = 0.40,
-):
-    with console.status(f"[bold green]{wait_string}...[/bold green]", spinner="dots"):
-        time.sleep(wait_time)
+REQUIRED_VARS = {
+    "FIORILLI_USER": None,
+    "FIORILLI_PASSWORD": None,
+    "AHGORA_USER": None,
+    "AHGORA_PASSWORD": None,
+    "AHGORA_COMPANY": None,
+}

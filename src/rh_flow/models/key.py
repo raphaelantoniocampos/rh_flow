@@ -9,9 +9,7 @@ class Key:
         self.color = color
         self.key = str(name)
         self.action = action
-        self.desc = (
-            f"Pressione {self} para [bold white]{action.lower()}[/bold white]"
-        )
+        self.desc = f"Pressione {self} para [bold white]{action.lower()}[/bold white]"
 
     def __str__(self):
         return f"[bold {self.color}]{self.name.upper()}[/bold {self.color}]"

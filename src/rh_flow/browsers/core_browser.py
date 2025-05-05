@@ -16,7 +16,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from rh_flow.utils.constants import DOWNLOADS_DIR, console
+from rh_flow.utils.constants import DOWNLOADS_DIR
 
 
 class CoreBrowser(ABC):
@@ -265,8 +265,7 @@ class CoreBrowser(ABC):
             try:
                 time.sleep(self.DELAY)
                 return func()
-            except Exception as e:
+            except Exception:
                 time.sleep(self.DELAY)
                 if i >= max_tries - 1:
-                    console.print(e)
-                    raise (e)
+                    return

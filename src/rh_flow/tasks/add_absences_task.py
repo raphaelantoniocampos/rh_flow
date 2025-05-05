@@ -10,7 +10,8 @@ from rh_flow.managers.file_manager import FileManager
 from rh_flow.models.key import Key, wait_key_press
 from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
-from rh_flow.utils.constants import DATA_DIR, spinner
+from rh_flow.utils.constants import DATA_DIR
+from rh_flow.utils.ui import spinner
 
 
 class AddAbsencesTask(TaskRunner):
@@ -26,7 +27,6 @@ class AddAbsencesTask(TaskRunner):
     def run(self):
         print(f"\n[bold yellow]{'-' * 15} AFASTAMENTOS! {'-' * 15}[/bold yellow]")
 
-
         absences_bytes = (DATA_DIR / "fiorilli" / "absences.csv").read_bytes()
 
         temp_absences_file = self.temp_dir_path / "absences.csv"
@@ -37,7 +37,6 @@ class AddAbsencesTask(TaskRunner):
 
         repeat = True
         while repeat:
-
             self.ask_to_insert_file("absences.csv")
             if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
                 return
@@ -155,7 +154,6 @@ class AddAbsencesTask(TaskRunner):
         else:
             for error in errors:
                 print(f"  - {error}")
-
 
     def read_filter_numbers(self, file_path):
         """Lê o arquivo TXT e retorna uma lista com os números dos registros."""

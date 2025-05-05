@@ -4,7 +4,7 @@ from rich import print
 
 from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
-from rh_flow.utils.constants import spinner
+from rh_flow.utils.ui import spinner
 from rh_flow.models.key import Key, wait_key_press
 
 
@@ -40,9 +40,9 @@ class RemoveEmployeesTask(TaskRunner):
                 case "próximo":
                     spinner("Continuando")
                 case "sair":
-                    super().exit_task()
+                    self.exit_task()
                     spinner()
                     return
 
         print("[bold green]Não há mais funcionários desligados![/bold green]")
-        super().exit_task()
+        self.exit_task()
