@@ -57,12 +57,10 @@ class Config:
 """
         )
 
-        choices = (
-            ["Voltar", "Alterar Headless Mode", "Configurar Variaveis de Ambiente"],
-        )
+        choices = ["Voltar", "Alterar Headless Mode", "Configurar Variaveis de Ambiente"]
         answer = inquirer.rawlist(
             message="Selecione as opções de download",
-            choices=choices if not self.is_env_ok else choices,
+            choices=choices[:-1] if self.is_env_ok else choices,
             keybindings=INQUIRER_KEYBINDINGS,
             multiselect=True,
         ).execute()

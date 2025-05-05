@@ -79,8 +79,8 @@ PT_WEEKDAYS = {
 
 REQUIRED_VARS = {
     "FIORILLI_USER": None,
-    "FIORILLI_PASSWORD": None,
+    "FIORILLI_PSW": None,
     "AHGORA_USER": None,
-    "AHGORA_PASSWORD": None,
+    "AHGORA_PSW": None,
     "AHGORA_COMPANY": None,
 }
