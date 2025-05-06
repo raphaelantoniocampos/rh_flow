@@ -83,8 +83,9 @@ class AddAbsencesTask(TaskRunner):
         self.exit_task(temp_absences_file)
         return
 
-    def filter_lines(self, absences_file, new_absences_file, filter_numbers_file):
-        """Filtra as linhas do arquivo de entrada e escreve no arquivo de saída."""
+    def filter_lines(
+        self, absences_file, new_absences_file, filter_numbers_file
+    ) -> int:
         with (
             open(absences_file, "r", encoding="utf-8") as infile,
             open(new_absences_file, "w", encoding="utf-8") as outfile,

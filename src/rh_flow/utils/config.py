@@ -57,7 +57,11 @@ class Config:
 """
         )
 
-        choices = ["Voltar", "Alterar Headless Mode", "Configurar Variaveis de Ambiente"]
+        choices = [
+            "Voltar",
+            "Alterar Headless Mode",
+            "Configurar Variaveis de Ambiente",
+        ]
         answer = inquirer.rawlist(
             message="Selecione as opções de download",
             choices=choices[:-1] if self.is_env_ok else choices,

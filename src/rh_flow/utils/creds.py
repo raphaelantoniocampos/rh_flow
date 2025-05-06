@@ -50,6 +50,7 @@ class Creds:
         except Exception as e:
             print(f"\nErro ao salvar no arquivo .env: {e}")
 
+    @staticmethod
     def is_env_ok():
         load_dotenv()
         missing = [var for var in REQUIRED_VARS if os.getenv(var) is None]
