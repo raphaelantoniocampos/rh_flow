@@ -35,8 +35,7 @@ class AddAbsencesTask(TaskRunner):
 
         temp_absences_file.write_bytes(absences_bytes)
 
-        repeat = True
-        while repeat:
+        while True:
             self.ask_to_insert_file("absences.csv")
             if wait_key_press([self.KEY_CONTINUE, self.KEY_STOP]) == "sair":
                 return
@@ -57,9 +56,8 @@ class AddAbsencesTask(TaskRunner):
             self.display_error_groups(error_groups)
             if inquirer.confirm(message="Editar arquivo?", default=False).execute():
                 os.startfile(temp_absences_file)
-                if inquirer.confirm(message="Repetir", default=False).execute():
-                    continue
-            break
+                if not inquirer.confirm(message="Repetir", default=False).execute():
+                    break
 
         filter_numbers_file = self.read_filter_numbers(filter_file)
 

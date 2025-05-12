@@ -1,4 +1,7 @@
 import time
+
+import pyautogui
+from InquirerPy import inquirer
 from pyperclip import copy
 from rich import print
 
@@ -10,8 +13,8 @@ from rh_flow.models.key import Key, wait_key_press
 
 class UpdateEmployeesTask(TaskRunner):
     KEY_CONTINUE = Key("F2", "green", "continuar")
-    KEY_POSITION = Key("F1", "cyan", "copiar o cargo")
-    KEY_DEPARTMENT = Key("F2", "violet", "copiar o departamento")
+    KEY_POSITION = Key("F1", "cyan", "escrever o cargo")
+    KEY_DEPARTMENT = Key("F2", "violet", "escrever o departamento")
     KEY_NEXT = Key("F3", "yellow", "próximo")
     KEY_STOP = Key("F4", "red", "sair")
 
@@ -59,6 +62,7 @@ class UpdateEmployeesTask(TaskRunner):
             print("\n")
             copy(name)
             print(f"(Nome '{name}' copiado para a área de transferência!)")
+
             while True:
                 match wait_key_press(
                     [
@@ -68,17 +72,13 @@ class UpdateEmployeesTask(TaskRunner):
                         self.KEY_STOP,
                     ]
                 ):
-                    case "copiar o cargo":
+                    case "escrever o cargo":
                         copy(position_fiorilli)
-                        print(
-                            f"(Cargo '{position_fiorilli}' copiado para a área de transferência!)"
-                        )
+                        pyautogui.write(position_fiorilli, interval=0.02)
                         time.sleep(0.5)
-                    case "copiar o departamento":
+                    case "escrever o departamento":
                         copy(department_fiorilli)
-                        print(
-                            f"(Departamento '{department_fiorilli}' copiado para a área de transferência!)"
-                        )
+                        pyautogui.write(department_fiorilli, interval=0.02)
                         time.sleep(0.5)
                     case "próximo":
                         spinner("Continuando")
@@ -87,6 +87,9 @@ class UpdateEmployeesTask(TaskRunner):
                         self.exit_task()
                         spinner()
                         return
+
+                if not inquirer.confirm(message="Repetir", default=False).execute():
+                    break
 
         print("[bold green]Não há mais cargos para alterar![/bold green]")
         self.exit_task()
