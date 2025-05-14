@@ -1,3 +1,4 @@
+import subprocess
 from abc import ABC, abstractmethod
 
 from InquirerPy import inquirer
@@ -33,11 +34,12 @@ class TaskRunner(ABC):
         if choose_itens:
             self._choose_itens()
 
-        proceed = inquirer.confirm(message="Iniciar?", default=True).execute()
-        if proceed:
-            print("Abra o [bold violet]Ahgora[/bold violet] e vá para a URL abaixo.")
-            copy(self.task.url)
-            print(f"URL '{self.task.url}' copiada para a área de transferência!)")
+        if inquirer.confirm(message="Iniciar?", default=True).execute():
+            url = self.task.url
+            if inquirer.confirm(message="Abrir navegador?", default=True).execute():
+                self._open_browser(url)
+            print(f"URL '{url}' copiada para a área de transferência!)")
+            copy(url)
             wait_key_press(self.KEY_CONTINUE)
             self.run()
 
@@ -86,3 +88,6 @@ class TaskRunner(ABC):
         if itens:
             ids = [item[0] for item in itens]
             self.task.df = DataManager.filter_df(self.task.df, ids)
+
+    def _open_browser(self, url: str) -> None:
+        subprocess.run(['explorer.exe', url])

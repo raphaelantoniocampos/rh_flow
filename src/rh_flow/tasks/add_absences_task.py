@@ -56,8 +56,8 @@ class AddAbsencesTask(TaskRunner):
             self.display_error_groups(error_groups)
             if inquirer.confirm(message="Editar arquivo?", default=False).execute():
                 os.startfile(temp_absences_file)
-                if not inquirer.confirm(message="Repetir", default=False).execute():
-                    break
+            if not inquirer.confirm(message="Repetir", default=False).execute():
+                break
 
         filter_numbers_file = self.read_filter_numbers(filter_file)
 
@@ -92,8 +92,16 @@ class AddAbsencesTask(TaskRunner):
             for index, line in enumerate(infile, start=1):
                 if index not in filter_numbers_file:
                     outfile.write(line)
+                    self._get_line_absences_data(line)
                     lines_written += 1
             return lines_written
+
+    def _get_line_absences_data(self, line: str):
+        listo = line.split(',')
+        print(listo)
+        first = listo[0]
+        print(first)
+        print(type(first))
 
     def process_filter_errors(self, file_path):
         """Processa o arquivo de erros e retorna um dicionário com os erros agrupados"""
@@ -137,22 +145,9 @@ class AddAbsencesTask(TaskRunner):
 
             print(f"\n[bold]{error_type.upper()}:[/bold] {len(errors)} ocorrências")
 
-            if error_type == "Intersecção com afastamento existente":
-                self.resume_errors(errors)
-            elif error_type == "Intersecção com período bloqueado":
-                self.resume_errors(errors)
-            else:
+            if not error_type == "Intersecção com afastamento existente" and not error_type == "Intersecção com período bloqueado":
                 for error in errors:
                     print(f"  - {error}")
-
-    def resume_errors(self, errors):
-        if len(errors) > 5:
-            print(f"  - {errors[0]}")
-            print("  - ...")
-            print(f"  - {errors[-1]}")
-        else:
-            for error in errors:
-                print(f"  - {error}")
 
     def read_filter_numbers(self, file_path):
         """Lê o arquivo TXT e retorna uma lista com os números dos registros."""
