@@ -5,10 +5,10 @@ from dateutil.relativedelta import relativedelta
 from rich import print
 from rich.console import Console
 from selenium.webdriver.common.by import By
-from rh_flow.utils.config import Config
-from rh_flow.utils.creds import Creds
 
 from rh_flow.browsers.core_browser import CoreBrowser
+from rh_flow.utils.config import Config
+from rh_flow.utils.creds import Creds
 
 
 class FiorilliBrowser(CoreBrowser):
@@ -187,7 +187,7 @@ class FiorilliBrowser(CoreBrowser):
     def _fill_input_field(self) -> None:
         today = datetime.today()
         today_str = today.strftime("%d/%m/%Y")
-        last_month = (today - relativedelta(months=1)).strftime("%d/%m/%Y")
+        last_month = (today - relativedelta(months=2)).strftime("%d/%m/%Y")
         year_end = date(today.year, 12, 31).strftime("%d/%m/%Y")
         self.select_and_send_keys(
             f"//input[@value='{today_str}']",

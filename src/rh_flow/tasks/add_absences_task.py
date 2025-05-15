@@ -97,11 +97,7 @@ class AddAbsencesTask(TaskRunner):
             return lines_written
 
     def _get_line_absences_data(self, line: str):
-        listo = line.split(',')
-        print(listo)
-        first = listo[0]
-        print(first)
-        print(type(first))
+        return line
 
     def process_filter_errors(self, file_path):
         """Processa o arquivo de erros e retorna um dicionário com os erros agrupados"""

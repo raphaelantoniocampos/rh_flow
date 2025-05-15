@@ -1,9 +1,9 @@
 import os
+
 from dotenv import load_dotenv
-
 from InquirerPy import inquirer
-
 from rich import print
+
 from rh_flow.utils.constants import REQUIRED_VARS
 
 

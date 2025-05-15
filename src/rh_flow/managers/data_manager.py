@@ -1,6 +1,6 @@
 import unicodedata
-from time import sleep
 from datetime import datetime
+from time import sleep
 
 import pandas as pd
 from pandas.errors import EmptyDataError

@@ -1,6 +1,8 @@
-from datetime import datetime
-import pandas as pd
 from abc import ABC, abstractmethod
+from datetime import datetime
+
+import pandas as pd
+
 
 class AbsenceDataParser(ABC):
     @abstractmethod

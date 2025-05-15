@@ -5,10 +5,10 @@ from InquirerPy import inquirer
 from pyperclip import copy
 from rich import print
 
+from rh_flow.models.key import Key, wait_key_press
 from rh_flow.models.task import Task
 from rh_flow.tasks.task_runner import TaskRunner
 from rh_flow.utils.ui import spinner
-from rh_flow.models.key import Key, wait_key_press
 
 
 class UpdateEmployeesTask(TaskRunner):

@@ -3,10 +3,10 @@ import time
 from rich import print
 from rich.console import Console
 from selenium.webdriver.common.by import By
-from rh_flow.utils.config import Config
-from rh_flow.utils.creds import Creds
 
 from rh_flow.browsers.core_browser import CoreBrowser
+from rh_flow.utils.config import Config
+from rh_flow.utils.creds import Creds
 
 
 class AhgoraBrowser(CoreBrowser):
