@@ -79,7 +79,7 @@ class AddEmployeesTask(TaskRunner):
         pyautogui.press("tab")
         time.sleep(0.2)
 
-        pyautogui.write(str(row["cpf"]), interval=0.02)
+        pyautogui.write(row["cpf"], interval=0.05)
         time.sleep(0.2)
 
         for i in range(5):
