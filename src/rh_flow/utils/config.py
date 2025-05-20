@@ -150,9 +150,8 @@ class Config:
             self._update_downloads_time_since(last_download, "fiorilli_employees", now)
             self._update_downloads_time_since(last_download, "absences", now)
         except FileNotFoundError as error:
-            raise Exception(
-                f"{error}\nBaixe o arquivo e o coloque na pasta solicitada."
-            )
+            print(f"{error}\n")
+            return
 
     def toggle_headless_mode(self):
         headless_mode = self.data.get("headless_mode")

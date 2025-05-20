@@ -60,6 +60,10 @@ class DataManager:
             print(f"[bold red]Erro ao sincronizar dados: {e}[/bold red]\n")
             sleep(1)
 
+        except FileNotFoundError as e:
+            print(f"[bold red]Erro ao analisar dados: {e}[/bold red]\nFaça do download primeiro.")
+            sleep(1)
+
     @staticmethod
     def filter_df(df: pd.DataFrame, ids: list[str]) -> pd.DataFrame:
         return df[df["id"].isin(ids)]

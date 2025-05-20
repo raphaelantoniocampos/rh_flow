@@ -36,9 +36,6 @@ class Header:
         time_str = now.strftime("%H[blink]:[/]%M[blink]")
 
         grid = Table.grid()
-        # grid.add_column(justify="left")
-        # grid.add_column(justify="center", ratio=1)
-        # grid.add_column(justify="right")
         grid.add_row(
             f"{pt_weekday} {day} {pt_month} {year}",
         )
@@ -128,4 +125,4 @@ if __name__ == "__main__":
         exit(0)
     except KeyboardInterrupt:
         spinner("Saindo")
-        exit(0)
+        exit(1)
